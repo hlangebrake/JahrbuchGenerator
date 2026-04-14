@@ -6,14 +6,14 @@
   <title>A5 Raster-Generator</title>
   <style>
     :root {
-      --bg: #f3f4f6;
-      --panel: #ffffff;
-      --border: #d1d5db;
-      --text: #111827;
-      --muted: #6b7280;
-      --accent: #2563eb;
-      --danger: #b91c1c;
-      --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      --bg: #111318;
+      --panel: #171b22;
+      --border: #2a3140;
+      --text: #e5e7eb;
+      --muted: #9aa3b2;
+      --accent: #60a5fa;
+      --danger: #f87171;
+      --shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
     }
 
     * { box-sizing: border-box; }
@@ -66,7 +66,7 @@
       padding: 4px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      background: #f9fafb;
+      background: #10151f;
     }
 
     .tab-button {
@@ -87,12 +87,12 @@
 
     .tab-button:hover {
       color: var(--text);
-      background: #eef2ff;
+      background: #1d2636;
     }
 
     .tab-button.active {
-      color: #1d4ed8;
-      background: #dbeafe;
+      color: #93c5fd;
+      background: #1f304a;
     }
 
     .tab-icon {
@@ -124,7 +124,7 @@
       padding: 14px;
       border: 1px solid var(--border);
       border-radius: 12px;
-      background: #fafafa;
+      background: #1a202b;
     }
 
     .control label {
@@ -152,7 +152,7 @@
       padding: 8px 10px;
       border: 1px solid var(--border);
       border-radius: 8px;
-      background: #ffffff;
+      background: #111827;
       color: var(--text);
       cursor: grab;
       font: inherit;
@@ -201,15 +201,15 @@
       margin-top: 20px;
       padding: 16px;
       border-radius: 12px;
-      background: #eff6ff;
-      border: 1px solid #bfdbfe;
+      background: #152338;
+      border: 1px solid #2d4567;
       display: grid;
       gap: 8px;
       font-size: 0.92rem;
     }
 
     .stats strong {
-      color: #1d4ed8;
+      color: #93c5fd;
     }
 
     .status {
@@ -222,15 +222,15 @@
     }
 
     .status.ok {
-      background: #ecfdf5;
-      color: #065f46;
-      border-color: #a7f3d0;
+      background: #10291f;
+      color: #9be9c2;
+      border-color: #1f6b4b;
     }
 
     .status.error {
-      background: #fef2f2;
-      color: var(--danger);
-      border-color: #fecaca;
+      background: #301717;
+      color: #fecaca;
+      border-color: #7f1d1d;
     }
 
     .main {
@@ -247,23 +247,17 @@
       justify-items: center;
     }
 
-    .page-label {
-      color: var(--muted);
-      font-size: 0.9rem;
-    }
-
     .canvas-frame {
       width: fit-content;
       max-width: 100%;
       display: grid;
       place-items: center;
-      padding: 24px;
+      padding: 0;
       overflow: auto;
-      border: 1px solid var(--border);
-      border-radius: 18px;
-      background:
-        linear-gradient(135deg, rgba(255,255,255,0.9), rgba(243,244,246,0.9));
-      box-shadow: var(--shadow);
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      box-shadow: none;
     }
 
     canvas {
@@ -272,17 +266,10 @@
       max-width: none;
       max-height: none;
       touch-action: none;
-      border-radius: 4px;
+      border-radius: 0;
       background: white;
-      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
-      border: 1px solid #d4d4d8;
-    }
-
-    .footer-note {
-      color: var(--muted);
-      font-size: 0.86rem;
-      text-align: center;
-      line-height: 1.4;
+      box-shadow: none;
+      border: 0;
     }
 
     @media (max-width: 920px) {
@@ -328,7 +315,7 @@
         <section class="control">
           <div class="field-row">
             <label for="outerMarginRange">Außenabstand zur Seitenkante</label>
-            <div class="value-badge"><span id="outerMarginValue">60</span> px</div>
+            <div class="value-badge"><span id="outerMarginValue">0.60</span> cm</div>
           </div>
           <input id="outerMarginRange" type="range" min="0" max="300" step="1" value="60" />
         </section>
@@ -352,7 +339,7 @@
         <section class="control">
           <div class="field-row">
             <label for="cellGapRange">Abstand zwischen den Zellen</label>
-            <div class="value-badge"><span id="cellGapValue">16</span> px</div>
+            <div class="value-badge"><span id="cellGapValue">0.16</span> cm</div>
           </div>
           <input id="cellGapRange" type="range" min="0" max="120" step="1" value="16" />
         </section>
@@ -389,13 +376,8 @@
 
     <main class="main">
       <div class="canvas-wrap">
-        <div class="page-label" id="pageLabel">Canvas im DIN-A5-Seitenverhältnis (148 × 210)</div>
         <div class="canvas-frame">
           <canvas id="pageCanvas" width="1480" height="2100"></canvas>
-        </div>
-        <div class="footer-note">
-          Das Raster liegt exakt innerhalb des definierten Außenabstands.
-          Die Außenkante des Rasters entspricht direkt den Außenkanten der äußeren Zellen.
         </div>
       </div>
     </main>
@@ -440,9 +422,12 @@
       cellHeightStat: document.getElementById('cellHeightStat'),
       gridWidthStat: document.getElementById('gridWidthStat'),
       gridHeightStat: document.getElementById('gridHeightStat'),
-      pageLabel: document.getElementById('pageLabel'),
       status: document.getElementById('status')
     };
+
+    function pxToCm(px) {
+      return px / 100;
+    }
 
     const tabButtons = Array.from(document.querySelectorAll('.tab-button'));
     const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
@@ -996,15 +981,14 @@
       }
       canvas.style.width = pageFormat.displayWidth;
       canvas.style.height = pageFormat.displayHeight;
-      outputs.pageLabel.textContent = pageFormat.label;
 
       const { width, height } = canvas;
 
       outputs.pageOrientationValue.textContent = pageOrientation === 'landscape' ? 'Quer' : 'Hoch';
-      outputs.outerMarginValue.textContent = outerMargin.toFixed(0);
+      outputs.outerMarginValue.textContent = pxToCm(outerMargin).toFixed(2);
       outputs.colsValue.textContent = cols;
       outputs.rowsValue.textContent = rows;
-      outputs.cellGapValue.textContent = cellGap.toFixed(0);
+      outputs.cellGapValue.textContent = pxToCm(cellGap).toFixed(2);
 
       ctx.clearRect(0, 0, width, height);
       const isElementsTab = activeTab === 'elements';
@@ -1054,8 +1038,8 @@
       const cellWidth = (gridWidth - totalHorizontalGap) / cols;
       const cellHeight = (gridHeight - totalVerticalGap) / rows;
 
-      outputs.gridWidthStat.textContent = gridWidth.toFixed(2) + ' px';
-      outputs.gridHeightStat.textContent = gridHeight.toFixed(2) + ' px';
+      outputs.gridWidthStat.textContent = pxToCm(gridWidth).toFixed(2) + ' cm';
+      outputs.gridHeightStat.textContent = pxToCm(gridHeight).toFixed(2) + ' cm';
 
       if (cellWidth <= 0 || cellHeight <= 0) {
         outputs.cellWidthStat.textContent = 'ungültig';
@@ -1066,8 +1050,8 @@
         return;
       }
 
-      outputs.cellWidthStat.textContent = cellWidth.toFixed(2) + ' px';
-      outputs.cellHeightStat.textContent = cellHeight.toFixed(2) + ' px';
+      outputs.cellWidthStat.textContent = pxToCm(cellWidth).toFixed(2) + ' cm';
+      outputs.cellHeightStat.textContent = pxToCm(cellHeight).toFixed(2) + ' cm';
       setStatus('Raster erfolgreich berechnet und dargestellt.', false);
 
       if (!isElementsTab) {
@@ -1109,11 +1093,7 @@
     }
 
     function drawPageBorder() {
-      ctx.save();
-      ctx.strokeStyle = '#9ca3af';
-      ctx.lineWidth = 4;
-      ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
-      ctx.restore();
+      // Seite bleibt bewusst ohne zusätzliche Kontur.
     }
 
     function drawMarginGuide(x, y, w, h) {
