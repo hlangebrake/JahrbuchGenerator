@@ -58,6 +58,91 @@
       gap: 16px;
     }
 
+    .layout-switcher {
+      display: grid;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .switcher-row {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .layout-select {
+      width: 100%;
+      min-height: 38px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #10151f;
+      color: var(--text);
+      font: inherit;
+    }
+
+    .layout-actions {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+    }
+
+    .layout-action {
+      min-height: 34px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #141a25;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .layout-action:hover {
+      color: var(--text);
+      background: #1d2636;
+    }
+
+    .layout-action:disabled {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .layout-mode-btn {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-weight: 700;
+    }
+
+    .layout-mode-icon {
+      position: relative;
+      display: inline-block;
+      width: 14px;
+      height: 10px;
+      border: 2px solid currentColor;
+      border-radius: 2px;
+      flex: 0 0 auto;
+    }
+
+    .layout-mode-icon.double {
+      margin-right: 10px;
+    }
+
+    .layout-mode-icon.double::after {
+      content: '';
+      position: absolute;
+      left: 8px;
+      top: -2px;
+      width: 14px;
+      height: 10px;
+      border: 2px solid currentColor;
+      border-radius: 2px;
+    }
+
     .tabs {
       display: grid;
       grid-template-columns: 1fr 1fr;
@@ -235,13 +320,13 @@
 
     .main {
       padding: 24px;
-      display: grid;
-      align-items: start;
-      justify-items: center;
+      overflow: auto;
     }
 
     .canvas-wrap {
-      width: min(100%, 920px);
+      width: max-content;
+      min-width: 100%;
+      margin: 0 auto;
       display: grid;
       gap: 14px;
       justify-items: center;
@@ -249,11 +334,10 @@
 
     .canvas-frame {
       width: fit-content;
-      max-width: 100%;
       display: grid;
       place-items: center;
       padding: 0;
-      overflow: auto;
+      overflow: visible;
       border: 0;
       border-radius: 0;
       background: transparent;
@@ -291,6 +375,32 @@
 <body>
   <div class="app">
     <aside class="sidebar">
+      <div class="layout-switcher">
+        <div class="switcher-row">
+          <select id="categorySelect" class="layout-select" aria-label="Aktive Kategorie"></select>
+          <select id="layoutSelect" class="layout-select" aria-label="Aktives Layout"></select>
+        </div>
+        <div class="switcher-row">
+          <div class="layout-actions">
+            <button id="categoryRenameBtn" class="layout-action" type="button" aria-label="Kategorie umbenennen">&#9998;</button>
+            <button id="categoryAddBtn" class="layout-action" type="button" aria-label="Neue Kategorie">+</button>
+            <button id="categoryDeleteBtn" class="layout-action" type="button" aria-label="Kategorie löschen">-</button>
+          </div>
+          <div class="layout-actions">
+            <button id="layoutRenameBtn" class="layout-action" type="button" aria-label="Layout umbenennen">&#9998;</button>
+            <button id="layoutAddBtn" class="layout-action" type="button" aria-label="Neues Layout">+</button>
+            <button id="layoutDeleteBtn" class="layout-action" type="button" aria-label="Layout löschen">-</button>
+          </div>
+        </div>
+        <div class="switcher-row">
+          <div></div>
+          <button id="layoutModeBtn" class="layout-action layout-mode-btn" type="button" aria-label="Seitenmodus wechseln">
+            <span class="layout-mode-icon" aria-hidden="true"></span>
+            <span id="layoutModeLabel">Einzelseite</span>
+          </button>
+        </div>
+      </div>
+
       <div class="tabs" role="tablist" aria-label="Einstellungen">
         <button class="tab-button active" type="button" role="tab" id="setupTab" aria-controls="setupPanel" aria-selected="true" data-tab="setup">
           <span class="tab-icon" aria-hidden="true">&#9881;</span>
@@ -386,21 +496,20 @@
   <script>
     const canvas = document.getElementById('pageCanvas');
     const ctx = canvas.getContext('2d');
+    const mainArea = document.querySelector('.main');
 
     const pageFormats = {
       portrait: {
         width: 1480,
         height: 2100,
-        displayWidth: '148mm',
-        displayHeight: '210mm',
-        label: 'Canvas im DIN-A5-Seitenverhältnis (148 × 210)'
+        displayWidthMm: 148,
+        displayHeightMm: 210
       },
       landscape: {
         width: 2100,
         height: 1480,
-        displayWidth: '210mm',
-        displayHeight: '148mm',
-        label: 'Canvas im DIN-A5-Querformat (210 × 148)'
+        displayWidthMm: 210,
+        displayHeightMm: 148
       }
     };
 
@@ -410,6 +519,23 @@
       colsRange: document.getElementById('colsRange'),
       rowsRange: document.getElementById('rowsRange'),
       cellGapRange: document.getElementById('cellGapRange')
+    };
+
+    const layoutUi = {
+      select: document.getElementById('layoutSelect'),
+      renameBtn: document.getElementById('layoutRenameBtn'),
+      addBtn: document.getElementById('layoutAddBtn'),
+      deleteBtn: document.getElementById('layoutDeleteBtn')
+    };
+    const layoutModeUi = {
+      btn: document.getElementById('layoutModeBtn'),
+      label: document.getElementById('layoutModeLabel')
+    };
+    const categoryUi = {
+      select: document.getElementById('categorySelect'),
+      renameBtn: document.getElementById('categoryRenameBtn'),
+      addBtn: document.getElementById('categoryAddBtn'),
+      deleteBtn: document.getElementById('categoryDeleteBtn')
     };
 
     const outputs = {
@@ -433,6 +559,7 @@
     const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
     const elementOptions = Array.from(document.querySelectorAll('.element-option'));
     const placedElements = [];
+    const categories = [];
     let currentCells = [];
     let currentElementRects = [];
     let nextElementId = 1;
@@ -440,7 +567,503 @@
     let moveState = null;
     let hoveredElementId = null;
     let activeTab = 'setup';
+    let activeCategoryId = null;
+    let activeLayoutId = null;
     let currentDragPayload = null;
+    let snapshotDbPromise = null;
+    let snapshotSaveTimer = null;
+    let lastViewportLayoutKey = '';
+
+    const SNAPSHOT_DB_NAME = 'jahrbuch-generator-db';
+    const SNAPSHOT_STORE_NAME = 'snapshots';
+    const SNAPSHOT_KEY = 'latest';
+
+    const DEFAULT_CONTROLS = {
+      pageOrientationRange: '1',
+      outerMarginRange: '60',
+      colsRange: '6',
+      rowsRange: '6',
+      cellGapRange: '16'
+    };
+
+    function makeLayoutId() {
+      return `layout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function makeCategoryId() {
+      return `category_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function captureControls() {
+      return {
+        pageOrientationRange: controls.pageOrientationRange.value,
+        outerMarginRange: controls.outerMarginRange.value,
+        colsRange: controls.colsRange.value,
+        rowsRange: controls.rowsRange.value,
+        cellGapRange: controls.cellGapRange.value
+      };
+    }
+
+    function createDefaultControls() {
+      return { ...DEFAULT_CONTROLS };
+    }
+
+    function createDefaultLayout(name = 'Layout 1') {
+      return {
+        id: makeLayoutId(),
+        name,
+        spreadMode: 'single',
+        nextElementId: 1,
+        elements: []
+      };
+    }
+
+    function createDefaultCategory(name = 'Kategorie 1') {
+      const firstLayout = createDefaultLayout('Layout 1');
+      return {
+        id: makeCategoryId(),
+        name,
+        controls: createDefaultControls(),
+        activeLayoutId: firstLayout.id,
+        layouts: [firstLayout]
+      };
+    }
+
+    function getActiveCategory() {
+      return categories.find((category) => category.id === activeCategoryId) || null;
+    }
+
+    function getCurrentLayouts() {
+      return getActiveCategory()?.layouts || [];
+    }
+
+    function getActiveLayout() {
+      return getCurrentLayouts().find((layout) => layout.id === activeLayoutId) || null;
+    }
+
+    function normalizeLayoutSpreadMode(layout) {
+      if (!layout) return;
+      layout.spreadMode = layout.spreadMode === 'double' ? 'double' : 'single';
+    }
+
+    function isDoubleSpreadLayout(layout) {
+      return !!layout && layout.spreadMode === 'double';
+    }
+
+    function refreshLayoutModeButton() {
+      const activeLayout = getActiveLayout();
+      if (!activeLayout) {
+        layoutModeUi.btn.disabled = true;
+        layoutModeUi.label.textContent = 'Einzelseite';
+        const icon = layoutModeUi.btn.querySelector('.layout-mode-icon');
+        if (icon) icon.classList.remove('double');
+        return;
+      }
+
+      normalizeLayoutSpreadMode(activeLayout);
+      const isDouble = isDoubleSpreadLayout(activeLayout);
+      const icon = layoutModeUi.btn.querySelector('.layout-mode-icon');
+      if (icon) icon.classList.toggle('double', isDouble);
+      layoutModeUi.label.textContent = isDouble ? 'Doppelseite' : 'Einzelseite';
+      layoutModeUi.btn.setAttribute('aria-label', isDouble ? 'Doppelseite aktiv' : 'Einzelseite aktiv');
+      layoutModeUi.btn.disabled = false;
+    }
+
+    function syncMainViewport(activeLayout, canvasWidth, canvasHeight) {
+      if (!mainArea || !activeLayout) return;
+      const isDouble = isDoubleSpreadLayout(activeLayout);
+      const layoutKey = `${activeLayout.id}:${activeLayout.spreadMode}:${canvasWidth}x${canvasHeight}`;
+      if (layoutKey === lastViewportLayoutKey) return;
+      lastViewportLayoutKey = layoutKey;
+
+      requestAnimationFrame(() => {
+        if (!mainArea) return;
+        if (isDouble) {
+          const target = Math.max(0, Math.floor((mainArea.scrollWidth - mainArea.clientWidth) / 2));
+          mainArea.scrollLeft = target;
+        } else {
+          mainArea.scrollLeft = 0;
+        }
+        mainArea.scrollTop = 0;
+      });
+    }
+
+    function serializeElements() {
+      return placedElements.map((element) => ({
+        id: element.id,
+        type: element.type,
+        row: element.row,
+        col: element.col,
+        startRow: element.startRow,
+        endRow: element.endRow,
+        startCol: element.startCol,
+        endCol: element.endCol,
+        leftBoundary: element.leftBoundary || 'none',
+        rightBoundary: element.rightBoundary || 'none',
+        leftToPage: !!element.leftToPage,
+        rightToPage: !!element.rightToPage,
+        topToPage: !!element.topToPage,
+        bottomToPage: !!element.bottomToPage
+      }));
+    }
+
+    function applyControls(controlValues) {
+      if (!controlValues || typeof controlValues !== 'object') return;
+      if (controlValues.pageOrientationRange === '0' || controlValues.pageOrientationRange === '1') {
+        controls.pageOrientationRange.value = controlValues.pageOrientationRange;
+      }
+      if (controlValues.outerMarginRange != null) controls.outerMarginRange.value = String(controlValues.outerMarginRange);
+      if (controlValues.colsRange != null) controls.colsRange.value = String(controlValues.colsRange);
+      if (controlValues.rowsRange != null) controls.rowsRange.value = String(controlValues.rowsRange);
+      if (controlValues.cellGapRange != null) controls.cellGapRange.value = String(controlValues.cellGapRange);
+    }
+
+    function saveCurrentLayoutIntoCollection() {
+      const currentLayout = getActiveLayout();
+      if (!currentLayout) return;
+
+      currentLayout.nextElementId = nextElementId;
+      currentLayout.elements = serializeElements();
+    }
+
+    function saveCurrentCategoryIntoCollection() {
+      const currentCategory = getActiveCategory();
+      if (!currentCategory) return;
+      saveCurrentLayoutIntoCollection();
+      currentCategory.activeLayoutId = activeLayoutId;
+      currentCategory.controls = captureControls();
+    }
+
+    function loadLayoutIntoEditor(layout) {
+      if (!layout) return;
+      normalizeLayoutSpreadMode(layout);
+
+      placedElements.length = 0;
+      if (Array.isArray(layout.elements)) {
+        layout.elements.forEach((element) => {
+          if (!element || (element.type !== 'image' && element.type !== 'text')) return;
+          placedElements.push({
+            id: Number.isInteger(element.id) ? element.id : nextElementId++,
+            type: element.type,
+            row: Number.isInteger(element.row) ? element.row : 0,
+            col: Number.isInteger(element.col) ? element.col : 0,
+            startRow: Number.isInteger(element.startRow) ? element.startRow : (Number.isInteger(element.row) ? element.row : 0),
+            endRow: Number.isInteger(element.endRow) ? element.endRow : (Number.isInteger(element.row) ? element.row : 0),
+            startCol: Number.isInteger(element.startCol) ? element.startCol : (Number.isInteger(element.col) ? element.col : 0),
+            endCol: Number.isInteger(element.endCol) ? element.endCol : (Number.isInteger(element.col) ? element.col : 0),
+            leftBoundary: (element.leftBoundary === 'page-left' || element.leftBoundary === 'page-seam')
+              ? element.leftBoundary
+              : (element.leftToPage ? 'page-left' : 'none'),
+            rightBoundary: (element.rightBoundary === 'page-right' || element.rightBoundary === 'page-seam')
+              ? element.rightBoundary
+              : (element.rightToPage ? 'page-right' : 'none'),
+            leftToPage: !!element.leftToPage,
+            rightToPage: !!element.rightToPage,
+            topToPage: !!element.topToPage,
+            bottomToPage: !!element.bottomToPage
+          });
+        });
+      }
+
+      const maxId = placedElements.reduce((max, element) => Math.max(max, element.id || 0), 0);
+      nextElementId = Math.max(
+        Number.isInteger(layout.nextElementId) ? layout.nextElementId : 1,
+        maxId + 1
+      );
+    }
+
+    function getImageCount(layout) {
+      if (!layout || !Array.isArray(layout.elements)) return 0;
+      return layout.elements.filter((element) => element.type === 'image').length;
+    }
+
+    function refreshCategorySelector() {
+      categoryUi.select.innerHTML = '';
+      const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+
+      sortedCategories.forEach((category) => {
+        const option = document.createElement('option');
+        option.value = category.id;
+        option.textContent = category.name;
+        option.selected = category.id === activeCategoryId;
+        categoryUi.select.appendChild(option);
+      });
+
+      categoryUi.deleteBtn.disabled = categories.length <= 1;
+    }
+
+    function refreshLayoutSelector() {
+      const currentCategory = getActiveCategory();
+      const layouts = currentCategory?.layouts || [];
+      const activeLayout = getActiveLayout();
+      const currentImageCount = placedElements.filter((element) => element.type === 'image').length;
+      layoutUi.select.innerHTML = '';
+
+      const sortedLayouts = [...layouts].sort((a, b) => {
+        const countA = activeLayout && a.id === activeLayout.id ? currentImageCount : getImageCount(a);
+        const countB = activeLayout && b.id === activeLayout.id ? currentImageCount : getImageCount(b);
+        if (countA !== countB) return countA - countB;
+        return a.name.localeCompare(b.name, 'de');
+      });
+
+      sortedLayouts.forEach((layout) => {
+        const option = document.createElement('option');
+        const imageCount = activeLayout && layout.id === activeLayout.id ? currentImageCount : getImageCount(layout);
+        option.value = layout.id;
+        option.textContent = `${imageCount} ${layout.name}`;
+        option.selected = layout.id === activeLayoutId;
+        layoutUi.select.appendChild(option);
+      });
+
+      layoutUi.deleteBtn.disabled = layouts.length <= 1;
+      refreshLayoutModeButton();
+    }
+
+    function switchToLayout(layoutId) {
+      const currentCategory = getActiveCategory();
+      if (!currentCategory) return;
+      const nextLayout = currentCategory.layouts.find((layout) => layout.id === layoutId);
+      if (!nextLayout) return;
+
+      saveCurrentLayoutIntoCollection();
+      activeLayoutId = nextLayout.id;
+      currentCategory.activeLayoutId = nextLayout.id;
+      loadLayoutIntoEditor(nextLayout);
+      refreshLayoutSelector();
+      draw();
+      queueSnapshotSave();
+    }
+
+    function switchToCategory(categoryId) {
+      const nextCategory = categories.find((category) => category.id === categoryId);
+      if (!nextCategory) return;
+
+      saveCurrentCategoryIntoCollection();
+      activeCategoryId = nextCategory.id;
+      applyControls(nextCategory.controls);
+
+      if (!Array.isArray(nextCategory.layouts) || nextCategory.layouts.length === 0) {
+        const fallbackLayout = createDefaultLayout('Layout 1');
+        nextCategory.layouts = [fallbackLayout];
+        nextCategory.activeLayoutId = fallbackLayout.id;
+      }
+
+      const selectedLayout = nextCategory.layouts.find((layout) => layout.id === nextCategory.activeLayoutId) || nextCategory.layouts[0];
+      activeLayoutId = selectedLayout.id;
+      nextCategory.activeLayoutId = selectedLayout.id;
+      loadLayoutIntoEditor(selectedLayout);
+      refreshCategorySelector();
+      refreshLayoutSelector();
+      draw();
+      queueSnapshotSave();
+    }
+
+    function getNextLayoutName() {
+      const layouts = getCurrentLayouts();
+      const used = new Set(layouts.map((layout) => layout.name));
+      let index = layouts.length + 1;
+      while (used.has(`Layout ${index}`)) index++;
+      return `Layout ${index}`;
+    }
+
+    function getNextCategoryName() {
+      const used = new Set(categories.map((category) => category.name));
+      let index = categories.length + 1;
+      while (used.has(`Kategorie ${index}`)) index++;
+      return `Kategorie ${index}`;
+    }
+
+    function openSnapshotDb() {
+      if (snapshotDbPromise) return snapshotDbPromise;
+
+      snapshotDbPromise = new Promise((resolve, reject) => {
+        const request = indexedDB.open(SNAPSHOT_DB_NAME, 1);
+
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(SNAPSHOT_STORE_NAME)) {
+            db.createObjectStore(SNAPSHOT_STORE_NAME);
+          }
+        };
+
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+
+      return snapshotDbPromise;
+    }
+
+    async function loadSnapshot() {
+      try {
+        const db = await openSnapshotDb();
+        return await new Promise((resolve, reject) => {
+          const transaction = db.transaction(SNAPSHOT_STORE_NAME, 'readonly');
+          const store = transaction.objectStore(SNAPSHOT_STORE_NAME);
+          const request = store.get(SNAPSHOT_KEY);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error);
+        });
+      } catch {
+        return null;
+      }
+    }
+
+    async function saveSnapshot(snapshot) {
+      try {
+        const db = await openSnapshotDb();
+        await new Promise((resolve, reject) => {
+          const transaction = db.transaction(SNAPSHOT_STORE_NAME, 'readwrite');
+          const store = transaction.objectStore(SNAPSHOT_STORE_NAME);
+          const request = store.put(snapshot, SNAPSHOT_KEY);
+          request.onsuccess = () => resolve();
+          request.onerror = () => reject(request.error);
+        });
+      } catch {
+        // Snapshot speichern ist optional; UI bleibt funktional.
+      }
+    }
+
+    function getSnapshotData() {
+      saveCurrentCategoryIntoCollection();
+      return {
+        version: 3,
+        savedAt: Date.now(),
+        activeTab,
+        activeCategoryId,
+        activeLayoutId,
+        categories: categories.map((category) => ({
+          id: category.id,
+          name: category.name,
+          activeLayoutId: category.activeLayoutId,
+          controls: category.controls || createDefaultControls(),
+          layouts: (Array.isArray(category.layouts) ? category.layouts : []).map((layout) => ({
+            id: layout.id,
+            name: layout.name,
+            spreadMode: layout.spreadMode === 'double' ? 'double' : 'single',
+            nextElementId: layout.nextElementId,
+            elements: Array.isArray(layout.elements) ? layout.elements : []
+          }))
+        }))
+      };
+    }
+
+    function queueSnapshotSave() {
+      if (snapshotSaveTimer) clearTimeout(snapshotSaveTimer);
+      snapshotSaveTimer = setTimeout(() => {
+        snapshotSaveTimer = null;
+        void saveSnapshot(getSnapshotData());
+      }, 60);
+    }
+
+    function applySnapshot(snapshot) {
+      if (!snapshot || typeof snapshot !== 'object') return;
+      categories.length = 0;
+      if (Array.isArray(snapshot.categories) && snapshot.categories.length > 0) {
+        snapshot.categories.forEach((category, categoryIndex) => {
+          if (!category || typeof category !== 'object') return;
+          const restoredLayouts = [];
+          if (Array.isArray(category.layouts)) {
+            category.layouts.forEach((layout, layoutIndex) => {
+              if (!layout || typeof layout !== 'object') return;
+              restoredLayouts.push({
+                id: typeof layout.id === 'string' ? layout.id : `layout_restored_${categoryIndex + 1}_${layoutIndex + 1}`,
+                name: typeof layout.name === 'string' && layout.name.trim() ? layout.name.trim() : `Layout ${restoredLayouts.length + 1}`,
+                spreadMode: layout.spreadMode === 'double' ? 'double' : 'single',
+                nextElementId: Number.isInteger(layout.nextElementId) ? layout.nextElementId : 1,
+                elements: Array.isArray(layout.elements) ? layout.elements : []
+              });
+            });
+          }
+
+          if (restoredLayouts.length === 0) {
+            restoredLayouts.push(createDefaultLayout('Layout 1'));
+          }
+
+          const requestedLayoutId = typeof category.activeLayoutId === 'string' ? category.activeLayoutId : null;
+          const selectedLayout = restoredLayouts.find((layout) => layout.id === requestedLayoutId) || restoredLayouts[0];
+          categories.push({
+            id: typeof category.id === 'string' ? category.id : `category_restored_${categoryIndex + 1}`,
+            name: typeof category.name === 'string' && category.name.trim() ? category.name.trim() : `Kategorie ${categories.length + 1}`,
+            controls: (category.controls && typeof category.controls === 'object')
+              ? {
+                  ...createDefaultControls(),
+                  ...category.controls
+                }
+              : createDefaultControls(),
+            activeLayoutId: selectedLayout.id,
+            layouts: restoredLayouts
+          });
+        });
+      } else {
+        const fallbackCategory = createDefaultCategory('Kategorie 1');
+        if (snapshot.controls && typeof snapshot.controls === 'object') {
+          fallbackCategory.controls = {
+            ...createDefaultControls(),
+            ...snapshot.controls
+          };
+        }
+        if (Array.isArray(snapshot.layouts) && snapshot.layouts.length > 0) {
+          fallbackCategory.layouts = snapshot.layouts
+            .filter((layout) => layout && typeof layout === 'object')
+            .map((layout, index) => ({
+              id: typeof layout.id === 'string' ? layout.id : `layout_restored_${index + 1}`,
+              name: typeof layout.name === 'string' && layout.name.trim() ? layout.name.trim() : `Layout ${index + 1}`,
+              spreadMode: layout.spreadMode === 'double' ? 'double' : 'single',
+              nextElementId: Number.isInteger(layout.nextElementId) ? layout.nextElementId : 1,
+              elements: Array.isArray(layout.elements) ? layout.elements : []
+            }));
+          if (fallbackCategory.layouts.length === 0) {
+            fallbackCategory.layouts = [createDefaultLayout('Layout 1')];
+          }
+          fallbackCategory.activeLayoutId = (
+            fallbackCategory.layouts.find((layout) => layout.id === snapshot.activeLayoutId) || fallbackCategory.layouts[0]
+          ).id;
+        } else if (Array.isArray(snapshot.elements)) {
+          fallbackCategory.layouts = [
+            {
+              ...createDefaultLayout('Layout 1'),
+              nextElementId: Number.isInteger(snapshot.nextElementId) ? snapshot.nextElementId : 1,
+              elements: snapshot.elements
+            }
+          ];
+          fallbackCategory.activeLayoutId = fallbackCategory.layouts[0].id;
+        }
+        categories.push(fallbackCategory);
+      }
+
+      if (categories.length === 0) {
+        categories.push(createDefaultCategory('Kategorie 1'));
+      }
+
+      const requestedCategoryId = typeof snapshot.activeCategoryId === 'string' ? snapshot.activeCategoryId : null;
+      const initialCategory = categories.find((category) => category.id === requestedCategoryId) || categories[0];
+      activeCategoryId = initialCategory.id;
+      applyControls(initialCategory.controls);
+
+      if (!Array.isArray(initialCategory.layouts) || initialCategory.layouts.length === 0) {
+        initialCategory.layouts = [createDefaultLayout('Layout 1')];
+      }
+      const requestedLayoutId = typeof snapshot.activeLayoutId === 'string' ? snapshot.activeLayoutId : null;
+      const initialLayout = initialCategory.layouts.find((layout) => layout.id === requestedLayoutId)
+        || initialCategory.layouts.find((layout) => layout.id === initialCategory.activeLayoutId)
+        || initialCategory.layouts[0];
+      activeLayoutId = initialLayout.id;
+      initialCategory.activeLayoutId = initialLayout.id;
+      loadLayoutIntoEditor(initialLayout);
+      refreshCategorySelector();
+      refreshLayoutSelector();
+
+      const tabName = snapshot.activeTab === 'elements' ? 'elements' : 'setup';
+      activeTab = tabName;
+      tabButtons.forEach((button) => {
+        const isActive = button.dataset.tab === tabName;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', String(isActive));
+      });
+      tabPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tabName;
+      });
+    }
 
     function getSettings() {
       return {
@@ -469,6 +1092,7 @@
         panel.hidden = panel.dataset.panel !== tabName;
       });
       draw();
+      queueSnapshotSave();
     }
 
     function setDragPayload(dataTransfer, payload) {
@@ -554,6 +1178,15 @@
         element.endCol = element.col;
       }
 
+      if (element.leftBoundary !== 'page-left' && element.leftBoundary !== 'page-seam') {
+        element.leftBoundary = element.leftToPage ? 'page-left' : 'none';
+      }
+      if (element.rightBoundary !== 'page-right' && element.rightBoundary !== 'page-seam') {
+        element.rightBoundary = element.rightToPage ? 'page-right' : 'none';
+      }
+      element.leftToPage = element.leftBoundary === 'page-left';
+      element.rightToPage = element.rightBoundary === 'page-right';
+
       if (typeof element.leftToPage !== 'boolean') element.leftToPage = false;
       if (typeof element.rightToPage !== 'boolean') element.rightToPage = false;
       if (typeof element.topToPage !== 'boolean') element.topToPage = false;
@@ -578,14 +1211,20 @@
       const startCell = getCell(element.startRow, element.startCol);
       const endCell = getCell(element.endRow, element.endCol);
       if (!startCell || !endCell) return null;
+      const activeLayout = getActiveLayout();
+      const seamX = isDoubleSpreadLayout(activeLayout) ? canvas.width / 2 : null;
 
       const x = startCell.x;
       const y = startCell.y;
       const right = endCell.x + endCell.width;
       const bottom = endCell.y + endCell.height;
-      const left = element.leftToPage ? 0 : x;
+      const left = element.leftBoundary === 'page-left'
+        ? 0
+        : (element.leftBoundary === 'page-seam' && seamX !== null ? seamX : x);
       const top = element.topToPage ? 0 : y;
-      const adjustedRight = element.rightToPage ? canvas.width : right;
+      const adjustedRight = element.rightBoundary === 'page-right'
+        ? canvas.width
+        : (element.rightBoundary === 'page-seam' && seamX !== null ? seamX : right);
       const adjustedBottom = element.bottomToPage ? canvas.height : bottom;
 
       return {
@@ -731,6 +1370,8 @@
         endRow: cell.row,
         startCol: cell.col,
         endCol: cell.col,
+        leftBoundary: 'none',
+        rightBoundary: 'none',
         leftToPage: false,
         rightToPage: false,
         topToPage: false,
@@ -770,6 +1411,8 @@
       element.endRow = bounds.endRow;
       element.startCol = bounds.startCol;
       element.endCol = bounds.endCol;
+      element.leftBoundary = 'none';
+      element.rightBoundary = 'none';
       element.leftToPage = false;
       element.rightToPage = false;
       element.topToPage = false;
@@ -791,6 +1434,8 @@
       element.endRow = bounds.endRow;
       element.startCol = bounds.startCol;
       element.endCol = bounds.endCol;
+      element.leftBoundary = 'none';
+      element.rightBoundary = 'none';
       element.leftToPage = false;
       element.rightToPage = false;
       element.topToPage = false;
@@ -833,19 +1478,40 @@
     function findNearestAllowedCellForEdge(edge, startBounds, point) {
       let candidates = [];
       const { maxRow, maxCol } = getGridMaxima();
+      const pageFormat = pageFormats[getSettings().pageOrientation] || pageFormats.portrait;
+      const seamX = pageFormat.width;
+      const isDoubleSpread = isDoubleSpreadLayout(getActiveLayout());
+      const colsPerPage = getSettings().cols;
+      const startRect = getElementRect({
+        ...startBounds,
+        id: -1,
+        type: 'image',
+        leftBoundary: resizeState?.startPageFlags?.leftBoundary || 'none',
+        rightBoundary: resizeState?.startPageFlags?.rightBoundary || 'none',
+        topToPage: resizeState?.startPageFlags?.topToPage || false,
+        bottomToPage: resizeState?.startPageFlags?.bottomToPage || false,
+        leftToPage: resizeState?.startPageFlags?.leftBoundary === 'page-left',
+        rightToPage: resizeState?.startPageFlags?.rightBoundary === 'page-right'
+      });
 
       if (edge === 'left') {
         candidates = currentCells
           .filter((cell) => cell.col <= startBounds.endCol)
           .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.x - cell.x) }));
-        candidates.push({ kind: 'page', edge: 'left', distance: Math.abs(point.x) });
+        candidates.push({ kind: 'page', boundary: 'page-left', distance: Math.abs(point.x), col: 0 });
+        if (isDoubleSpread && startRect && seamX <= startRect.x + startRect.width) {
+          candidates.push({ kind: 'page', boundary: 'page-seam', distance: Math.abs(point.x - seamX), col: colsPerPage });
+        }
       }
 
       if (edge === 'right') {
         candidates = currentCells
           .filter((cell) => cell.col >= startBounds.startCol)
           .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.x - (cell.x + cell.width)) }));
-        candidates.push({ kind: 'page', edge: 'right', distance: Math.abs(point.x - canvas.width) });
+        candidates.push({ kind: 'page', boundary: 'page-right', distance: Math.abs(point.x - canvas.width), col: maxCol });
+        if (isDoubleSpread && startRect && seamX >= startRect.x) {
+          candidates.push({ kind: 'page', boundary: 'page-seam', distance: Math.abs(point.x - seamX), col: Math.max(0, colsPerPage - 1) });
+        }
       }
 
       if (edge === 'top') {
@@ -870,8 +1536,7 @@
         return target;
       }
 
-      if (target.edge === 'left') return { kind: 'page', edge: 'left', col: 0 };
-      if (target.edge === 'right') return { kind: 'page', edge: 'right', col: maxCol };
+      if (target.boundary) return target;
       if (target.edge === 'top') return { kind: 'page', edge: 'top', row: 0 };
       return { kind: 'page', edge: 'bottom', row: maxRow };
     }
@@ -889,16 +1554,20 @@
       element.endRow = resizeState.startBounds.endRow;
       element.startCol = resizeState.startBounds.startCol;
       element.endCol = resizeState.startBounds.endCol;
-      element.leftToPage = resizeState.startPageFlags.leftToPage;
-      element.rightToPage = resizeState.startPageFlags.rightToPage;
+      element.leftBoundary = resizeState.startPageFlags.leftBoundary;
+      element.rightBoundary = resizeState.startPageFlags.rightBoundary;
+      element.leftToPage = resizeState.startPageFlags.leftBoundary === 'page-left';
+      element.rightToPage = resizeState.startPageFlags.rightBoundary === 'page-right';
       element.topToPage = resizeState.startPageFlags.topToPage;
       element.bottomToPage = resizeState.startPageFlags.bottomToPage;
 
       if (resizeState.edge === 'left') {
         if (targetCell.kind === 'page') {
-          element.leftToPage = true;
-          element.startCol = 0;
+          element.leftBoundary = targetCell.boundary;
+          element.leftToPage = targetCell.boundary === 'page-left';
+          element.startCol = Number.isInteger(targetCell.col) ? targetCell.col : 0;
         } else {
+          element.leftBoundary = 'none';
           element.leftToPage = false;
           element.startCol = targetCell.cell.col;
         }
@@ -906,9 +1575,11 @@
 
       if (resizeState.edge === 'right') {
         if (targetCell.kind === 'page') {
-          element.rightToPage = true;
-          element.endCol = getGridMaxima().maxCol;
+          element.rightBoundary = targetCell.boundary;
+          element.rightToPage = targetCell.boundary === 'page-right';
+          element.endCol = Number.isInteger(targetCell.col) ? targetCell.col : getGridMaxima().maxCol;
         } else {
+          element.rightBoundary = 'none';
           element.rightToPage = false;
           element.endCol = targetCell.cell.col;
         }
@@ -935,6 +1606,38 @@
       }
 
       normalizeElementBounds(element);
+      const candidateBounds = {
+        startRow: element.startRow,
+        endRow: element.endRow,
+        startCol: element.startCol,
+        endCol: element.endCol
+      };
+      if (hasSameTypeOverlap(candidateBounds, element.type, element.id)) {
+        element.startRow = resizeState.lastValidState.startRow;
+        element.endRow = resizeState.lastValidState.endRow;
+        element.startCol = resizeState.lastValidState.startCol;
+        element.endCol = resizeState.lastValidState.endCol;
+        element.leftBoundary = resizeState.lastValidState.leftBoundary;
+        element.rightBoundary = resizeState.lastValidState.rightBoundary;
+        element.leftToPage = resizeState.lastValidState.leftToPage;
+        element.rightToPage = resizeState.lastValidState.rightToPage;
+        element.topToPage = resizeState.lastValidState.topToPage;
+        element.bottomToPage = resizeState.lastValidState.bottomToPage;
+        return;
+      }
+
+      resizeState.lastValidState = {
+        startRow: element.startRow,
+        endRow: element.endRow,
+        startCol: element.startCol,
+        endCol: element.endCol,
+        leftBoundary: element.leftBoundary,
+        rightBoundary: element.rightBoundary,
+        leftToPage: element.leftToPage,
+        rightToPage: element.rightToPage,
+        topToPage: element.topToPage,
+        bottomToPage: element.bottomToPage
+      };
       draw();
     }
 
@@ -975,12 +1678,20 @@
     function draw() {
       const { pageOrientation, outerMargin, cols, rows, cellGap } = getSettings();
       const pageFormat = pageFormats[pageOrientation] || pageFormats.portrait;
-      if (canvas.width !== pageFormat.width || canvas.height !== pageFormat.height) {
-        canvas.width = pageFormat.width;
-        canvas.height = pageFormat.height;
+      const activeLayout = getActiveLayout();
+      const isDoubleSpread = isDoubleSpreadLayout(activeLayout);
+      const spreadCount = isDoubleSpread ? 2 : 1;
+      const pageWidth = pageFormat.width;
+      const pageHeight = pageFormat.height;
+      const targetCanvasWidth = pageWidth * spreadCount;
+      const targetCanvasHeight = pageHeight;
+
+      if (canvas.width !== targetCanvasWidth || canvas.height !== targetCanvasHeight) {
+        canvas.width = targetCanvasWidth;
+        canvas.height = targetCanvasHeight;
       }
-      canvas.style.width = pageFormat.displayWidth;
-      canvas.style.height = pageFormat.displayHeight;
+      canvas.style.width = `${pageFormat.displayWidthMm * spreadCount}mm`;
+      canvas.style.height = `${pageFormat.displayHeightMm}mm`;
 
       const { width, height } = canvas;
 
@@ -993,9 +1704,14 @@
       ctx.clearRect(0, 0, width, height);
       const isElementsTab = activeTab === 'elements';
 
-      // Seite
+      // Seite(n)
       ctx.fillStyle = '#ffffff';
-      ctx.fillRect(0, 0, width, height);
+      if (isDoubleSpread) {
+        ctx.fillRect(0, 0, pageWidth, pageHeight);
+        ctx.fillRect(pageWidth, 0, pageWidth, pageHeight);
+      } else {
+        ctx.fillRect(0, 0, width, height);
+      }
 
       // Hintergrund-Rasterhilfe
       if (!isElementsTab) {
@@ -1017,13 +1733,11 @@
         ctx.restore();
       }
 
-      const gridX = outerMargin;
-      const gridY = outerMargin;
-      const gridWidth = width - outerMargin * 2;
-      const gridHeight = height - outerMargin * 2;
+      const singlePageGridWidth = pageWidth - outerMargin * 2;
+      const singlePageGridHeight = pageHeight - outerMargin * 2;
       currentCells = [];
 
-      if (gridWidth <= 0 || gridHeight <= 0) {
+      if (singlePageGridWidth <= 0 || singlePageGridHeight <= 0) {
         outputs.cellWidthStat.textContent = '–';
         outputs.cellHeightStat.textContent = '–';
         outputs.gridWidthStat.textContent = '–';
@@ -1035,18 +1749,25 @@
 
       const totalHorizontalGap = (cols - 1) * cellGap;
       const totalVerticalGap = (rows - 1) * cellGap;
-      const cellWidth = (gridWidth - totalHorizontalGap) / cols;
-      const cellHeight = (gridHeight - totalVerticalGap) / rows;
+      const cellWidth = (singlePageGridWidth - totalHorizontalGap) / cols;
+      const cellHeight = (singlePageGridHeight - totalVerticalGap) / rows;
 
-      outputs.gridWidthStat.textContent = pxToCm(gridWidth).toFixed(2) + ' cm';
-      outputs.gridHeightStat.textContent = pxToCm(gridHeight).toFixed(2) + ' cm';
+      outputs.gridWidthStat.textContent = pxToCm(singlePageGridWidth).toFixed(2) + ' cm';
+      outputs.gridHeightStat.textContent = pxToCm(singlePageGridHeight).toFixed(2) + ' cm';
 
       if (cellWidth <= 0 || cellHeight <= 0) {
         outputs.cellWidthStat.textContent = 'ungültig';
         outputs.cellHeightStat.textContent = 'ungültig';
         setStatus('Mit diesen Werten bleibt für die Zellen kein positiver Platz mehr übrig.', true);
         drawPageBorder();
-        drawMarginGuide(gridX, gridY, gridWidth, gridHeight);
+        for (let pageIndex = 0; pageIndex < spreadCount; pageIndex++) {
+          drawMarginGuide(
+            pageIndex * pageWidth + outerMargin,
+            outerMargin,
+            singlePageGridWidth,
+            singlePageGridHeight
+          );
+        }
         return;
       }
 
@@ -1054,42 +1775,74 @@
       outputs.cellHeightStat.textContent = pxToCm(cellHeight).toFixed(2) + ' cm';
       setStatus('Raster erfolgreich berechnet und dargestellt.', false);
 
-      if (!isElementsTab) {
-        drawMarginGuide(gridX, gridY, gridWidth, gridHeight);
-      }
-
-      // Zellen
+      // Zellen pro Seite
       ctx.save();
-      for (let row = 0; row < rows; row++) {
-        for (let col = 0; col < cols; col++) {
-          const x = gridX + col * (cellWidth + cellGap);
-          const y = gridY + row * (cellHeight + cellGap);
-          currentCells.push({ row, col, x, y, width: cellWidth, height: cellHeight });
+      for (let pageIndex = 0; pageIndex < spreadCount; pageIndex++) {
+        const gridX = pageIndex * pageWidth + outerMargin;
+        const gridY = outerMargin;
+        const colOffset = pageIndex * cols;
 
-          ctx.strokeStyle = isElementsTab ? 'rgba(107, 114, 128, 0.38)' : 'rgba(37, 99, 235, 0.95)';
-          ctx.lineWidth = isElementsTab ? 2 : 3;
-          if (!isElementsTab) {
-            ctx.fillStyle = 'rgba(37, 99, 235, 0.10)';
-            ctx.fillRect(x, y, cellWidth, cellHeight);
+        if (!isElementsTab) {
+          drawMarginGuide(gridX, gridY, singlePageGridWidth, singlePageGridHeight);
+        }
+
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            const x = gridX + col * (cellWidth + cellGap);
+            const y = gridY + row * (cellHeight + cellGap);
+            currentCells.push({
+              row,
+              col: colOffset + col,
+              x,
+              y,
+              width: cellWidth,
+              height: cellHeight
+            });
+
+            ctx.strokeStyle = isElementsTab ? 'rgba(107, 114, 128, 0.38)' : 'rgba(37, 99, 235, 0.95)';
+            ctx.lineWidth = isElementsTab ? 2 : 3;
+            if (!isElementsTab) {
+              ctx.fillStyle = 'rgba(37, 99, 235, 0.10)';
+              ctx.fillRect(x, y, cellWidth, cellHeight);
+            }
+            ctx.strokeRect(x, y, cellWidth, cellHeight);
           }
-          ctx.strokeRect(x, y, cellWidth, cellHeight);
         }
       }
       ctx.restore();
 
       drawPlacedElements();
 
-      if (!isElementsTab) {
-        // Außenkante des Rasters markieren
+      if (isDoubleSpread) {
+        const seamX = pageWidth;
         ctx.save();
-        ctx.strokeStyle = '#111827';
+        ctx.fillStyle = 'rgba(100, 116, 139, 0.14)';
+        ctx.fillRect(seamX - 2, 0, 4, height);
+        ctx.strokeStyle = 'rgba(148, 163, 184, 0.75)';
         ctx.lineWidth = 2;
-        ctx.setLineDash([14, 10]);
-        ctx.strokeRect(gridX, gridY, gridWidth, gridHeight);
+        ctx.beginPath();
+        ctx.moveTo(seamX + 0.5, 0);
+        ctx.lineTo(seamX + 0.5, height);
+        ctx.stroke();
         ctx.restore();
       }
 
+      if (!isElementsTab) {
+        for (let pageIndex = 0; pageIndex < spreadCount; pageIndex++) {
+          const gridX = pageIndex * pageWidth + outerMargin;
+          const gridY = outerMargin;
+          ctx.save();
+          ctx.strokeStyle = '#111827';
+          ctx.lineWidth = 2;
+          ctx.setLineDash([14, 10]);
+          ctx.strokeRect(gridX, gridY, singlePageGridWidth, singlePageGridHeight);
+          ctx.restore();
+        }
+      }
+
       drawPageBorder();
+      refreshLayoutSelector();
+      syncMainViewport(activeLayout, width, height);
     }
 
     function drawPageBorder() {
@@ -1105,11 +1858,166 @@
       ctx.restore();
     }
 
-    controls.pageOrientationRange.addEventListener('input', draw);
-    controls.outerMarginRange.addEventListener('input', draw);
-    controls.colsRange.addEventListener('input', draw);
-    controls.rowsRange.addEventListener('input', draw);
-    controls.cellGapRange.addEventListener('input', draw);
+    function handleSettingsInput() {
+      const currentCategory = getActiveCategory();
+      if (currentCategory) {
+        currentCategory.controls = captureControls();
+      }
+      draw();
+      queueSnapshotSave();
+    }
+
+    controls.pageOrientationRange.addEventListener('input', handleSettingsInput);
+    controls.outerMarginRange.addEventListener('input', handleSettingsInput);
+    controls.colsRange.addEventListener('input', handleSettingsInput);
+    controls.rowsRange.addEventListener('input', handleSettingsInput);
+    controls.cellGapRange.addEventListener('input', handleSettingsInput);
+    categoryUi.select.addEventListener('change', () => {
+      switchToCategory(categoryUi.select.value);
+    });
+    categoryUi.renameBtn.addEventListener('click', () => {
+      const currentCategory = getActiveCategory();
+      if (!currentCategory) return;
+
+      const nextName = prompt('Neuer Name fuer diese Kategorie:', currentCategory.name);
+      if (nextName === null) return;
+      const trimmedName = nextName.trim();
+      if (!trimmedName) {
+        setStatus('Kategorie-Name darf nicht leer sein.', true);
+        return;
+      }
+
+      currentCategory.name = trimmedName;
+      refreshCategorySelector();
+      queueSnapshotSave();
+      setStatus(`Kategorie umbenannt in "${trimmedName}".`, false);
+    });
+    categoryUi.addBtn.addEventListener('click', () => {
+      saveCurrentCategoryIntoCollection();
+
+      const defaultName = getNextCategoryName();
+      const nextName = prompt('Name fuer neue Kategorie:', defaultName);
+      if (nextName === null) return;
+      const trimmedName = nextName.trim();
+      if (!trimmedName) {
+        setStatus('Kategorie-Name darf nicht leer sein.', true);
+        return;
+      }
+
+      const newCategory = createDefaultCategory(trimmedName);
+      newCategory.controls = captureControls();
+      categories.push(newCategory);
+      activeCategoryId = newCategory.id;
+      activeLayoutId = newCategory.activeLayoutId;
+      loadLayoutIntoEditor(newCategory.layouts[0]);
+      refreshCategorySelector();
+      refreshLayoutSelector();
+      draw();
+      queueSnapshotSave();
+      setStatus(`Kategorie "${trimmedName}" erstellt.`, false);
+    });
+    categoryUi.deleteBtn.addEventListener('click', () => {
+      if (categories.length <= 1) return;
+
+      const index = categories.findIndex((category) => category.id === activeCategoryId);
+      if (index < 0) return;
+      const currentName = categories[index].name;
+      categories.splice(index, 1);
+
+      const fallbackIndex = Math.min(index, categories.length - 1);
+      const fallbackCategory = categories[fallbackIndex];
+      activeCategoryId = fallbackCategory.id;
+      applyControls(fallbackCategory.controls);
+      const fallbackLayout = fallbackCategory.layouts.find((layout) => layout.id === fallbackCategory.activeLayoutId)
+        || fallbackCategory.layouts[0];
+      activeLayoutId = fallbackLayout.id;
+      fallbackCategory.activeLayoutId = fallbackLayout.id;
+      loadLayoutIntoEditor(fallbackLayout);
+      refreshCategorySelector();
+      refreshLayoutSelector();
+      draw();
+      queueSnapshotSave();
+      setStatus(`Kategorie "${currentName}" geloescht.`, false);
+    });
+    layoutUi.select.addEventListener('change', () => {
+      switchToLayout(layoutUi.select.value);
+    });
+    layoutUi.renameBtn.addEventListener('click', () => {
+      const currentLayout = getActiveLayout();
+      if (!currentLayout) return;
+
+      const nextName = prompt('Neuer Name fuer dieses Layout:', currentLayout.name);
+      if (nextName === null) return;
+      const trimmedName = nextName.trim();
+      if (!trimmedName) {
+        setStatus('Layout-Name darf nicht leer sein.', true);
+        return;
+      }
+
+      currentLayout.name = trimmedName;
+      refreshLayoutSelector();
+      queueSnapshotSave();
+      setStatus(`Layout umbenannt in "${trimmedName}".`, false);
+    });
+    layoutUi.addBtn.addEventListener('click', () => {
+      const currentCategory = getActiveCategory();
+      if (!currentCategory) return;
+
+      saveCurrentLayoutIntoCollection();
+      const defaultName = getNextLayoutName();
+      const nextName = prompt('Name fuer neues Layout:', defaultName);
+      if (nextName === null) return;
+      const trimmedName = nextName.trim();
+      if (!trimmedName) {
+        setStatus('Layout-Name darf nicht leer sein.', true);
+        return;
+      }
+
+      const newLayout = createDefaultLayout(trimmedName);
+      currentCategory.layouts.push(newLayout);
+      activeLayoutId = newLayout.id;
+      currentCategory.activeLayoutId = newLayout.id;
+      loadLayoutIntoEditor(newLayout);
+      refreshLayoutSelector();
+      draw();
+      queueSnapshotSave();
+      setStatus(`Layout "${trimmedName}" erstellt.`, false);
+    });
+    layoutUi.deleteBtn.addEventListener('click', () => {
+      const currentCategory = getActiveCategory();
+      if (!currentCategory || currentCategory.layouts.length <= 1) return;
+
+      const index = currentCategory.layouts.findIndex((layout) => layout.id === activeLayoutId);
+      if (index < 0) return;
+      const currentName = currentCategory.layouts[index].name;
+      currentCategory.layouts.splice(index, 1);
+
+      const fallbackIndex = Math.min(index, currentCategory.layouts.length - 1);
+      const fallbackLayout = currentCategory.layouts[fallbackIndex];
+      activeLayoutId = fallbackLayout.id;
+      currentCategory.activeLayoutId = fallbackLayout.id;
+      loadLayoutIntoEditor(fallbackLayout);
+      refreshLayoutSelector();
+      draw();
+      queueSnapshotSave();
+      setStatus(`Layout "${currentName}" geloescht.`, false);
+    });
+    layoutModeUi.btn.addEventListener('click', () => {
+      const currentLayout = getActiveLayout();
+      if (!currentLayout) return;
+
+      normalizeLayoutSpreadMode(currentLayout);
+      currentLayout.spreadMode = currentLayout.spreadMode === 'double' ? 'single' : 'double';
+      refreshLayoutModeButton();
+      draw();
+      queueSnapshotSave();
+      setStatus(
+        currentLayout.spreadMode === 'double'
+          ? 'Doppelseite aktiviert.'
+          : 'Einzelseite aktiviert.',
+        false
+      );
+    });
     tabButtons.forEach((button) => {
       button.addEventListener('click', () => setActiveTab(button.dataset.tab));
     });
@@ -1181,6 +2089,7 @@
 
       draw();
       setStatus(`${payload.type === 'text' ? 'Text' : 'Bild'} in Zelle ${cell.col + 1}/${cell.row + 1} ${isMove ? 'verschoben' : 'platziert'}.`, false);
+      queueSnapshotSave();
     });
     canvas.addEventListener('pointerdown', (event) => {
       if (event.button !== 0) return;
@@ -1191,6 +2100,7 @@
         if (deletePlacedElement(deleteButton.id)) {
           draw();
           setStatus('Element gelöscht.', false);
+          queueSnapshotSave();
         }
         event.preventDefault();
         return;
@@ -1250,6 +2160,18 @@
           endCol: element.endCol
         },
         startPageFlags: {
+          leftBoundary: element.leftBoundary || (element.leftToPage ? 'page-left' : 'none'),
+          rightBoundary: element.rightBoundary || (element.rightToPage ? 'page-right' : 'none'),
+          topToPage: element.topToPage,
+          bottomToPage: element.bottomToPage
+        },
+        lastValidState: {
+          startRow: element.startRow,
+          endRow: element.endRow,
+          startCol: element.startCol,
+          endCol: element.endCol,
+          leftBoundary: element.leftBoundary || (element.leftToPage ? 'page-left' : 'none'),
+          rightBoundary: element.rightBoundary || (element.rightToPage ? 'page-right' : 'none'),
           leftToPage: element.leftToPage,
           rightToPage: element.rightToPage,
           topToPage: element.topToPage,
@@ -1323,31 +2245,18 @@
             : `${movedType === 'text' ? 'Text' : 'Bild'} verschoben.`,
           wasBlocked
         );
+        if (!wasBlocked) queueSnapshotSave();
         return;
       }
 
       if (!resizeState) return;
-
-      const resizedElement = placedElements.find((placedElement) => placedElement.id === resizeState.id);
-      if (resizedElement) {
-        normalizeElementBounds(resizedElement);
-        removeElementsOverlappingBounds(
-          {
-            startRow: resizedElement.startRow,
-            endRow: resizedElement.endRow,
-            startCol: resizedElement.startCol,
-            endCol: resizedElement.endCol
-          },
-          resizedElement.type,
-          resizedElement.id
-        );
-      }
 
       canvas.releasePointerCapture(event.pointerId);
       canvas.style.cursor = '';
       setStatus('Elementrand angepasst.', false);
       resizeState = null;
       draw();
+      queueSnapshotSave();
     });
     canvas.addEventListener('pointercancel', (event) => {
       if (moveState) {
@@ -1367,7 +2276,24 @@
       draw();
     });
 
-    draw();
+    async function initializeApp() {
+      const snapshot = await loadSnapshot();
+      if (snapshot) {
+        applySnapshot(snapshot);
+      } else {
+        const defaultCategory = createDefaultCategory('Kategorie 1');
+        categories.push(defaultCategory);
+        activeCategoryId = defaultCategory.id;
+        activeLayoutId = defaultCategory.activeLayoutId;
+        applyControls(defaultCategory.controls);
+        loadLayoutIntoEditor(defaultCategory.layouts[0]);
+        refreshCategorySelector();
+        refreshLayoutSelector();
+      }
+      draw();
+    }
+
+    void initializeApp();
   </script>
 </body>
 </html>
