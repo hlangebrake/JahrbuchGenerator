@@ -320,9 +320,9 @@
         <section class="control">
           <div class="field-row">
             <label for="pageOrientationRange">Seitenformat</label>
-            <div class="value-badge"><span id="pageOrientationValue">Hoch</span></div>
+            <div class="value-badge"><span id="pageOrientationValue">Quer</span></div>
           </div>
-          <input id="pageOrientationRange" type="range" min="0" max="1" step="1" value="0" />
+          <input id="pageOrientationRange" type="range" min="0" max="1" step="1" value="1" />
         </section>
 
         <section class="control">
@@ -336,17 +336,17 @@
         <section class="control">
           <div class="field-row">
             <label for="colsRange">Zellen horizontal</label>
-            <div class="value-badge"><span id="colsValue">5</span></div>
+            <div class="value-badge"><span id="colsValue">6</span></div>
           </div>
-          <input id="colsRange" type="range" min="1" max="30" step="1" value="5" />
+          <input id="colsRange" type="range" min="1" max="30" step="1" value="6" />
         </section>
 
         <section class="control">
           <div class="field-row">
             <label for="rowsRange">Zellen vertikal</label>
-            <div class="value-badge"><span id="rowsValue">8</span></div>
+            <div class="value-badge"><span id="rowsValue">6</span></div>
           </div>
-          <input id="rowsRange" type="range" min="1" max="40" step="1" value="8" />
+          <input id="rowsRange" type="range" min="1" max="40" step="1" value="6" />
         </section>
 
         <section class="control">
@@ -569,11 +569,23 @@
         element.endCol = element.col;
       }
 
+      if (typeof element.leftToPage !== 'boolean') element.leftToPage = false;
+      if (typeof element.rightToPage !== 'boolean') element.rightToPage = false;
+      if (typeof element.topToPage !== 'boolean') element.topToPage = false;
+      if (typeof element.bottomToPage !== 'boolean') element.bottomToPage = false;
+
       element.startRow = Math.max(0, element.startRow);
       element.endRow = Math.max(element.startRow, element.endRow);
       element.startCol = Math.max(0, element.startCol);
       element.endCol = Math.max(element.startCol, element.endCol);
       return element;
+    }
+
+    function getGridMaxima() {
+      return {
+        maxRow: Math.max(0, ...currentCells.map((cell) => cell.row)),
+        maxCol: Math.max(0, ...currentCells.map((cell) => cell.col))
+      };
     }
 
     function getElementRect(element) {
@@ -586,6 +598,10 @@
       const y = startCell.y;
       const right = endCell.x + endCell.width;
       const bottom = endCell.y + endCell.height;
+      const left = element.leftToPage ? 0 : x;
+      const top = element.topToPage ? 0 : y;
+      const adjustedRight = element.rightToPage ? canvas.width : right;
+      const adjustedBottom = element.bottomToPage ? canvas.height : bottom;
 
       return {
         id: element.id,
@@ -594,10 +610,10 @@
         endRow: element.endRow,
         startCol: element.startCol,
         endCol: element.endCol,
-        x,
-        y,
-        width: right - x,
-        height: bottom - y
+        x: left,
+        y: top,
+        width: adjustedRight - left,
+        height: adjustedBottom - top
       };
     }
 
@@ -729,7 +745,11 @@
         startRow: cell.row,
         endRow: cell.row,
         startCol: cell.col,
-        endCol: cell.col
+        endCol: cell.col,
+        leftToPage: false,
+        rightToPage: false,
+        topToPage: false,
+        bottomToPage: false
       };
 
       removeElementsOverlappingBounds(
@@ -765,6 +785,10 @@
       element.endRow = bounds.endRow;
       element.startCol = bounds.startCol;
       element.endCol = bounds.endCol;
+      element.leftToPage = false;
+      element.rightToPage = false;
+      element.topToPage = false;
+      element.bottomToPage = false;
       return true;
     }
 
@@ -782,6 +806,10 @@
       element.endRow = bounds.endRow;
       element.startCol = bounds.startCol;
       element.endCol = bounds.endCol;
+      element.leftToPage = false;
+      element.rightToPage = false;
+      element.topToPage = false;
+      element.bottomToPage = false;
       return true;
     }
 
@@ -819,33 +847,48 @@
 
     function findNearestAllowedCellForEdge(edge, startBounds, point) {
       let candidates = [];
+      const { maxRow, maxCol } = getGridMaxima();
 
       if (edge === 'left') {
         candidates = currentCells
           .filter((cell) => cell.col <= startBounds.endCol)
-          .map((cell) => ({ cell, value: cell.x, distance: Math.abs(point.x - cell.x) }));
+          .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.x - cell.x) }));
+        candidates.push({ kind: 'page', edge: 'left', distance: Math.abs(point.x) });
       }
 
       if (edge === 'right') {
         candidates = currentCells
           .filter((cell) => cell.col >= startBounds.startCol)
-          .map((cell) => ({ cell, value: cell.x + cell.width, distance: Math.abs(point.x - (cell.x + cell.width)) }));
+          .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.x - (cell.x + cell.width)) }));
+        candidates.push({ kind: 'page', edge: 'right', distance: Math.abs(point.x - canvas.width) });
       }
 
       if (edge === 'top') {
         candidates = currentCells
           .filter((cell) => cell.row <= startBounds.endRow)
-          .map((cell) => ({ cell, value: cell.y, distance: Math.abs(point.y - cell.y) }));
+          .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.y - cell.y) }));
+        candidates.push({ kind: 'page', edge: 'top', distance: Math.abs(point.y) });
       }
 
       if (edge === 'bottom') {
         candidates = currentCells
           .filter((cell) => cell.row >= startBounds.startRow)
-          .map((cell) => ({ cell, value: cell.y + cell.height, distance: Math.abs(point.y - (cell.y + cell.height)) }));
+          .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.y - (cell.y + cell.height)) }));
+        candidates.push({ kind: 'page', edge: 'bottom', distance: Math.abs(point.y - canvas.height) });
       }
 
       candidates.sort((a, b) => a.distance - b.distance);
-      return candidates[0]?.cell || null;
+      const target = candidates[0];
+      if (!target) return null;
+
+      if (target.kind === 'cell') {
+        return target;
+      }
+
+      if (target.edge === 'left') return { kind: 'page', edge: 'left', col: 0 };
+      if (target.edge === 'right') return { kind: 'page', edge: 'right', col: maxCol };
+      if (target.edge === 'top') return { kind: 'page', edge: 'top', row: 0 };
+      return { kind: 'page', edge: 'bottom', row: maxRow };
     }
 
     function resizeElementToPoint(point) {
@@ -861,11 +904,50 @@
       element.endRow = resizeState.startBounds.endRow;
       element.startCol = resizeState.startBounds.startCol;
       element.endCol = resizeState.startBounds.endCol;
+      element.leftToPage = resizeState.startPageFlags.leftToPage;
+      element.rightToPage = resizeState.startPageFlags.rightToPage;
+      element.topToPage = resizeState.startPageFlags.topToPage;
+      element.bottomToPage = resizeState.startPageFlags.bottomToPage;
 
-      if (resizeState.edge === 'left') element.startCol = targetCell.col;
-      if (resizeState.edge === 'right') element.endCol = targetCell.col;
-      if (resizeState.edge === 'top') element.startRow = targetCell.row;
-      if (resizeState.edge === 'bottom') element.endRow = targetCell.row;
+      if (resizeState.edge === 'left') {
+        if (targetCell.kind === 'page') {
+          element.leftToPage = true;
+          element.startCol = 0;
+        } else {
+          element.leftToPage = false;
+          element.startCol = targetCell.cell.col;
+        }
+      }
+
+      if (resizeState.edge === 'right') {
+        if (targetCell.kind === 'page') {
+          element.rightToPage = true;
+          element.endCol = getGridMaxima().maxCol;
+        } else {
+          element.rightToPage = false;
+          element.endCol = targetCell.cell.col;
+        }
+      }
+
+      if (resizeState.edge === 'top') {
+        if (targetCell.kind === 'page') {
+          element.topToPage = true;
+          element.startRow = 0;
+        } else {
+          element.topToPage = false;
+          element.startRow = targetCell.cell.row;
+        }
+      }
+
+      if (resizeState.edge === 'bottom') {
+        if (targetCell.kind === 'page') {
+          element.bottomToPage = true;
+          element.endRow = getGridMaxima().maxRow;
+        } else {
+          element.bottomToPage = false;
+          element.endRow = targetCell.cell.row;
+        }
+      }
 
       normalizeElementBounds(element);
       draw();
@@ -1186,6 +1268,12 @@
           endRow: element.endRow,
           startCol: element.startCol,
           endCol: element.endCol
+        },
+        startPageFlags: {
+          leftToPage: element.leftToPage,
+          rightToPage: element.rightToPage,
+          topToPage: element.topToPage,
+          bottomToPage: element.bottomToPage
         }
       };
       canvas.draggable = false;
