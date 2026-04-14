@@ -1,0 +1,1305 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>A5 Raster-Generator</title>
+  <style>
+    :root {
+      --bg: #f3f4f6;
+      --panel: #ffffff;
+      --border: #d1d5db;
+      --text: #111827;
+      --muted: #6b7280;
+      --accent: #2563eb;
+      --danger: #b91c1c;
+      --shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--text);
+      background: var(--bg);
+    }
+
+    .app {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 340px 1fr;
+    }
+
+    .sidebar {
+      background: var(--panel);
+      border-right: 1px solid var(--border);
+      padding: 24px;
+      box-shadow: var(--shadow);
+      position: relative;
+      z-index: 1;
+    }
+
+    .sidebar h1 {
+      margin: 0 0 8px;
+      font-size: 1.4rem;
+      line-height: 1.2;
+    }
+
+    .sidebar p {
+      margin: 0 0 20px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.95rem;
+    }
+
+    .controls {
+      display: grid;
+      gap: 16px;
+    }
+
+    .tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 18px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #f9fafb;
+    }
+
+    .tab-button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 42px;
+      padding: 9px 10px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .tab-button:hover {
+      color: var(--text);
+      background: #eef2ff;
+    }
+
+    .tab-button.active {
+      color: #1d4ed8;
+      background: #dbeafe;
+    }
+
+    .tab-icon {
+      font-size: 1.05rem;
+      line-height: 1;
+    }
+
+    .tab-panel {
+      display: grid;
+      gap: 16px;
+    }
+
+    .tab-panel[hidden] {
+      display: none;
+    }
+
+    #setupPanel .controls {
+      gap: 10px;
+    }
+
+    #setupPanel .control {
+      gap: 6px;
+      padding: 10px 12px;
+    }
+
+    .control {
+      display: grid;
+      gap: 8px;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .control label {
+      font-weight: 600;
+      font-size: 0.95rem;
+    }
+
+    .control .hint {
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .element-palette {
+      display: grid;
+      gap: 10px;
+    }
+
+    .element-option {
+      display: grid;
+      grid-template-columns: 42px 1fr;
+      align-items: center;
+      gap: 10px;
+      min-height: 52px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #ffffff;
+      color: var(--text);
+      cursor: grab;
+      font: inherit;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .element-option:active {
+      cursor: grabbing;
+    }
+
+    .element-preview {
+      width: 34px;
+      height: 24px;
+      border: 2px solid #2563eb;
+      border-radius: 4px;
+      background: rgba(37, 99, 235, 0.12);
+    }
+
+    .element-option[data-element-type="text"] .element-preview {
+      border-color: #059669;
+      background: rgba(5, 150, 105, 0.12);
+    }
+
+    .field-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 10px;
+    }
+
+    input[type="range"] {
+      width: 100%;
+      accent-color: var(--accent);
+    }
+
+    .value-badge {
+      min-width: 72px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .stats {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 12px;
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      display: grid;
+      gap: 8px;
+      font-size: 0.92rem;
+    }
+
+    .stats strong {
+      color: #1d4ed8;
+    }
+
+    .status {
+      margin-top: 18px;
+      padding: 12px 14px;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      line-height: 1.45;
+      border: 1px solid transparent;
+    }
+
+    .status.ok {
+      background: #ecfdf5;
+      color: #065f46;
+      border-color: #a7f3d0;
+    }
+
+    .status.error {
+      background: #fef2f2;
+      color: var(--danger);
+      border-color: #fecaca;
+    }
+
+    .main {
+      padding: 24px;
+      display: grid;
+      align-items: start;
+      justify-items: center;
+    }
+
+    .canvas-wrap {
+      width: min(100%, 920px);
+      display: grid;
+      gap: 14px;
+      justify-items: center;
+    }
+
+    .page-label {
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .canvas-frame {
+      width: fit-content;
+      max-width: 100%;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      background:
+        linear-gradient(135deg, rgba(255,255,255,0.9), rgba(243,244,246,0.9));
+      box-shadow: var(--shadow);
+    }
+
+    canvas {
+      width: 148mm;
+      height: 210mm;
+      max-width: none;
+      max-height: none;
+      touch-action: none;
+      border-radius: 4px;
+      background: white;
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.12);
+      border: 1px solid #d4d4d8;
+    }
+
+    .footer-note {
+      color: var(--muted);
+      font-size: 0.86rem;
+      text-align: center;
+      line-height: 1.4;
+    }
+
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+      }
+
+      .sidebar {
+        border-right: none;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .main {
+        padding-top: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <aside class="sidebar">
+      <div class="tabs" role="tablist" aria-label="Einstellungen">
+        <button class="tab-button active" type="button" role="tab" id="setupTab" aria-controls="setupPanel" aria-selected="true" data-tab="setup">
+          <span class="tab-icon" aria-hidden="true">&#9881;</span>
+          <span>SetUp</span>
+        </button>
+        <button class="tab-button" type="button" role="tab" id="elementsTab" aria-controls="elementsPanel" aria-selected="false" data-tab="elements">
+          <span class="tab-icon" aria-hidden="true">&#9638;</span>
+          <span>Elemente</span>
+        </button>
+      </div>
+
+      <section class="tab-panel" id="setupPanel" role="tabpanel" aria-labelledby="setupTab" data-panel="setup">
+        <div class="controls">
+        <section class="control">
+          <div class="field-row">
+            <label for="pageOrientationRange">Seitenformat</label>
+            <div class="value-badge"><span id="pageOrientationValue">Hoch</span></div>
+          </div>
+          <input id="pageOrientationRange" type="range" min="0" max="1" step="1" value="0" />
+        </section>
+
+        <section class="control">
+          <div class="field-row">
+            <label for="outerMarginRange">Außenabstand zur Seitenkante</label>
+            <div class="value-badge"><span id="outerMarginValue">60</span> px</div>
+          </div>
+          <input id="outerMarginRange" type="range" min="0" max="300" step="1" value="60" />
+        </section>
+
+        <section class="control">
+          <div class="field-row">
+            <label for="colsRange">Zellen horizontal</label>
+            <div class="value-badge"><span id="colsValue">5</span></div>
+          </div>
+          <input id="colsRange" type="range" min="1" max="30" step="1" value="5" />
+        </section>
+
+        <section class="control">
+          <div class="field-row">
+            <label for="rowsRange">Zellen vertikal</label>
+            <div class="value-badge"><span id="rowsValue">8</span></div>
+          </div>
+          <input id="rowsRange" type="range" min="1" max="40" step="1" value="8" />
+        </section>
+
+        <section class="control">
+          <div class="field-row">
+            <label for="cellGapRange">Abstand zwischen den Zellen</label>
+            <div class="value-badge"><span id="cellGapValue">16</span> px</div>
+          </div>
+          <input id="cellGapRange" type="range" min="0" max="120" step="1" value="16" />
+        </section>
+        </div>
+
+      <div class="stats" id="stats">
+        <div><strong>Zellbreite:</strong> <span id="cellWidthStat">–</span></div>
+        <div><strong>Zellhöhe:</strong> <span id="cellHeightStat">–</span></div>
+        <div><strong>Rasterbreite:</strong> <span id="gridWidthStat">–</span></div>
+        <div><strong>Rasterhöhe:</strong> <span id="gridHeightStat">–</span></div>
+      </div>
+
+      <div class="status ok" id="status">
+        Bereit.
+      </div>
+      </section>
+
+      <section class="tab-panel" id="elementsPanel" role="tabpanel" aria-labelledby="elementsTab" data-panel="elements" hidden>
+        <section class="control">
+          <label>Elemente</label>
+          <div class="element-palette" aria-label="Elemente zum Platzieren">
+            <div class="element-option" draggable="true" data-element-type="image" role="button" tabindex="0">
+              <span class="element-preview" aria-hidden="true"></span>
+              <span>Bild</span>
+            </div>
+            <div class="element-option" draggable="true" data-element-type="text" role="button" tabindex="0">
+              <span class="element-preview" aria-hidden="true"></span>
+              <span>Text</span>
+            </div>
+          </div>
+        </section>
+      </section>
+    </aside>
+
+    <main class="main">
+      <div class="canvas-wrap">
+        <div class="page-label" id="pageLabel">Canvas im DIN-A5-Seitenverhältnis (148 × 210)</div>
+        <div class="canvas-frame">
+          <canvas id="pageCanvas" width="1480" height="2100"></canvas>
+        </div>
+        <div class="footer-note">
+          Das Raster liegt exakt innerhalb des definierten Außenabstands.
+          Die Außenkante des Rasters entspricht direkt den Außenkanten der äußeren Zellen.
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    const canvas = document.getElementById('pageCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const pageFormats = {
+      portrait: {
+        width: 1480,
+        height: 2100,
+        displayWidth: '148mm',
+        displayHeight: '210mm',
+        label: 'Canvas im DIN-A5-Seitenverhältnis (148 × 210)'
+      },
+      landscape: {
+        width: 2100,
+        height: 1480,
+        displayWidth: '210mm',
+        displayHeight: '148mm',
+        label: 'Canvas im DIN-A5-Querformat (210 × 148)'
+      }
+    };
+
+    const controls = {
+      pageOrientationRange: document.getElementById('pageOrientationRange'),
+      outerMarginRange: document.getElementById('outerMarginRange'),
+      colsRange: document.getElementById('colsRange'),
+      rowsRange: document.getElementById('rowsRange'),
+      cellGapRange: document.getElementById('cellGapRange')
+    };
+
+    const outputs = {
+      pageOrientationValue: document.getElementById('pageOrientationValue'),
+      outerMarginValue: document.getElementById('outerMarginValue'),
+      colsValue: document.getElementById('colsValue'),
+      rowsValue: document.getElementById('rowsValue'),
+      cellGapValue: document.getElementById('cellGapValue'),
+      cellWidthStat: document.getElementById('cellWidthStat'),
+      cellHeightStat: document.getElementById('cellHeightStat'),
+      gridWidthStat: document.getElementById('gridWidthStat'),
+      gridHeightStat: document.getElementById('gridHeightStat'),
+      pageLabel: document.getElementById('pageLabel'),
+      status: document.getElementById('status')
+    };
+
+    const tabButtons = Array.from(document.querySelectorAll('.tab-button'));
+    const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
+    const elementOptions = Array.from(document.querySelectorAll('.element-option'));
+    const placedElements = [];
+    let currentCells = [];
+    let currentElementRects = [];
+    let nextElementId = 1;
+    let resizeState = null;
+    let moveState = null;
+    let hoveredElementId = null;
+    let activeTab = 'setup';
+    let currentDragPayload = null;
+
+    function getSettings() {
+      return {
+        pageOrientation: controls.pageOrientationRange.value === '1' ? 'landscape' : 'portrait',
+        outerMargin: Math.max(0, Number(controls.outerMarginRange.value) || 0),
+        cols: Math.max(1, Math.floor(Number(controls.colsRange.value) || 1)),
+        rows: Math.max(1, Math.floor(Number(controls.rowsRange.value) || 1)),
+        cellGap: Math.max(0, Number(controls.cellGapRange.value) || 0)
+      };
+    }
+
+    function setStatus(message, isError = false) {
+      outputs.status.textContent = message;
+      outputs.status.className = 'status ' + (isError ? 'error' : 'ok');
+    }
+
+    function setActiveTab(tabName) {
+      activeTab = tabName;
+      tabButtons.forEach((button) => {
+        const isActive = button.dataset.tab === tabName;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-selected', String(isActive));
+      });
+
+      tabPanels.forEach((panel) => {
+        panel.hidden = panel.dataset.panel !== tabName;
+      });
+      draw();
+    }
+
+    function setDragPayload(dataTransfer, payload) {
+      currentDragPayload = payload;
+      dataTransfer.setData('application/json', JSON.stringify(payload));
+      dataTransfer.setData('text/plain', payload.type);
+    }
+
+    function getDragPayload(dataTransfer) {
+      const jsonPayload = dataTransfer.getData('application/json');
+      if (jsonPayload) {
+        try {
+          return JSON.parse(jsonPayload);
+        } catch {
+          return null;
+        }
+      }
+
+      const type = dataTransfer.getData('text/plain');
+      if (type === 'image' || type === 'text') {
+        return { source: 'palette', type };
+      }
+
+      return null;
+    }
+
+    function getCanvasPoint(event) {
+      const rect = canvas.getBoundingClientRect();
+      return {
+        x: (event.clientX - rect.left) * (canvas.width / rect.width),
+        y: (event.clientY - rect.top) * (canvas.height / rect.height)
+      };
+    }
+
+    function findCellAtPoint(point) {
+      return currentCells.find((cell) => (
+        point.x >= cell.x &&
+        point.x <= cell.x + cell.width &&
+        point.y >= cell.y &&
+        point.y <= cell.y + cell.height
+      ));
+    }
+
+    function findNearestCell(point) {
+      const scoredCells = currentCells.map((cell) => {
+        const centerX = cell.x + cell.width / 2;
+        const centerY = cell.y + cell.height / 2;
+        return {
+          cell,
+          distance: Math.hypot(point.x - centerX, point.y - centerY)
+        };
+      });
+
+      scoredCells.sort((a, b) => a.distance - b.distance);
+      return scoredCells[0]?.cell || null;
+    }
+
+    function findPlacedElementAtPoint(point) {
+      for (let index = currentElementRects.length - 1; index >= 0; index--) {
+        const elementRect = currentElementRects[index];
+        if (
+          point.x >= elementRect.x &&
+          point.x <= elementRect.x + elementRect.width &&
+          point.y >= elementRect.y &&
+          point.y <= elementRect.y + elementRect.height
+        ) {
+          return elementRect;
+        }
+      }
+
+      return null;
+    }
+
+    function getCell(row, col) {
+      return currentCells.find((cell) => cell.row === row && cell.col === col);
+    }
+
+    function normalizeElementBounds(element) {
+      if (!Number.isInteger(element.startRow)) {
+        element.startRow = element.row;
+        element.endRow = element.row;
+        element.startCol = element.col;
+        element.endCol = element.col;
+      }
+
+      element.startRow = Math.max(0, element.startRow);
+      element.endRow = Math.max(element.startRow, element.endRow);
+      element.startCol = Math.max(0, element.startCol);
+      element.endCol = Math.max(element.startCol, element.endCol);
+      return element;
+    }
+
+    function getElementRect(element) {
+      normalizeElementBounds(element);
+      const startCell = getCell(element.startRow, element.startCol);
+      const endCell = getCell(element.endRow, element.endCol);
+      if (!startCell || !endCell) return null;
+
+      const x = startCell.x;
+      const y = startCell.y;
+      const right = endCell.x + endCell.width;
+      const bottom = endCell.y + endCell.height;
+
+      return {
+        id: element.id,
+        type: element.type,
+        startRow: element.startRow,
+        endRow: element.endRow,
+        startCol: element.startCol,
+        endCol: element.endCol,
+        x,
+        y,
+        width: right - x,
+        height: bottom - y
+      };
+    }
+
+    function findElementEdgeAtPoint(point) {
+      const scale = canvas.width / canvas.getBoundingClientRect().width;
+      const threshold = Math.max(10, 8 * scale);
+
+      for (let index = currentElementRects.length - 1; index >= 0; index--) {
+        const rect = currentElementRects[index];
+        const withinX = point.x >= rect.x - threshold && point.x <= rect.x + rect.width + threshold;
+        const withinY = point.y >= rect.y - threshold && point.y <= rect.y + rect.height + threshold;
+        if (!withinX || !withinY) continue;
+
+        const edges = [
+          { edge: 'left', distance: Math.abs(point.x - rect.x) },
+          { edge: 'right', distance: Math.abs(point.x - (rect.x + rect.width)) },
+          { edge: 'top', distance: Math.abs(point.y - rect.y) },
+          { edge: 'bottom', distance: Math.abs(point.y - (rect.y + rect.height)) }
+        ].filter((candidate) => candidate.distance <= threshold);
+
+        if (edges.length === 0) continue;
+
+        edges.sort((a, b) => a.distance - b.distance);
+        return { elementRect: rect, edge: edges[0].edge };
+      }
+
+      return null;
+    }
+
+    function getDeleteButtonRect(elementRect) {
+      const scale = canvas.width / canvas.getBoundingClientRect().width;
+      const size = Math.max(28, 22 * scale);
+      const offset = Math.max(6, 4 * scale);
+
+      return {
+        id: elementRect.id,
+        x: elementRect.x + elementRect.width - size - offset,
+        y: elementRect.y + offset,
+        width: size,
+        height: size
+      };
+    }
+
+    function findDeleteButtonAtPoint(point) {
+      for (let index = currentElementRects.length - 1; index >= 0; index--) {
+        const rect = getDeleteButtonRect(currentElementRects[index]);
+        if (
+          point.x >= rect.x &&
+          point.x <= rect.x + rect.width &&
+          point.y >= rect.y &&
+          point.y <= rect.y + rect.height
+        ) {
+          return rect;
+        }
+      }
+
+      return null;
+    }
+
+    function deletePlacedElement(id) {
+      const index = placedElements.findIndex((element) => element.id === id);
+      if (index < 0) return false;
+
+      placedElements.splice(index, 1);
+      if (hoveredElementId === id) hoveredElementId = null;
+      return true;
+    }
+
+    function drawDeleteButton(elementRect) {
+      const rect = getDeleteButtonRect(elementRect);
+      const fontSize = Math.max(18, rect.width * 0.7);
+
+      ctx.save();
+      ctx.fillStyle = '#ffffff';
+      ctx.strokeStyle = '#b91c1c';
+      ctx.lineWidth = 3;
+      ctx.fillRect(rect.x, rect.y, rect.width, rect.height);
+      ctx.strokeRect(rect.x, rect.y, rect.width, rect.height);
+      ctx.fillStyle = '#b91c1c';
+      ctx.font = `700 ${fontSize}px system-ui, sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('×', rect.x + rect.width / 2, rect.y + rect.height / 2);
+      ctx.restore();
+    }
+
+    function getResizeCursor(edge) {
+      return edge === 'left' || edge === 'right' ? 'ew-resize' : 'ns-resize';
+    }
+
+    function removeElementsOverlappingBounds(bounds, overlapType = null, exceptId = null) {
+      for (let index = placedElements.length - 1; index >= 0; index--) {
+        const element = normalizeElementBounds(placedElements[index]);
+        const overlaps = (
+          element.id !== exceptId &&
+          (overlapType === null || element.type === overlapType) &&
+          element.startRow <= bounds.endRow &&
+          element.endRow >= bounds.startRow &&
+          element.startCol <= bounds.endCol &&
+          element.endCol >= bounds.startCol
+        );
+
+        if (overlaps) {
+          placedElements.splice(index, 1);
+        }
+      }
+    }
+
+    function hasSameTypeOverlap(bounds, type, exceptId = null) {
+      return placedElements.some((placedElement) => {
+        const element = normalizeElementBounds(placedElement);
+        if (element.id === exceptId || element.type !== type) return false;
+
+        return (
+          element.startRow <= bounds.endRow &&
+          element.endRow >= bounds.startRow &&
+          element.startCol <= bounds.endCol &&
+          element.endCol >= bounds.startCol
+        );
+      });
+    }
+
+    function addPlacedElement(type, cell) {
+      const nextElement = {
+        id: nextElementId++,
+        type,
+        row: cell.row,
+        col: cell.col,
+        startRow: cell.row,
+        endRow: cell.row,
+        startCol: cell.col,
+        endCol: cell.col
+      };
+
+      removeElementsOverlappingBounds(
+        {
+          startRow: cell.row,
+          endRow: cell.row,
+          startCol: cell.col,
+          endCol: cell.col
+        },
+        type
+      );
+      placedElements.push(nextElement);
+    }
+
+    function movePlacedElement(id, cell) {
+      const element = placedElements.find((placedElement) => placedElement.id === id);
+      if (!element) return false;
+
+      normalizeElementBounds(element);
+      const rowSpan = element.endRow - element.startRow;
+      const colSpan = element.endCol - element.startCol;
+      const bounds = {
+        startRow: cell.row,
+        endRow: cell.row + rowSpan,
+        startCol: cell.col,
+        endCol: cell.col + colSpan
+      };
+
+      removeElementsOverlappingBounds(bounds, element.type, id);
+      element.row = cell.row;
+      element.col = cell.col;
+      element.startRow = bounds.startRow;
+      element.endRow = bounds.endRow;
+      element.startCol = bounds.startCol;
+      element.endCol = bounds.endCol;
+      return true;
+    }
+
+    function moveElementToBounds(id, bounds, removeOverlaps = false) {
+      const element = placedElements.find((placedElement) => placedElement.id === id);
+      if (!element) return false;
+
+      if (removeOverlaps) {
+        removeElementsOverlappingBounds(bounds, element.type, id);
+      }
+
+      element.row = bounds.startRow;
+      element.col = bounds.startCol;
+      element.startRow = bounds.startRow;
+      element.endRow = bounds.endRow;
+      element.startCol = bounds.startCol;
+      element.endCol = bounds.endCol;
+      return true;
+    }
+
+    function getSnappedMoveBounds(point) {
+      if (!moveState) return null;
+
+      const targetCell = findCellAtPoint(point) || findNearestCell(point);
+      if (!targetCell) return null;
+
+      const maxStartRow = Math.max(0, moveState.maxRow - moveState.rowSpan);
+      const maxStartCol = Math.max(0, moveState.maxCol - moveState.colSpan);
+      const startRow = Math.min(Math.max(0, targetCell.row - moveState.pointerRowOffset), maxStartRow);
+      const startCol = Math.min(Math.max(0, targetCell.col - moveState.pointerColOffset), maxStartCol);
+
+      return {
+        startRow,
+        endRow: startRow + moveState.rowSpan,
+        startCol,
+        endCol: startCol + moveState.colSpan
+      };
+    }
+
+    function moveElementToPoint(point) {
+      const bounds = getSnappedMoveBounds(point);
+      if (!bounds) return;
+
+      if (hasSameTypeOverlap(bounds, moveState.type, moveState.id)) {
+        return;
+      }
+
+      moveElementToBounds(moveState.id, bounds, false);
+      moveState.lastValidBounds = bounds;
+      draw();
+    }
+
+    function findNearestAllowedCellForEdge(edge, startBounds, point) {
+      let candidates = [];
+
+      if (edge === 'left') {
+        candidates = currentCells
+          .filter((cell) => cell.col <= startBounds.endCol)
+          .map((cell) => ({ cell, value: cell.x, distance: Math.abs(point.x - cell.x) }));
+      }
+
+      if (edge === 'right') {
+        candidates = currentCells
+          .filter((cell) => cell.col >= startBounds.startCol)
+          .map((cell) => ({ cell, value: cell.x + cell.width, distance: Math.abs(point.x - (cell.x + cell.width)) }));
+      }
+
+      if (edge === 'top') {
+        candidates = currentCells
+          .filter((cell) => cell.row <= startBounds.endRow)
+          .map((cell) => ({ cell, value: cell.y, distance: Math.abs(point.y - cell.y) }));
+      }
+
+      if (edge === 'bottom') {
+        candidates = currentCells
+          .filter((cell) => cell.row >= startBounds.startRow)
+          .map((cell) => ({ cell, value: cell.y + cell.height, distance: Math.abs(point.y - (cell.y + cell.height)) }));
+      }
+
+      candidates.sort((a, b) => a.distance - b.distance);
+      return candidates[0]?.cell || null;
+    }
+
+    function resizeElementToPoint(point) {
+      if (!resizeState) return;
+
+      const element = placedElements.find((placedElement) => placedElement.id === resizeState.id);
+      if (!element) return;
+
+      const targetCell = findNearestAllowedCellForEdge(resizeState.edge, resizeState.startBounds, point);
+      if (!targetCell) return;
+
+      element.startRow = resizeState.startBounds.startRow;
+      element.endRow = resizeState.startBounds.endRow;
+      element.startCol = resizeState.startBounds.startCol;
+      element.endCol = resizeState.startBounds.endCol;
+
+      if (resizeState.edge === 'left') element.startCol = targetCell.col;
+      if (resizeState.edge === 'right') element.endCol = targetCell.col;
+      if (resizeState.edge === 'top') element.startRow = targetCell.row;
+      if (resizeState.edge === 'bottom') element.endRow = targetCell.row;
+
+      normalizeElementBounds(element);
+      draw();
+    }
+
+    function drawPlacedElements() {
+      currentElementRects = [];
+      const drawOrder = [...placedElements].sort((a, b) => {
+        if (a.type === b.type) return a.id - b.id;
+        return a.type === 'image' ? -1 : 1;
+      });
+
+      drawOrder.forEach((element) => {
+        const elementRect = getElementRect(element);
+        if (!elementRect) return;
+
+        const { x, y, width, height } = elementRect;
+        const isText = element.type === 'text';
+        currentElementRects.push(elementRect);
+
+        ctx.save();
+        ctx.fillStyle = isText ? 'rgba(5, 150, 105, 0.16)' : 'rgba(37, 99, 235, 0.16)';
+        ctx.strokeStyle = isText ? '#059669' : '#2563eb';
+        ctx.lineWidth = 4;
+        ctx.fillRect(x, y, width, height);
+        ctx.strokeRect(x, y, width, height);
+        ctx.fillStyle = isText ? '#065f46' : '#1d4ed8';
+        ctx.font = '700 44px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(isText ? 'Text' : 'Bild', x + width / 2, y + height / 2);
+        ctx.restore();
+
+        if (hoveredElementId === element.id) {
+          drawDeleteButton(currentElementRects[currentElementRects.length - 1]);
+        }
+      });
+    }
+
+    function draw() {
+      const { pageOrientation, outerMargin, cols, rows, cellGap } = getSettings();
+      const pageFormat = pageFormats[pageOrientation] || pageFormats.portrait;
+      if (canvas.width !== pageFormat.width || canvas.height !== pageFormat.height) {
+        canvas.width = pageFormat.width;
+        canvas.height = pageFormat.height;
+      }
+      canvas.style.width = pageFormat.displayWidth;
+      canvas.style.height = pageFormat.displayHeight;
+      outputs.pageLabel.textContent = pageFormat.label;
+
+      const { width, height } = canvas;
+
+      outputs.pageOrientationValue.textContent = pageOrientation === 'landscape' ? 'Quer' : 'Hoch';
+      outputs.outerMarginValue.textContent = outerMargin.toFixed(0);
+      outputs.colsValue.textContent = cols;
+      outputs.rowsValue.textContent = rows;
+      outputs.cellGapValue.textContent = cellGap.toFixed(0);
+
+      ctx.clearRect(0, 0, width, height);
+      const isElementsTab = activeTab === 'elements';
+
+      // Seite
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      // Hintergrund-Rasterhilfe
+      if (!isElementsTab) {
+        ctx.save();
+        ctx.strokeStyle = '#f1f5f9';
+        ctx.lineWidth = 1;
+        for (let x = 0; x <= width; x += 40) {
+          ctx.beginPath();
+          ctx.moveTo(x + 0.5, 0);
+          ctx.lineTo(x + 0.5, height);
+          ctx.stroke();
+        }
+        for (let y = 0; y <= height; y += 40) {
+          ctx.beginPath();
+          ctx.moveTo(0, y + 0.5);
+          ctx.lineTo(width, y + 0.5);
+          ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      const gridX = outerMargin;
+      const gridY = outerMargin;
+      const gridWidth = width - outerMargin * 2;
+      const gridHeight = height - outerMargin * 2;
+      currentCells = [];
+
+      if (gridWidth <= 0 || gridHeight <= 0) {
+        outputs.cellWidthStat.textContent = '–';
+        outputs.cellHeightStat.textContent = '–';
+        outputs.gridWidthStat.textContent = '–';
+        outputs.gridHeightStat.textContent = '–';
+        setStatus('Der Außenabstand ist zu groß für die A5-Seite.', true);
+        drawPageBorder();
+        return;
+      }
+
+      const totalHorizontalGap = (cols - 1) * cellGap;
+      const totalVerticalGap = (rows - 1) * cellGap;
+      const cellWidth = (gridWidth - totalHorizontalGap) / cols;
+      const cellHeight = (gridHeight - totalVerticalGap) / rows;
+
+      outputs.gridWidthStat.textContent = gridWidth.toFixed(2) + ' px';
+      outputs.gridHeightStat.textContent = gridHeight.toFixed(2) + ' px';
+
+      if (cellWidth <= 0 || cellHeight <= 0) {
+        outputs.cellWidthStat.textContent = 'ungültig';
+        outputs.cellHeightStat.textContent = 'ungültig';
+        setStatus('Mit diesen Werten bleibt für die Zellen kein positiver Platz mehr übrig.', true);
+        drawPageBorder();
+        drawMarginGuide(gridX, gridY, gridWidth, gridHeight);
+        return;
+      }
+
+      outputs.cellWidthStat.textContent = cellWidth.toFixed(2) + ' px';
+      outputs.cellHeightStat.textContent = cellHeight.toFixed(2) + ' px';
+      setStatus('Raster erfolgreich berechnet und dargestellt.', false);
+
+      if (!isElementsTab) {
+        drawMarginGuide(gridX, gridY, gridWidth, gridHeight);
+      }
+
+      // Zellen
+      ctx.save();
+      for (let row = 0; row < rows; row++) {
+        for (let col = 0; col < cols; col++) {
+          const x = gridX + col * (cellWidth + cellGap);
+          const y = gridY + row * (cellHeight + cellGap);
+          currentCells.push({ row, col, x, y, width: cellWidth, height: cellHeight });
+
+          ctx.strokeStyle = isElementsTab ? 'rgba(107, 114, 128, 0.38)' : 'rgba(37, 99, 235, 0.95)';
+          ctx.lineWidth = isElementsTab ? 2 : 3;
+          if (!isElementsTab) {
+            ctx.fillStyle = 'rgba(37, 99, 235, 0.10)';
+            ctx.fillRect(x, y, cellWidth, cellHeight);
+          }
+          ctx.strokeRect(x, y, cellWidth, cellHeight);
+        }
+      }
+      ctx.restore();
+
+      drawPlacedElements();
+
+      if (!isElementsTab) {
+        // Außenkante des Rasters markieren
+        ctx.save();
+        ctx.strokeStyle = '#111827';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([14, 10]);
+        ctx.strokeRect(gridX, gridY, gridWidth, gridHeight);
+        ctx.restore();
+      }
+
+      drawPageBorder();
+    }
+
+    function drawPageBorder() {
+      ctx.save();
+      ctx.strokeStyle = '#9ca3af';
+      ctx.lineWidth = 4;
+      ctx.strokeRect(2, 2, canvas.width - 4, canvas.height - 4);
+      ctx.restore();
+    }
+
+    function drawMarginGuide(x, y, w, h) {
+      ctx.save();
+      ctx.strokeStyle = 'rgba(107, 114, 128, 0.8)';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([8, 8]);
+      ctx.strokeRect(x, y, w, h);
+      ctx.restore();
+    }
+
+    controls.pageOrientationRange.addEventListener('input', draw);
+    controls.outerMarginRange.addEventListener('input', draw);
+    controls.colsRange.addEventListener('input', draw);
+    controls.rowsRange.addEventListener('input', draw);
+    controls.cellGapRange.addEventListener('input', draw);
+    tabButtons.forEach((button) => {
+      button.addEventListener('click', () => setActiveTab(button.dataset.tab));
+    });
+    elementOptions.forEach((option) => {
+      option.addEventListener('dragstart', (event) => {
+        setDragPayload(event.dataTransfer, {
+          source: 'palette',
+          type: option.dataset.elementType
+        });
+        event.dataTransfer.effectAllowed = 'copy';
+      });
+      option.addEventListener('dragend', () => {
+        currentDragPayload = null;
+      });
+    });
+    canvas.addEventListener('dragstart', (event) => {
+      if (resizeState) {
+        event.preventDefault();
+        return;
+      }
+
+      const point = getCanvasPoint(event);
+      if (findDeleteButtonAtPoint(point)) {
+        event.preventDefault();
+        return;
+      }
+
+      const elementRect = findPlacedElementAtPoint(point);
+      if (!elementRect) {
+        event.preventDefault();
+        return;
+      }
+
+      setDragPayload(event.dataTransfer, {
+        source: 'canvas',
+        id: elementRect.id,
+        type: elementRect.type
+      });
+      event.dataTransfer.effectAllowed = 'move';
+    });
+    canvas.addEventListener('dragend', () => {
+      currentDragPayload = null;
+    });
+    canvas.addEventListener('dragover', (event) => {
+      const cell = findCellAtPoint(getCanvasPoint(event));
+      if (!cell) return;
+
+      event.preventDefault();
+      event.dataTransfer.dropEffect = currentDragPayload?.source === 'canvas' ? 'move' : 'copy';
+    });
+    canvas.addEventListener('drop', (event) => {
+      event.preventDefault();
+      const payload = getDragPayload(event.dataTransfer);
+      currentDragPayload = null;
+      if (!payload || (payload.type !== 'image' && payload.type !== 'text')) return;
+
+      const cell = findCellAtPoint(getCanvasPoint(event));
+      if (!cell) {
+        setStatus('Elemente können nur innerhalb einer Rasterzelle platziert werden.', true);
+        return;
+      }
+
+      const isMove = payload.source === 'canvas';
+      if (isMove) {
+        if (!movePlacedElement(payload.id, cell)) return;
+      } else {
+        addPlacedElement(payload.type, cell);
+      }
+
+      draw();
+      setStatus(`${payload.type === 'text' ? 'Text' : 'Bild'} in Zelle ${cell.col + 1}/${cell.row + 1} ${isMove ? 'verschoben' : 'platziert'}.`, false);
+    });
+    canvas.addEventListener('pointerdown', (event) => {
+      if (event.button !== 0) return;
+
+      const point = getCanvasPoint(event);
+      const deleteButton = findDeleteButtonAtPoint(point);
+      if (deleteButton) {
+        if (deletePlacedElement(deleteButton.id)) {
+          draw();
+          setStatus('Element gelöscht.', false);
+        }
+        event.preventDefault();
+        return;
+      }
+
+      const edgeHit = findElementEdgeAtPoint(point);
+      if (!edgeHit) {
+        const elementRect = findPlacedElementAtPoint(point);
+        if (!elementRect) return;
+
+        const element = placedElements.find((placedElement) => placedElement.id === elementRect.id);
+        const pointerCell = findCellAtPoint(point) || findNearestCell(point);
+        if (!element || !pointerCell) return;
+
+        normalizeElementBounds(element);
+        moveState = {
+          id: element.id,
+          type: element.type,
+          rowSpan: element.endRow - element.startRow,
+          colSpan: element.endCol - element.startCol,
+          startBounds: {
+            startRow: element.startRow,
+            endRow: element.endRow,
+            startCol: element.startCol,
+            endCol: element.endCol
+          },
+          lastValidBounds: {
+            startRow: element.startRow,
+            endRow: element.endRow,
+            startCol: element.startCol,
+            endCol: element.endCol
+          },
+          pointerRowOffset: Math.min(Math.max(0, pointerCell.row - element.startRow), element.endRow - element.startRow),
+          pointerColOffset: Math.min(Math.max(0, pointerCell.col - element.startCol), element.endCol - element.startCol),
+          maxRow: Math.max(...currentCells.map((cell) => cell.row)),
+          maxCol: Math.max(...currentCells.map((cell) => cell.col))
+        };
+        hoveredElementId = element.id;
+        canvas.style.cursor = 'grabbing';
+        canvas.setPointerCapture(event.pointerId);
+        event.preventDefault();
+        return;
+      }
+
+      const element = placedElements.find((placedElement) => placedElement.id === edgeHit.elementRect.id);
+      if (!element) return;
+      normalizeElementBounds(element);
+
+      resizeState = {
+        id: element.id,
+        edge: edgeHit.edge,
+        startPoint: point,
+        startBounds: {
+          startRow: element.startRow,
+          endRow: element.endRow,
+          startCol: element.startCol,
+          endCol: element.endCol
+        }
+      };
+      canvas.draggable = false;
+      canvas.style.cursor = getResizeCursor(edgeHit.edge);
+      canvas.setPointerCapture(event.pointerId);
+      event.preventDefault();
+    });
+    canvas.addEventListener('pointermove', (event) => {
+      const point = getCanvasPoint(event);
+
+      if (resizeState) {
+        resizeElementToPoint(point);
+        event.preventDefault();
+        return;
+      }
+
+      if (moveState) {
+        moveElementToPoint(point);
+        canvas.style.cursor = 'grabbing';
+        event.preventDefault();
+        return;
+      }
+
+      const hoveredElement = findPlacedElementAtPoint(point);
+      const nextHoveredElementId = hoveredElement ? hoveredElement.id : null;
+      if (nextHoveredElementId !== hoveredElementId) {
+        hoveredElementId = nextHoveredElementId;
+        draw();
+      }
+
+      const deleteButton = findDeleteButtonAtPoint(point);
+      if (deleteButton) {
+        canvas.style.cursor = 'pointer';
+        return;
+      }
+
+      const edgeHit = findElementEdgeAtPoint(point);
+      canvas.style.cursor = edgeHit ? getResizeCursor(edgeHit.edge) : '';
+    });
+    canvas.addEventListener('pointerleave', () => {
+      if (resizeState || moveState || hoveredElementId === null) return;
+
+      hoveredElementId = null;
+      canvas.style.cursor = '';
+      draw();
+    });
+    canvas.addEventListener('pointerup', (event) => {
+      if (moveState) {
+        const bounds = getSnappedMoveBounds(getCanvasPoint(event));
+        let wasBlocked = false;
+        if (bounds && !hasSameTypeOverlap(bounds, moveState.type, moveState.id)) {
+          moveElementToBounds(moveState.id, bounds, false);
+          moveState.lastValidBounds = bounds;
+        } else {
+          wasBlocked = true;
+          moveElementToBounds(moveState.id, moveState.lastValidBounds || moveState.startBounds, false);
+        }
+
+        canvas.releasePointerCapture(event.pointerId);
+        canvas.style.cursor = '';
+        const movedType = moveState.type;
+        moveState = null;
+        draw();
+        setStatus(
+          wasBlocked
+            ? `${movedType === 'text' ? 'Text' : 'Bild'} wurde nicht verschoben (gleichartiges Element im Zielbereich).`
+            : `${movedType === 'text' ? 'Text' : 'Bild'} verschoben.`,
+          wasBlocked
+        );
+        return;
+      }
+
+      if (!resizeState) return;
+
+      const resizedElement = placedElements.find((placedElement) => placedElement.id === resizeState.id);
+      if (resizedElement) {
+        normalizeElementBounds(resizedElement);
+        removeElementsOverlappingBounds(
+          {
+            startRow: resizedElement.startRow,
+            endRow: resizedElement.endRow,
+            startCol: resizedElement.startCol,
+            endCol: resizedElement.endCol
+          },
+          resizedElement.type,
+          resizedElement.id
+        );
+      }
+
+      canvas.releasePointerCapture(event.pointerId);
+      canvas.style.cursor = '';
+      setStatus('Elementrand angepasst.', false);
+      resizeState = null;
+      draw();
+    });
+    canvas.addEventListener('pointercancel', (event) => {
+      if (moveState) {
+        moveElementToBounds(moveState.id, moveState.startBounds, false);
+        canvas.releasePointerCapture(event.pointerId);
+        canvas.style.cursor = '';
+        moveState = null;
+        draw();
+        return;
+      }
+
+      if (!resizeState) return;
+
+      canvas.releasePointerCapture(event.pointerId);
+      canvas.style.cursor = '';
+      resizeState = null;
+      draw();
+    });
+
+    draw();
+  </script>
+</body>
+</html>
