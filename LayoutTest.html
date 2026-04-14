@@ -29,9 +29,74 @@
       min-height: 100vh;
       display: grid;
       grid-template-columns: 340px 1fr;
+      grid-template-rows: auto 1fr;
+      grid-template-areas:
+        "menu menu"
+        "sidebar main";
+    }
+
+    .app.sidebar-collapsed {
+      grid-template-columns: 0 1fr;
+      grid-template-areas:
+        "menu menu"
+        "main main";
+    }
+
+    .top-menu {
+      grid-area: menu;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #121720;
+      position: sticky;
+      top: 0;
+      z-index: 5;
+    }
+
+    .app-menu-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 36px;
+      padding: 8px 12px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #141a25;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .app-menu-button:hover {
+      color: var(--text);
+      background: #1d2636;
+    }
+
+    .app-menu-button.active {
+      color: #93c5fd;
+      background: #1f304a;
+      border-color: #35527a;
+    }
+
+    .app-menu-icon {
+      font-size: 1rem;
+      line-height: 1;
+    }
+
+    .menu-toggle-btn {
+      margin-right: 6px;
+    }
+
+    .app.sidebar-collapsed .sidebar {
+      display: none;
     }
 
     .sidebar {
+      grid-area: sidebar;
       background: var(--panel);
       border-right: 1px solid var(--border);
       padding: 24px;
@@ -319,8 +384,22 @@
     }
 
     .main {
+      grid-area: main;
       padding: 24px;
       overflow: auto;
+    }
+
+    .main-placeholder {
+      min-height: 220px;
+      display: grid;
+      place-items: center;
+      color: var(--muted);
+      font-size: 1.02rem;
+      text-align: center;
+      padding: 24px;
+      border: 1px dashed var(--border);
+      border-radius: 8px;
+      background: #141a25;
     }
 
     .canvas-wrap {
@@ -359,6 +438,23 @@
     @media (max-width: 920px) {
       .app {
         grid-template-columns: 1fr;
+        grid-template-rows: auto auto 1fr;
+        grid-template-areas:
+          "menu"
+          "sidebar"
+          "main";
+      }
+
+      .app.sidebar-collapsed {
+        grid-template-rows: auto 1fr;
+        grid-template-areas:
+          "menu"
+          "main";
+      }
+
+      .top-menu {
+        overflow-x: auto;
+        white-space: nowrap;
       }
 
       .sidebar {
@@ -374,7 +470,20 @@
 </head>
 <body>
   <div class="app">
+    <nav class="top-menu" aria-label="Hauptmenü">
+      <button id="sidebarToggleBtn" class="app-menu-button menu-toggle-btn" type="button" aria-label="Seitenleiste einklappen">
+        <span id="sidebarToggleIcon" class="app-menu-icon" aria-hidden="true">&#9776;</span>
+        <span id="sidebarToggleLabel">Menue Einklapp</span>
+      </button>
+      <button class="app-menu-button" type="button" data-app-view="projekt"><span class="app-menu-icon" aria-hidden="true">&#128193;</span><span>Projekt</span></button>
+      <button class="app-menu-button" type="button" data-app-view="redaktion"><span class="app-menu-icon" aria-hidden="true">&#9997;</span><span>Redaktion</span></button>
+      <button class="app-menu-button active" type="button" data-app-view="layout"><span class="app-menu-icon" aria-hidden="true">&#9638;</span><span>Layout</span></button>
+      <button class="app-menu-button" type="button" data-app-view="overlay"><span class="app-menu-icon" aria-hidden="true">&#9726;</span><span>Overlay</span></button>
+      <button class="app-menu-button" type="button" data-app-view="seite"><span class="app-menu-icon" aria-hidden="true">&#128196;</span><span>Seite</span></button>
+      <button class="app-menu-button" type="button" data-app-view="druck"><span class="app-menu-icon" aria-hidden="true">&#9113;</span><span>Druck</span></button>
+    </nav>
     <aside class="sidebar">
+      <div id="layoutSidebarContent">
       <div class="layout-switcher">
         <div class="switcher-row">
           <select id="categorySelect" class="layout-select" aria-label="Aktive Kategorie"></select>
@@ -492,14 +601,18 @@
           TODO: Für jede Elementart können hier Styling Einstellungen vorgenommen werden: Rand Farbe, Dicke, Eckenrundung, Rand nur bei Ecken, für Texte: Schriftart, Schriftgröße, verschiedene Schriftkategorien (Überschrift, Body, Subtext, Autor, hervorgehoben, dezent,...) Kategorien können selbst erstellt werden und bearbeitet werden. Sie sind später in "Projekt" zuordnenbar und in den Texteditoren auswählbar.
         </div>
       </section>
+      </div>
     </aside>
 
     <main class="main">
-      <div class="canvas-wrap">
-        <div class="canvas-frame">
-          <canvas id="pageCanvas" width="1480" height="2100"></canvas>
+      <div id="layoutMainContent">
+        <div class="canvas-wrap">
+          <div class="canvas-frame">
+            <canvas id="pageCanvas" width="1480" height="2100"></canvas>
+          </div>
         </div>
       </div>
+      <div id="mainPlaceholder" class="main-placeholder" hidden></div>
     </main>
   </div>
 
@@ -507,6 +620,14 @@
     const canvas = document.getElementById('pageCanvas');
     const ctx = canvas.getContext('2d');
     const mainArea = document.querySelector('.main');
+    const appRoot = document.querySelector('.app');
+    const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+    const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
+    const sidebarToggleLabel = document.getElementById('sidebarToggleLabel');
+    const topMenuButtons = Array.from(document.querySelectorAll('.app-menu-button[data-app-view]'));
+    const layoutSidebarContent = document.getElementById('layoutSidebarContent');
+    const layoutMainContent = document.getElementById('layoutMainContent');
+    const mainPlaceholder = document.getElementById('mainPlaceholder');
 
     const pageFormats = {
       portrait: {
@@ -576,6 +697,8 @@
     let resizeState = null;
     let moveState = null;
     let hoveredElementId = null;
+    let isSidebarCollapsed = false;
+    let activeAppView = 'layout';
     let activeTab = 'setup';
     let activeCategoryId = null;
     let activeLayoutId = null;
@@ -696,6 +819,66 @@
         }
         mainArea.scrollTop = 0;
       });
+    }
+
+    function getAppViewTitle(view) {
+      if (view === 'projekt') return 'Projekt';
+      if (view === 'redaktion') return 'Redaktion';
+      if (view === 'overlay') return 'Overlay';
+      if (view === 'seite') return 'Seite';
+      if (view === 'druck') return 'Druck';
+      return 'Layout';
+    }
+
+    function setActiveAppView(view, persist = true) {
+      const allowedViews = new Set(['projekt', 'redaktion', 'layout', 'overlay', 'seite', 'druck']);
+      const nextView = allowedViews.has(view) ? view : 'layout';
+      activeAppView = nextView;
+
+      topMenuButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.appView === nextView);
+      });
+
+      const isLayoutView = nextView === 'layout';
+      layoutSidebarContent.hidden = !isLayoutView;
+      layoutMainContent.hidden = !isLayoutView;
+      mainPlaceholder.hidden = isLayoutView;
+
+      if (!isLayoutView) {
+        mainPlaceholder.textContent = `${getAppViewTitle(nextView)}: TODO`;
+        if (mainArea) {
+          mainArea.scrollLeft = 0;
+          mainArea.scrollTop = 0;
+        }
+      } else {
+        draw();
+      }
+
+      if (persist) {
+        queueSnapshotSave();
+      }
+    }
+
+    function setSidebarCollapsed(collapsed, persist = true) {
+      isSidebarCollapsed = !!collapsed;
+      if (appRoot) {
+        appRoot.classList.toggle('sidebar-collapsed', isSidebarCollapsed);
+      }
+      if (sidebarToggleLabel) {
+        sidebarToggleLabel.textContent = isSidebarCollapsed ? 'Menue Ausklapp' : 'Menue Einklapp';
+      }
+      if (sidebarToggleBtn) {
+        sidebarToggleBtn.setAttribute(
+          'aria-label',
+          isSidebarCollapsed ? 'Seitenleiste ausklappen' : 'Seitenleiste einklappen'
+        );
+      }
+      if (sidebarToggleIcon) {
+        sidebarToggleIcon.textContent = isSidebarCollapsed ? '▶' : '◀';
+      }
+      if (persist) {
+        queueSnapshotSave();
+      }
     }
 
     function serializeElements() {
@@ -938,6 +1121,8 @@
       return {
         version: 3,
         savedAt: Date.now(),
+        activeSidebarCollapsed: isSidebarCollapsed,
+        activeAppView,
         activeTab,
         activeCategoryId,
         activeLayoutId,
@@ -1073,6 +1258,10 @@
       tabPanels.forEach((panel) => {
         panel.hidden = panel.dataset.panel !== tabName;
       });
+
+      activeAppView = typeof snapshot.activeAppView === 'string' ? snapshot.activeAppView : 'layout';
+      setActiveAppView(activeAppView, false);
+      setSidebarCollapsed(!!snapshot.activeSidebarCollapsed, false);
     }
 
     function getSettings() {
@@ -1924,6 +2113,16 @@
     controls.colsRange.addEventListener('input', handleSettingsInput);
     controls.rowsRange.addEventListener('input', handleSettingsInput);
     controls.cellGapRange.addEventListener('input', handleSettingsInput);
+    if (sidebarToggleBtn) {
+      sidebarToggleBtn.addEventListener('click', () => {
+        setSidebarCollapsed(!isSidebarCollapsed);
+      });
+    }
+    topMenuButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setActiveAppView(button.dataset.appView || 'layout');
+      });
+    });
     categoryUi.select.addEventListener('change', () => {
       switchToCategory(categoryUi.select.value);
     });
@@ -2347,6 +2546,8 @@
         loadLayoutIntoEditor(defaultCategory.layouts[0]);
         refreshCategorySelector();
         refreshLayoutSelector();
+        setActiveAppView('layout', false);
+        setSidebarCollapsed(false, false);
       }
       draw();
     }
