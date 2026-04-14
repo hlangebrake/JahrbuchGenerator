@@ -145,7 +145,7 @@
 
     .tabs {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       margin-bottom: 18px;
       padding: 4px;
@@ -404,11 +404,15 @@
       <div class="tabs" role="tablist" aria-label="Einstellungen">
         <button class="tab-button active" type="button" role="tab" id="setupTab" aria-controls="setupPanel" aria-selected="true" data-tab="setup">
           <span class="tab-icon" aria-hidden="true">&#9881;</span>
-          <span>SetUp</span>
+          <span>Set</span>
+        </button>
+        <button class="tab-button" type="button" role="tab" id="stylingTab" aria-controls="stylingPanel" aria-selected="false" data-tab="styling">
+          <span class="tab-icon" aria-hidden="true">&#10000;</span>
+          <span>Style</span>
         </button>
         <button class="tab-button" type="button" role="tab" id="elementsTab" aria-controls="elementsPanel" aria-selected="false" data-tab="elements">
           <span class="tab-icon" aria-hidden="true">&#9638;</span>
-          <span>Elemente</span>
+          <span>Move</span>
         </button>
       </div>
 
@@ -481,6 +485,12 @@
             </div>
           </div>
         </section>
+      </section>
+
+      <section class="tab-panel" id="stylingPanel" role="tabpanel" aria-labelledby="stylingTab" data-panel="styling" hidden>
+        <div class="control">
+          TODO: Für jede Elementart können hier Styling Einstellungen vorgenommen werden: Rand Farbe, Dicke, Eckenrundung, Rand nur bei Ecken, für Texte: Schriftart, Schriftgröße, verschiedene Schriftkategorien (Überschrift, Body, Subtext, Autor, hervorgehoben, dezent,...) Kategorien können selbst erstellt werden und bearbeitet werden. Sie sind später in "Projekt" zuordnenbar und in den Texteditoren auswählbar.
+        </div>
       </section>
     </aside>
 
@@ -1395,6 +1405,18 @@
       if (!element) return false;
 
       normalizeElementBounds(element);
+      const sourceBounds = {
+        startRow: element.startRow,
+        endRow: element.endRow,
+        startCol: element.startCol,
+        endCol: element.endCol
+      };
+      const sourcePageFlags = {
+        leftBoundary: element.leftBoundary,
+        rightBoundary: element.rightBoundary,
+        topToPage: element.topToPage,
+        bottomToPage: element.bottomToPage
+      };
       const rowSpan = element.endRow - element.startRow;
       const colSpan = element.endCol - element.startCol;
       const bounds = {
@@ -1411,16 +1433,38 @@
       element.endRow = bounds.endRow;
       element.startCol = bounds.startCol;
       element.endCol = bounds.endCol;
-      element.leftBoundary = 'none';
-      element.rightBoundary = 'none';
-      element.leftToPage = false;
-      element.rightToPage = false;
-      element.topToPage = false;
-      element.bottomToPage = false;
+      applyMoveBoundaryRetention(element, bounds, sourceBounds, sourcePageFlags);
       return true;
     }
 
-    function moveElementToBounds(id, bounds, removeOverlaps = false) {
+    function applyMoveBoundaryRetention(element, bounds, sourceBounds, sourcePageFlags) {
+      const movedHorizontally = (
+        bounds.startCol !== sourceBounds.startCol ||
+        bounds.endCol !== sourceBounds.endCol
+      );
+      const movedVertically = (
+        bounds.startRow !== sourceBounds.startRow ||
+        bounds.endRow !== sourceBounds.endRow
+      );
+
+      element.leftBoundary = 'none';
+      element.rightBoundary = 'none';
+      if (!movedHorizontally) {
+        if (sourcePageFlags.leftBoundary === 'page-left' || sourcePageFlags.leftBoundary === 'page-seam') {
+          element.leftBoundary = sourcePageFlags.leftBoundary;
+        }
+        if (sourcePageFlags.rightBoundary === 'page-right' || sourcePageFlags.rightBoundary === 'page-seam') {
+          element.rightBoundary = sourcePageFlags.rightBoundary;
+        }
+      }
+
+      element.leftToPage = element.leftBoundary === 'page-left';
+      element.rightToPage = element.rightBoundary === 'page-right';
+      element.topToPage = !movedVertically && !!sourcePageFlags.topToPage;
+      element.bottomToPage = !movedVertically && !!sourcePageFlags.bottomToPage;
+    }
+
+    function moveElementToBounds(id, bounds, removeOverlaps = false, preserveState = null) {
       const element = placedElements.find((placedElement) => placedElement.id === id);
       if (!element) return false;
 
@@ -1434,12 +1478,20 @@
       element.endRow = bounds.endRow;
       element.startCol = bounds.startCol;
       element.endCol = bounds.endCol;
-      element.leftBoundary = 'none';
-      element.rightBoundary = 'none';
-      element.leftToPage = false;
-      element.rightToPage = false;
-      element.topToPage = false;
-      element.bottomToPage = false;
+      if (
+        preserveState &&
+        preserveState.startBounds &&
+        preserveState.startPageFlags
+      ) {
+        applyMoveBoundaryRetention(element, bounds, preserveState.startBounds, preserveState.startPageFlags);
+      } else {
+        element.leftBoundary = 'none';
+        element.rightBoundary = 'none';
+        element.leftToPage = false;
+        element.rightToPage = false;
+        element.topToPage = false;
+        element.bottomToPage = false;
+      }
       return true;
     }
 
@@ -1470,7 +1522,7 @@
         return;
       }
 
-      moveElementToBounds(moveState.id, bounds, false);
+      moveElementToBounds(moveState.id, bounds, false, moveState);
       moveState.lastValidBounds = bounds;
       draw();
     }
@@ -2127,6 +2179,12 @@
             startCol: element.startCol,
             endCol: element.endCol
           },
+          startPageFlags: {
+            leftBoundary: element.leftBoundary || (element.leftToPage ? 'page-left' : 'none'),
+            rightBoundary: element.rightBoundary || (element.rightToPage ? 'page-right' : 'none'),
+            topToPage: element.topToPage,
+            bottomToPage: element.bottomToPage
+          },
           lastValidBounds: {
             startRow: element.startRow,
             endRow: element.endRow,
@@ -2227,11 +2285,11 @@
         const bounds = getSnappedMoveBounds(getCanvasPoint(event));
         let wasBlocked = false;
         if (bounds && !hasSameTypeOverlap(bounds, moveState.type, moveState.id)) {
-          moveElementToBounds(moveState.id, bounds, false);
+          moveElementToBounds(moveState.id, bounds, false, moveState);
           moveState.lastValidBounds = bounds;
         } else {
           wasBlocked = true;
-          moveElementToBounds(moveState.id, moveState.lastValidBounds || moveState.startBounds, false);
+          moveElementToBounds(moveState.id, moveState.lastValidBounds || moveState.startBounds, false, moveState);
         }
 
         canvas.releasePointerCapture(event.pointerId);
@@ -2260,7 +2318,7 @@
     });
     canvas.addEventListener('pointercancel', (event) => {
       if (moveState) {
-        moveElementToBounds(moveState.id, moveState.startBounds, false);
+        moveElementToBounds(moveState.id, moveState.startBounds, false, moveState);
         canvas.releasePointerCapture(event.pointerId);
         canvas.style.cursor = '';
         moveState = null;
