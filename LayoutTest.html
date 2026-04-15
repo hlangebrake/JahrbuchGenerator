@@ -18,6 +18,35 @@
 
     * { box-sizing: border-box; }
 
+    * {
+      scrollbar-width: thin;
+      scrollbar-color: rgba(96, 165, 250, 0.34) rgba(16, 21, 31, 0.62);
+    }
+
+    *::-webkit-scrollbar {
+      width: 10px;
+      height: 10px;
+    }
+
+    *::-webkit-scrollbar-track {
+      background: rgba(16, 21, 31, 0.62);
+      border-radius: 999px;
+    }
+
+    *::-webkit-scrollbar-thumb {
+      background: linear-gradient(180deg, rgba(96, 165, 250, 0.34), rgba(154, 163, 178, 0.24));
+      border: 2px solid rgba(16, 21, 31, 0.82);
+      border-radius: 999px;
+    }
+
+    *::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(180deg, rgba(147, 197, 253, 0.52), rgba(154, 163, 178, 0.34));
+    }
+
+    *::-webkit-scrollbar-corner {
+      background: transparent;
+    }
+
     body {
       margin: 0;
       font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
@@ -276,11 +305,271 @@
       min-height: 0;
     }
 
+    #seiteMainContent {
+      height: 100%;
+      min-height: 0;
+    }
+
+    .seite-workspace {
+      height: 100%;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .seite-toolbar {
+      min-height: 52px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      background: #10151f;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .seite-view-toggle {
+      display: inline-grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #141a25;
+    }
+
+    .seite-view-toggle-btn {
+      min-height: 32px;
+      padding: 6px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.82rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .seite-view-toggle-btn.active {
+      color: var(--text);
+      background: rgba(96, 165, 250, 0.22);
+    }
+
+    .seite-stage {
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow: auto;
+      background:
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.08), transparent 34%),
+        #111318;
+    }
+
+    .seite-page-preview {
+      position: relative;
+      width: min(72vh, 520px);
+      aspect-ratio: 148 / 210;
+      background: #ffffff;
+      color: #111827;
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.48);
+      overflow: hidden;
+    }
+
+    .seite-page-preview.landscape {
+      width: min(82vw, 760px);
+      aspect-ratio: 210 / 148;
+    }
+
+    .seite-spread-preview {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      filter: drop-shadow(0 24px 60px rgba(0, 0, 0, 0.48));
+    }
+
+    .seite-spread-preview .seite-page-preview {
+      box-shadow: none;
+    }
+
+    .seite-spread-preview .seite-page-preview + .seite-page-preview {
+      margin-left: 0;
+    }
+
+    .seite-spread-preview .seite-page-preview.spread-left {
+      box-shadow: inset -4px 0 8px rgba(15, 23, 42, 0.12);
+    }
+
+    .seite-spread-preview .seite-page-preview.spread-right {
+      box-shadow: inset 4px 0 8px rgba(15, 23, 42, 0.12);
+    }
+
+    .seite-page-placeholder {
+      color: var(--muted);
+      border: 1px dashed #3a465a;
+      border-radius: 10px;
+      padding: 18px;
+      text-align: center;
+      max-width: 420px;
+      line-height: 1.4;
+    }
+
+    .seite-preview-element {
+      position: absolute;
+      overflow: hidden;
+      border: 1px solid rgba(17, 24, 39, 0.10);
+      background: #f8fafc;
+    }
+
+    .seite-preview-element.image {
+      cursor: grab;
+      touch-action: none;
+    }
+
+    .seite-preview-element.image.adjusting {
+      cursor: grabbing;
+    }
+
+    .seite-preview-element img {
+      position: absolute;
+      display: block;
+      pointer-events: none;
+      user-select: none;
+    }
+
+    .seite-preview-text {
+      padding: 3.6%;
+      font-size: clamp(0.52rem, 1.25vw, 0.86rem);
+      line-height: 1.32;
+      white-space: pre-wrap;
+      color: #111827;
+    }
+
+    .seite-preview-empty-slot {
+      height: 100%;
+      display: grid;
+      place-items: center;
+      color: #94a3b8;
+      font-size: 0.76rem;
+      background: repeating-linear-gradient(
+        -45deg,
+        #f8fafc,
+        #f8fafc 8px,
+        #eef2f7 8px,
+        #eef2f7 16px
+      );
+    }
+
+    .seite-page-strip {
+      width: 100%;
+      max-width: 100%;
+      padding: 12px 14px;
+      border-top: 1px solid var(--border);
+      background: #10151f;
+      overflow-x: auto;
+      overflow-y: hidden;
+    }
+
+    .seite-page-strip-inner {
+      display: flex;
+      align-items: stretch;
+      min-width: max-content;
+    }
+
+    .seite-page-cell {
+      position: relative;
+      width: 74px;
+      min-height: 54px;
+      padding: 6px 7px;
+      border: 1px solid rgba(154, 163, 178, 0.32);
+      background: rgba(20, 26, 37, 0.92);
+      color: var(--text);
+      display: grid;
+      align-content: start;
+      gap: 4px;
+      flex: 0 0 auto;
+    }
+
+    .seite-page-cell + .seite-page-cell {
+      margin-left: -1px;
+    }
+
+    .seite-page-cell.pair-start {
+      margin-left: 8px;
+    }
+
+    .seite-page-cell.strong {
+      background: rgba(229, 231, 235, 0.16);
+      box-shadow: inset 0 0 0 1px rgba(229, 231, 235, 0.16);
+    }
+
+    .seite-page-cell.subtle {
+      background: rgba(154, 163, 178, 0.08);
+    }
+
+    .seite-page-cell.active {
+      border-color: #ffffff;
+      box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.36);
+      z-index: 1;
+    }
+
+    .seite-page-number {
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .seite-page-title {
+      color: var(--text);
+      font-size: 0.72rem;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 100%;
+      opacity: 0.82;
+    }
+
+    .seite-page-status {
+      position: absolute;
+      top: 5px;
+      right: 6px;
+      width: 15px;
+      height: 15px;
+      border-radius: 999px;
+      display: grid;
+      place-items: center;
+      font-size: 0.68rem;
+      font-weight: 900;
+      line-height: 1;
+    }
+
+    .seite-page-status.review {
+      color: #fde68a;
+      background: rgba(251, 191, 36, 0.20);
+    }
+
+    .seite-page-status.critical {
+      color: #fecaca;
+      background: rgba(248, 113, 113, 0.22);
+    }
+
+    .seite-empty {
+      min-height: 54px;
+      padding: 16px;
+      color: var(--muted);
+      border: 1px dashed #3a465a;
+      border-radius: 8px;
+      display: grid;
+      place-items: center;
+    }
+
     .redaktion-workspace {
       height: 100%;
       min-height: 0;
       display: grid;
-      grid-template-columns: minmax(260px, 360px) 82px minmax(260px, 360px) minmax(260px, 320px);
+      grid-template-columns: minmax(338px, 468px) 82px minmax(338px, 468px) minmax(260px, 320px);
       align-items: start;
       justify-content: center;
     }
@@ -541,7 +830,7 @@
 
     .redaktion-page-card {
       position: relative;
-      width: 260px;
+      width: 338px;
       padding: 10px 12px;
       display: grid;
       align-content: center;
@@ -585,6 +874,60 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      min-width: 0;
+    }
+
+    .redaktion-page-content {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      min-width: 0;
+    }
+
+    .redaktion-layout-preview-strip {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 4px;
+      max-width: 132px;
+      overflow: hidden;
+    }
+
+    .redaktion-layout-preview {
+      width: 22px;
+      height: 28px;
+      border: 1px solid rgba(229, 231, 235, 0.42);
+      border-radius: 3px;
+      background:
+        linear-gradient(90deg, rgba(229, 231, 235, 0.18) 1px, transparent 1px),
+        linear-gradient(rgba(229, 231, 235, 0.14) 1px, transparent 1px),
+        rgba(15, 23, 42, 0.46);
+      background-size: 7px 7px;
+      flex: 0 0 auto;
+    }
+
+    .redaktion-layout-preview.double {
+      width: 42px;
+      position: relative;
+    }
+
+    .redaktion-layout-preview.double::after {
+      content: '';
+      position: absolute;
+      top: 3px;
+      bottom: 3px;
+      left: 50%;
+      border-left: 1px solid rgba(229, 231, 235, 0.46);
+    }
+
+    .redaktion-layout-preview.invalid {
+      border-color: #f87171;
+      background:
+        linear-gradient(90deg, rgba(248, 113, 113, 0.34) 1px, transparent 1px),
+        linear-gradient(rgba(248, 113, 113, 0.24) 1px, transparent 1px),
+        rgba(127, 29, 29, 0.58);
+      box-shadow: 0 0 0 1px rgba(248, 113, 113, 0.36);
     }
 
     .redaktion-page-critical {
@@ -727,6 +1070,105 @@
       color: var(--text);
       font: inherit;
       padding: 7px 9px;
+    }
+
+    .redaktion-layout-list {
+      display: grid;
+      gap: 6px;
+    }
+
+    .redaktion-layout-row {
+      display: grid;
+      grid-template-columns: 74px minmax(0, 1fr);
+      gap: 7px;
+      align-items: center;
+    }
+
+    .redaktion-layout-row.invalid select {
+      border-color: #f87171;
+      background: rgba(127, 29, 29, 0.28);
+      color: #fecaca;
+    }
+
+    .redaktion-layout-row label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .redaktion-layout-covered {
+      min-height: 34px;
+      display: grid;
+      align-items: center;
+      padding: 7px 9px;
+      border: 1px solid rgba(154, 163, 178, 0.28);
+      border-radius: 6px;
+      background: rgba(15, 23, 42, 0.42);
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .redaktion-layout-warning {
+      grid-column: 2;
+      color: #fecaca;
+      font-size: 0.76rem;
+      line-height: 1.25;
+    }
+
+    .redaktion-status-switch {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 3px;
+      padding: 3px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #10151f;
+    }
+
+    .redaktion-status-option {
+      position: relative;
+      min-width: 0;
+    }
+
+    .redaktion-status-option input {
+      position: absolute;
+      width: auto;
+      min-height: 0;
+      padding: 0;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .redaktion-status-option span {
+      min-height: 30px;
+      padding: 6px 7px;
+      border-radius: 6px;
+      color: var(--muted);
+      display: grid;
+      place-items: center;
+      font-size: 0.78rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: background 0.16s ease, color 0.16s ease, box-shadow 0.16s ease;
+    }
+
+    .redaktion-status-option input:focus-visible + span {
+      box-shadow: 0 0 0 2px rgba(96, 165, 250, 0.35);
+    }
+
+    .redaktion-status-option input:checked + span {
+      color: var(--text);
+      background: rgba(96, 165, 250, 0.18);
+    }
+
+    .redaktion-status-option input[value="pruefen"]:checked + span {
+      color: #fde68a;
+      background: rgba(251, 191, 36, 0.18);
+    }
+
+    .redaktion-status-option input[value="kritisch"]:checked + span {
+      color: #fecaca;
+      background: rgba(248, 113, 113, 0.18);
     }
 
     @media (max-width: 920px) {
@@ -1349,12 +1791,21 @@
                   <input id="redaktionCountInput" type="number" min="0" step="1">
                 </div>
                 <div class="redaktion-field">
-                  <label for="redaktionStatusSelect">Status</label>
-                  <select id="redaktionStatusSelect">
-                    <option value="fertig">fertig</option>
-                    <option value="pruefen">prüfen</option>
-                    <option value="kritisch">kritisch</option>
-                  </select>
+                  <label>Status</label>
+                  <div class="redaktion-status-switch" role="radiogroup" aria-label="Status">
+                    <label class="redaktion-status-option">
+                      <input type="radio" name="redaktionStatus" value="fertig">
+                      <span>fertig</span>
+                    </label>
+                    <label class="redaktion-status-option">
+                      <input type="radio" name="redaktionStatus" value="pruefen">
+                      <span>pruefen</span>
+                    </label>
+                    <label class="redaktion-status-option">
+                      <input type="radio" name="redaktionStatus" value="kritisch">
+                      <span>kritisch</span>
+                    </label>
+                  </div>
                 </div>
               </fieldset>
               <fieldset class="redaktion-fieldset">
@@ -1368,8 +1819,8 @@
                   <select id="redaktionCategorySelect"></select>
                 </div>
                 <div class="redaktion-field">
-                  <label for="redaktionLayoutSelect">Layout</label>
-                  <select id="redaktionLayoutSelect"></select>
+                  <label>Layout</label>
+                  <div id="redaktionLayoutList" class="redaktion-layout-list"></div>
                 </div>
               </fieldset>
               <fieldset class="redaktion-fieldset">
@@ -1378,6 +1829,20 @@
               </fieldset>
             </div>
           </aside>
+        </div>
+      </div>
+      <div id="seiteMainContent" hidden>
+        <div class="seite-workspace">
+          <div class="seite-toolbar">
+            <div class="seite-view-toggle" role="group" aria-label="Seitenansicht">
+              <button class="seite-view-toggle-btn active" type="button" data-seite-view-mode="single">Einzelseite</button>
+              <button class="seite-view-toggle-btn" type="button" data-seite-view-mode="double">Doppelseite</button>
+            </div>
+          </div>
+          <div id="seiteStage" class="seite-stage"></div>
+          <section class="seite-page-strip" aria-label="Seiten">
+            <div id="seitePageStrip" class="seite-page-strip-inner"></div>
+          </section>
         </div>
       </div>
     </main>
@@ -1407,6 +1872,10 @@
     const projectImportTree = document.getElementById('projectImportTree');
     const projectMainTree = document.getElementById('projectMainTree');
     const redaktionMainContent = document.getElementById('redaktionMainContent');
+    const seiteMainContent = document.getElementById('seiteMainContent');
+    const seiteStage = document.getElementById('seiteStage');
+    const seitePageStrip = document.getElementById('seitePageStrip');
+    const seiteViewToggleButtons = Array.from(document.querySelectorAll('.seite-view-toggle-btn'));
     const redaktionPageTool = document.getElementById('redaktionPageTool');
     const redaktionAutomaticTool = document.getElementById('redaktionAutomaticTool');
     const redaktionTrashTool = document.getElementById('redaktionTrashTool');
@@ -1419,10 +1888,10 @@
     const redaktionInspectorForm = document.getElementById('redaktionInspectorForm');
     const redaktionTitleInput = document.getElementById('redaktionTitleInput');
     const redaktionCountInput = document.getElementById('redaktionCountInput');
-    const redaktionStatusSelect = document.getElementById('redaktionStatusSelect');
+    const redaktionStatusInputs = Array.from(document.querySelectorAll('input[name="redaktionStatus"]'));
     const redaktionChildCategorySelect = document.getElementById('redaktionChildCategorySelect');
     const redaktionCategorySelect = document.getElementById('redaktionCategorySelect');
-    const redaktionLayoutSelect = document.getElementById('redaktionLayoutSelect');
+    const redaktionLayoutList = document.getElementById('redaktionLayoutList');
     const redaktionAssignedAssets = document.getElementById('redaktionAssignedAssets');
 
     const pageFormats = {
@@ -1521,6 +1990,11 @@
     let selectedAssetPaths = new Set();
     let redaktionResizeState = null;
     let redaktionAssetsFilter = 'all';
+    let activeSeitePageNumber = null;
+    let seiteViewMode = 'single';
+    let seitePreviewRenderToken = 0;
+    let seitePreviewObjectUrls = [];
+    let seiteImageDragState = null;
 
     const SNAPSHOT_DB_NAME = 'jahrbuch-generator-db';
     const SNAPSHOT_STORE_NAME = 'snapshots';
@@ -1689,6 +2163,7 @@
       const isLayoutView = nextView === 'layout';
       const isProjektView = nextView === 'projekt';
       const isRedaktionView = nextView === 'redaktion';
+      const isSeiteView = nextView === 'seite';
       if (appRoot) {
         appRoot.classList.toggle('main-only', !isLayoutView && !isProjektView);
       }
@@ -1697,6 +2172,8 @@
       layoutMainContent.hidden = !isLayoutView;
       if (projectMainContent) projectMainContent.hidden = !isProjektView;
       if (redaktionMainContent) redaktionMainContent.hidden = !isRedaktionView;
+      if (seiteMainContent) seiteMainContent.hidden = !isSeiteView;
+      if (!isSeiteView) clearSeitePreviewObjectUrls();
 
       if (!isLayoutView) {
         if (isProjektView) {
@@ -1704,6 +2181,9 @@
         }
         if (isRedaktionView) {
           renderRedaktionPages();
+        }
+        if (isSeiteView) {
+          renderSeitePageStrip();
         }
         if (mainArea) {
           mainArea.scrollLeft = 0;
@@ -1785,6 +2265,101 @@
       return categories.find((category) => category.id === categoryId) || null;
     }
 
+    function getLayoutById(category, layoutId) {
+      return (category?.layouts || []).find((layout) => layout.id === layoutId) || null;
+    }
+
+    function getRedaktionLayoutSpan(layout) {
+      normalizeLayoutSpreadMode(layout);
+      return isDoubleSpreadLayout(layout) ? 2 : 1;
+    }
+
+    function getRandomLayoutForRemaining(category, remainingCount) {
+      const candidates = (category?.layouts || []).filter((layout) => getRedaktionLayoutSpan(layout) <= remainingCount);
+      if (candidates.length === 0) return null;
+      return candidates[Math.floor(Math.random() * candidates.length)];
+    }
+
+    function normalizeRedaktionLayoutIds(page, forceRandom = false) {
+      if (!page) return [];
+      const count = normalizeRedaktionCount(page.count);
+      const category = getLayoutCategoryById(page.layoutCategoryId);
+      if (count === 0 || !category || !Array.isArray(category.layouts) || category.layouts.length === 0) {
+        page.layoutIds = [];
+        page.layoutId = '';
+        return page.layoutIds;
+      }
+
+      const sourceIds = forceRandom
+        ? []
+        : (Array.isArray(page.layoutIds) && page.layoutIds.length > 0
+          ? page.layoutIds
+          : (typeof page.layoutId === 'string' && page.layoutId && page.layoutId !== 'auto' ? [page.layoutId] : []));
+      const nextLayoutIds = [];
+      let usedCount = 0;
+
+      sourceIds.forEach((layoutId) => {
+        if (usedCount >= count) return;
+        const layout = getLayoutById(category, layoutId);
+        if (!layout) return;
+        const span = getRedaktionLayoutSpan(layout);
+        if (usedCount + span > count) return;
+        nextLayoutIds.push(layout.id);
+        usedCount += span;
+      });
+
+      while (usedCount < count) {
+        const layout = getRandomLayoutForRemaining(category, count - usedCount);
+        if (!layout) break;
+        nextLayoutIds.push(layout.id);
+        usedCount += getRedaktionLayoutSpan(layout);
+      }
+
+      page.layoutIds = nextLayoutIds;
+      page.layoutId = nextLayoutIds[0] || '';
+      return page.layoutIds;
+    }
+
+    function normalizeAllRedaktionPageLayouts(forceRandomCategoryId = '') {
+      redaktionPagesData.forEach((page) => {
+        normalizeRedaktionLayoutIds(page, forceRandomCategoryId && page.layoutCategoryId === forceRandomCategoryId);
+      });
+    }
+
+    function getRedaktionLayoutSlots(page) {
+      normalizeRedaktionLayoutIds(page);
+      const category = getLayoutCategoryById(page?.layoutCategoryId || '');
+      const slots = [];
+      let slotIndex = 0;
+      (page?.layoutIds || []).forEach((layoutId) => {
+        const layout = getLayoutById(category, layoutId);
+        if (!layout) return;
+        const span = getRedaktionLayoutSpan(layout);
+        slots.push({ slot: slotIndex, layout, covered: false });
+        if (span === 2) {
+          slots.push({ slot: slotIndex + 1, layout, covered: true });
+        }
+        slotIndex += span;
+      });
+      return slots.slice(0, normalizeRedaktionCount(page?.count));
+    }
+
+    function isValidRedaktionDoublePageStart(pageNumber) {
+      return Number.isInteger(pageNumber) && pageNumber >= 2 && pageNumber % 2 === 0;
+    }
+
+    function getInvalidRedaktionDoubleLayoutSlots(page, pageOrderNumber = getRedaktionOrderNumbers().get(page?.id) || 1) {
+      const invalidSlots = new Set();
+      getRedaktionLayoutSlots(page).forEach((slotInfo) => {
+        if (!slotInfo || slotInfo.covered || !isDoubleSpreadLayout(slotInfo.layout)) return;
+        const firstPageNumber = pageOrderNumber + slotInfo.slot;
+        if (!isValidRedaktionDoublePageStart(firstPageNumber)) {
+          invalidSlots.add(slotInfo.slot);
+        }
+      });
+      return invalidSlots;
+    }
+
     function getRedaktionParent(page) {
       return page?.parentId ? getRedaktionPageById(page.parentId) : null;
     }
@@ -1804,6 +2379,38 @@
       if (status === 'fertig' || status === 'kritisch') return status;
       if (status === 'prüfen' || status === 'pruefen' || status === '') return 'pruefen';
       return 'pruefen';
+    }
+
+    function normalizePathList(paths) {
+      const seenPaths = new Set();
+      return (Array.isArray(paths) ? paths : [])
+        .filter((path) => typeof path === 'string' && path.trim())
+        .map((path) => path.replace(/\\/g, '/').trim())
+        .filter((path) => {
+          if (seenPaths.has(path)) return false;
+          seenPaths.add(path);
+          return true;
+        });
+    }
+
+    function normalizeMediaSelectionList(paths) {
+      return (Array.isArray(paths) ? paths : [])
+        .filter((path) => typeof path === 'string' && path.trim())
+        .map((path) => path.replace(/\\/g, '/').trim());
+    }
+
+    function normalizeImageViewSettings(settings) {
+      const normalizedSettings = {};
+      if (!settings || typeof settings !== 'object') return normalizedSettings;
+      Object.entries(settings).forEach(([path, value]) => {
+        if (typeof path !== 'string' || !value || typeof value !== 'object') return;
+        normalizedSettings[path.replace(/\\/g, '/').trim()] = {
+          zoom: Math.min(5, Math.max(1, Number(value.zoom) || 1)),
+          offsetX: Math.min(500, Math.max(-500, Number(value.offsetX) || 0)),
+          offsetY: Math.min(500, Math.max(-500, Number(value.offsetY) || 0))
+        };
+      });
+      return normalizedSettings;
     }
 
     function getRedaktionPageHeight(count) {
@@ -1848,21 +2455,20 @@
       page.count = normalizeRedaktionCount(page.count);
       page.childLayoutCategoryId = typeof page.childLayoutCategoryId === 'string' ? page.childLayoutCategoryId : '';
       page.layoutCategoryId = typeof page.layoutCategoryId === 'string' ? page.layoutCategoryId : '';
-      page.layoutId = typeof page.layoutId === 'string' ? page.layoutId : 'auto';
+      page.layoutId = typeof page.layoutId === 'string' ? page.layoutId : '';
+      page.layoutIds = Array.isArray(page.layoutIds) ? page.layoutIds.filter((layoutId) => typeof layoutId === 'string') : [];
       page.assets = normalizeRedaktionAssets(page.assets);
+      page.selectedImagePaths = normalizeMediaSelectionList(page.selectedImagePaths);
+      page.selectedTextPaths = normalizeMediaSelectionList(page.selectedTextPaths);
+      page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
       page.status = normalizeRedaktionStatus(page.status);
       if (page.childLayoutCategoryId && !getLayoutCategoryById(page.childLayoutCategoryId)) {
         page.childLayoutCategoryId = '';
       }
       if (page.layoutCategoryId && !getLayoutCategoryById(page.layoutCategoryId)) {
         page.layoutCategoryId = '';
-        page.layoutId = 'auto';
       }
-      if (page.layoutId !== 'auto') {
-        const category = getLayoutCategoryById(page.layoutCategoryId);
-        const hasLayout = !!category?.layouts?.some((layout) => layout.id === page.layoutId);
-        if (!hasLayout) page.layoutId = 'auto';
-      }
+      normalizeRedaktionLayoutIds(page);
     }
 
     function normalizeRedaktionAssets(assets) {
@@ -1888,9 +2494,7 @@
     function applyLayoutCategoryToRedaktionPage(page, categoryId) {
       if (!page || !categoryId) return;
       page.layoutCategoryId = categoryId;
-      const category = getLayoutCategoryById(categoryId);
-      const hasLayout = !!category?.layouts?.some((layout) => layout.id === page.layoutId);
-      if (!hasLayout) page.layoutId = 'auto';
+      normalizeRedaktionLayoutIds(page, true);
     }
 
     function confirmRedaktionLayoutCategoryChange() {
@@ -1937,8 +2541,12 @@
           parentId: typeof page.parentId === 'string' ? page.parentId : null,
           childLayoutCategoryId: typeof page.childLayoutCategoryId === 'string' ? page.childLayoutCategoryId : '',
           layoutCategoryId: typeof page.layoutCategoryId === 'string' ? page.layoutCategoryId : '',
-          layoutId: typeof page.layoutId === 'string' ? page.layoutId : 'auto',
+          layoutId: typeof page.layoutId === 'string' ? page.layoutId : '',
+          layoutIds: Array.isArray(page.layoutIds) ? page.layoutIds.filter((layoutId) => typeof layoutId === 'string') : [],
           assets: normalizeRedaktionAssets(page.assets),
+          selectedImagePaths: normalizeMediaSelectionList(page.selectedImagePaths),
+          selectedTextPaths: normalizeMediaSelectionList(page.selectedTextPaths),
+          imageViewSettings: normalizeImageViewSettings(page.imageViewSettings),
           status: normalizeRedaktionStatus(page.status)
         });
       });
@@ -1970,8 +2578,12 @@
         parentId,
         childLayoutCategoryId: '',
         layoutCategoryId: '',
-        layoutId: 'auto',
+        layoutId: '',
+        layoutIds: [],
         assets: [],
+        selectedImagePaths: [],
+        selectedTextPaths: [],
+        imageViewSettings: {},
         status: 'pruefen'
       };
       nextRedaktionPageNumber++;
@@ -2198,26 +2810,125 @@
       select.value = selectedValue || '';
     }
 
-    function populateRedaktionLayoutSelect(page) {
-      if (!redaktionLayoutSelect) return;
-      redaktionLayoutSelect.replaceChildren();
-      const autoOption = document.createElement('option');
-      autoOption.value = 'auto';
-      autoOption.textContent = 'Automatisch';
-      redaktionLayoutSelect.appendChild(autoOption);
-
+    function populateRedaktionLayoutList(page) {
+      if (!redaktionLayoutList) return;
+      redaktionLayoutList.replaceChildren();
+      normalizeRedaktionLayoutIds(page);
+      const count = normalizeRedaktionCount(page?.count);
       const category = getLayoutCategoryById(page?.layoutCategoryId || '');
-      (category?.layouts || []).forEach((layout) => {
-        const option = document.createElement('option');
-        option.value = layout.id;
-        option.textContent = layout.name;
-        redaktionLayoutSelect.appendChild(option);
+      if (count === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'redaktion-inspector-empty';
+        empty.textContent = 'Anzahl 0 verwendet keine Layouts.';
+        redaktionLayoutList.appendChild(empty);
+        return;
+      }
+      if (!category || !Array.isArray(category.layouts) || category.layouts.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'redaktion-inspector-empty';
+        empty.textContent = 'Waehle zuerst eine Layout Kategorie mit Layouts.';
+        redaktionLayoutList.appendChild(empty);
+        return;
+      }
+
+      const pageOrderNumber = getRedaktionOrderNumbers().get(page.id) || 1;
+      const invalidDoubleSlots = getInvalidRedaktionDoubleLayoutSlots(page, pageOrderNumber);
+      const slotsByIndex = new Map(getRedaktionLayoutSlots(page).map((slotInfo) => [slotInfo.slot, slotInfo]));
+      for (let slotIndex = 0; slotIndex < count; slotIndex++) {
+        const slotInfo = slotsByIndex.get(slotIndex) || null;
+        const row = document.createElement('div');
+        row.className = 'redaktion-layout-row';
+        const label = document.createElement('label');
+        label.textContent = `Layout ${slotIndex + 1}:`;
+        row.appendChild(label);
+
+        if (slotInfo?.covered) {
+          const covered = document.createElement('div');
+          covered.className = 'redaktion-layout-covered';
+          covered.textContent = 'durch Doppelseite belegt';
+          row.appendChild(covered);
+          redaktionLayoutList.appendChild(row);
+          continue;
+        }
+
+        const select = document.createElement('select');
+        select.dataset.layoutSlot = String(slotIndex);
+        const remaining = count - slotIndex;
+        let validOptionCount = 0;
+        category.layouts.forEach((layout) => {
+          const option = document.createElement('option');
+          const span = getRedaktionLayoutSpan(layout);
+          option.value = layout.id;
+          option.textContent = `${layout.name} (${span === 2 ? 'Doppelseite' : 'Einzelseite'})`;
+          option.disabled = span > remaining;
+          if (!option.disabled) validOptionCount++;
+          select.appendChild(option);
+        });
+        if (validOptionCount === 0) {
+          const emptyOption = document.createElement('option');
+          emptyOption.value = '';
+          emptyOption.textContent = 'Kein passendes Layout';
+          emptyOption.selected = true;
+          select.prepend(emptyOption);
+          select.disabled = true;
+        }
+        select.value = slotInfo?.layout?.id || '';
+        row.appendChild(select);
+        if (invalidDoubleSlots.has(slotIndex)) {
+          row.classList.add('invalid');
+          const warning = document.createElement('div');
+          warning.className = 'redaktion-layout-warning';
+          const firstPageNumber = pageOrderNumber + slotIndex;
+          warning.textContent = `Doppelseite liegt auf ${firstPageNumber}/${firstPageNumber + 1}; erlaubt sind nur benachbarte Paare wie 2/3, 4/5, 6/7.`;
+          row.appendChild(warning);
+        }
+        redaktionLayoutList.appendChild(row);
+      }
+    }
+
+    function setRedaktionPageLayoutAtSlot(page, slotIndex, layoutId) {
+      const category = getLayoutCategoryById(page?.layoutCategoryId || '');
+      const count = normalizeRedaktionCount(page?.count);
+      const selectedLayout = getLayoutById(category, layoutId);
+      if (!page || !category || !selectedLayout || slotIndex < 0 || slotIndex >= count) return;
+      const selectedSpan = getRedaktionLayoutSpan(selectedLayout);
+      if (slotIndex + selectedSpan > count) return;
+
+      const nextLayoutIds = [];
+      const preservedAfter = [];
+      let currentSlot = 0;
+      (page.layoutIds || []).forEach((currentLayoutId) => {
+        const currentLayout = getLayoutById(category, currentLayoutId);
+        if (!currentLayout || currentSlot >= count) return;
+        const currentSpan = getRedaktionLayoutSpan(currentLayout);
+        if (currentSlot < slotIndex) {
+          nextLayoutIds.push(currentLayout.id);
+        } else if (currentSlot === slotIndex) {
+          nextLayoutIds.push(selectedLayout.id);
+        } else if (currentSlot >= slotIndex + selectedSpan) {
+          preservedAfter.push(currentLayout.id);
+        }
+        currentSlot += currentSpan;
       });
 
-      redaktionLayoutSelect.value = page?.layoutId || 'auto';
-      if (redaktionLayoutSelect.value !== (page?.layoutId || 'auto')) {
-        redaktionLayoutSelect.value = 'auto';
+      let usedCount = nextLayoutIds.reduce((sum, currentLayoutId) => {
+        return sum + getRedaktionLayoutSpan(getLayoutById(category, currentLayoutId));
+      }, 0);
+      if (usedCount <= slotIndex) {
+        nextLayoutIds.push(selectedLayout.id);
+        usedCount += selectedSpan;
       }
+      preservedAfter.forEach((currentLayoutId) => {
+        const currentLayout = getLayoutById(category, currentLayoutId);
+        const currentSpan = getRedaktionLayoutSpan(currentLayout);
+        if (usedCount + currentSpan <= count) {
+          nextLayoutIds.push(currentLayout.id);
+          usedCount += currentSpan;
+        }
+      });
+
+      page.layoutIds = nextLayoutIds;
+      normalizeRedaktionLayoutIds(page);
     }
 
     function refreshRedaktionInspector() {
@@ -2235,10 +2946,12 @@
       redaktionInspectorForm.hidden = false;
       if (redaktionTitleInput) redaktionTitleInput.value = page.title;
       if (redaktionCountInput) redaktionCountInput.value = String(page.count);
-      if (redaktionStatusSelect) redaktionStatusSelect.value = normalizeRedaktionStatus(page.status);
+      redaktionStatusInputs.forEach((input) => {
+        input.checked = input.value === normalizeRedaktionStatus(page.status);
+      });
       populateLayoutCategorySelect(redaktionChildCategorySelect, page.childLayoutCategoryId, true);
       populateLayoutCategorySelect(redaktionCategorySelect, page.layoutCategoryId, true);
-      populateRedaktionLayoutSelect(page);
+      populateRedaktionLayoutList(page);
       renderAssignedAssets(page);
     }
 
@@ -2332,8 +3045,12 @@
       page.count = 1;
       page.childLayoutCategoryId = '';
       page.layoutCategoryId = '';
-      page.layoutId = 'auto';
+      page.layoutId = '';
+      page.layoutIds = [];
       page.assets = normalizeRedaktionAssets([asset]);
+      page.selectedImagePaths = [];
+      page.selectedTextPaths = [];
+      page.imageViewSettings = {};
       return page;
     }
 
@@ -2397,6 +3114,577 @@
       queueSnapshotSave();
     }
 
+    function getRedaktionNumberedPageCells() {
+      const cells = [];
+      let nextPageNumber = 1;
+      redaktionPagesData.forEach((page) => {
+        const count = normalizeRedaktionCount(page.count);
+        for (let offset = 0; offset < count; offset++) {
+          cells.push({
+            number: nextPageNumber + offset,
+            title: page.title || 'Seitenbereich',
+            pageId: page.id,
+            status: normalizeRedaktionStatus(page.status),
+            layoutCategoryId: page.layoutCategoryId || ''
+          });
+        }
+        nextPageNumber += count;
+      });
+      return cells;
+    }
+
+    function getSeiteContextByNumber(pageNumber) {
+      let nextPageNumber = 1;
+      for (const page of redaktionPagesData) {
+        const count = normalizeRedaktionCount(page.count);
+        if (pageNumber >= nextPageNumber && pageNumber < nextPageNumber + count) {
+          const localSlot = pageNumber - nextPageNumber;
+          const layoutSlot = getRedaktionLayoutSlots(page).find((slotInfo) => {
+            if (!slotInfo || slotInfo.covered) return false;
+            const span = getRedaktionLayoutSpan(slotInfo.layout);
+            return localSlot >= slotInfo.slot && localSlot < slotInfo.slot + span;
+          });
+          return {
+            page,
+            pageNumber,
+            pageStartNumber: nextPageNumber,
+            localSlot,
+            layout: layoutSlot?.layout || null,
+            layoutSlot: layoutSlot || null,
+            spreadPageIndex: layoutSlot && isDoubleSpreadLayout(layoutSlot.layout) ? localSlot - layoutSlot.slot : 0
+          };
+        }
+        nextPageNumber += count;
+      }
+      return null;
+    }
+
+    function getAssetFileCandidates(page, kind) {
+      const extensions = kind === 'image'
+        ? new Set(['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'])
+        : new Set(['txt', 'md', 'text']);
+      const assetPaths = normalizeRedaktionAssets(page?.assets).map((asset) => asset.path);
+      if (assetPaths.length === 0) return [];
+      return importedProjectFiles.filter((file) => {
+        const relativePath = file?.relativePath || '';
+        const extension = relativePath.split('.').pop()?.toLowerCase() || '';
+        if (!extensions.has(extension)) return false;
+        return assetPaths.some((assetPath) => relativePath === assetPath || relativePath.startsWith(`${assetPath}/`));
+      });
+    }
+
+    function isHeroFilePath(path) {
+      const fileName = String(path || '').split('/').pop() || '';
+      const baseName = fileName.replace(/\.[^.]+$/, '');
+      return baseName.toLowerCase() === 'hero';
+    }
+
+    function shuffledCopy(items) {
+      const nextItems = [...items];
+      for (let index = nextItems.length - 1; index > 0; index--) {
+        const swapIndex = Math.floor(Math.random() * (index + 1));
+        [nextItems[index], nextItems[swapIndex]] = [nextItems[swapIndex], nextItems[index]];
+      }
+      return nextItems;
+    }
+
+    function ensureSeiteSelectionList(page, kind, slotCount) {
+      const candidates = getAssetFileCandidates(page, kind);
+      const candidatePaths = new Set(candidates.map((file) => file.relativePath));
+      const propertyName = kind === 'image' ? 'selectedImagePaths' : 'selectedTextPaths';
+      let selectedPaths = normalizeMediaSelectionList(page[propertyName]).filter((path) => candidatePaths.has(path));
+      const heroPaths = candidates
+        .map((file) => file.relativePath)
+        .filter((path) => isHeroFilePath(path))
+        .sort((a, b) => a.localeCompare(b, 'de', { sensitivity: 'base' }));
+      const randomPaths = shuffledCopy(
+        candidates
+          .map((file) => file.relativePath)
+          .filter((path) => !heroPaths.includes(path) && !selectedPaths.includes(path))
+      );
+      selectedPaths = [
+        ...heroPaths,
+        ...selectedPaths.filter((path) => !heroPaths.includes(path)),
+        ...randomPaths
+      ];
+      if (selectedPaths.length > 0) {
+        let fillIndex = 0;
+        while (selectedPaths.length < slotCount) {
+          selectedPaths.push(selectedPaths[fillIndex % selectedPaths.length]);
+          fillIndex++;
+        }
+      }
+      page[propertyName] = normalizeMediaSelectionList(selectedPaths);
+      return page[propertyName].slice(0, Math.max(slotCount, heroPaths.length));
+    }
+
+    function getLayoutPageGeometry(layout, category) {
+      normalizeLayoutSpreadMode(layout);
+      const controlsForCategory = {
+        ...createDefaultControls(),
+        ...(category?.controls || {})
+      };
+      const pageOrientation = controlsForCategory.pageOrientationRange === '0' ? 'portrait' : 'landscape';
+      const pageFormat = pageFormats[pageOrientation] || pageFormats.portrait;
+      const pageWidth = pageFormat.width;
+      const pageHeight = pageFormat.height;
+      const spreadCount = isDoubleSpreadLayout(layout) ? 2 : 1;
+      const cols = Math.max(1, Math.floor(Number(controlsForCategory.colsRange) || 1));
+      const rows = Math.max(1, Math.floor(Number(controlsForCategory.rowsRange) || 1));
+      const outerMargin = Math.max(0, Number(controlsForCategory.outerMarginRange) || 0);
+      const cellGap = Math.max(0, Number(controlsForCategory.cellGapRange) || 0);
+      const singlePageGridWidth = pageWidth - outerMargin * 2;
+      const singlePageGridHeight = pageHeight - outerMargin * 2;
+      const cellWidth = (singlePageGridWidth - (cols - 1) * cellGap) / cols;
+      const cellHeight = (singlePageGridHeight - (rows - 1) * cellGap) / rows;
+      const cells = [];
+      if (cellWidth <= 0 || cellHeight <= 0) {
+        return { pageOrientation, pageWidth, pageHeight, spreadCount, cells: [] };
+      }
+      for (let pageIndex = 0; pageIndex < spreadCount; pageIndex++) {
+        const gridX = pageIndex * pageWidth + outerMargin;
+        const gridY = outerMargin;
+        const colOffset = pageIndex * cols;
+        for (let row = 0; row < rows; row++) {
+          for (let col = 0; col < cols; col++) {
+            cells.push({
+              row,
+              col: colOffset + col,
+              x: gridX + col * (cellWidth + cellGap),
+              y: gridY + row * (cellHeight + cellGap),
+              width: cellWidth,
+              height: cellHeight
+            });
+          }
+        }
+      }
+      return { pageOrientation, pageWidth, pageHeight, spreadCount, cells };
+    }
+
+    function getLayoutElementRectForPreview(element, layout, category) {
+      const geometry = getLayoutPageGeometry(layout, category);
+      const normalizedElement = normalizeElementBounds({ ...element });
+      const startCell = geometry.cells.find((cell) => cell.row === normalizedElement.startRow && cell.col === normalizedElement.startCol);
+      const endCell = geometry.cells.find((cell) => cell.row === normalizedElement.endRow && cell.col === normalizedElement.endCol);
+      if (!startCell || !endCell) return null;
+      const seamX = isDoubleSpreadLayout(layout) ? geometry.pageWidth : null;
+      const left = normalizedElement.leftBoundary === 'page-left'
+        ? 0
+        : (normalizedElement.leftBoundary === 'page-seam' && seamX !== null ? seamX : startCell.x);
+      const right = normalizedElement.rightBoundary === 'page-right'
+        ? geometry.pageWidth * geometry.spreadCount
+        : (normalizedElement.rightBoundary === 'page-seam' && seamX !== null ? seamX : endCell.x + endCell.width);
+      return {
+        geometry,
+        rect: {
+          x: left,
+          y: normalizedElement.topToPage ? 0 : startCell.y,
+          width: right - left,
+          height: (normalizedElement.bottomToPage ? geometry.pageHeight : endCell.y + endCell.height) - (normalizedElement.topToPage ? 0 : startCell.y)
+        }
+      };
+    }
+
+    function getPreviewRectsForLayout(layout, category) {
+      const elements = Array.isArray(layout?.elements) ? layout.elements : [];
+      return elements
+        .map((element) => ({ element, ...getLayoutElementRectForPreview(element, layout, category) }))
+        .filter((entry) => entry.rect && entry.geometry)
+        .map((entry) => ({
+          element: entry.element,
+          geometry: entry.geometry,
+          rect: entry.rect,
+          area: entry.rect.width * entry.rect.height
+        }));
+    }
+
+    function getPreviewRectsForActivePage(layout, category, spreadPageIndex) {
+      return getPreviewRectsForLayout(layout, category)
+        .map((entry) => {
+          const pageLeft = spreadPageIndex * entry.geometry.pageWidth;
+          const pageRight = pageLeft + entry.geometry.pageWidth;
+          const rectLeft = Math.max(entry.rect.x, pageLeft);
+          const rectRight = Math.min(entry.rect.x + entry.rect.width, pageRight);
+          const rectTop = Math.max(entry.rect.y, 0);
+          const rectBottom = Math.min(entry.rect.y + entry.rect.height, entry.geometry.pageHeight);
+          if (rectRight <= rectLeft) return null;
+          if (rectBottom <= rectTop) return null;
+          return {
+            element: entry.element,
+            geometry: entry.geometry,
+            rect: {
+              x: entry.rect.x - pageLeft,
+              y: entry.rect.y,
+              width: entry.rect.width,
+              height: entry.rect.height
+            },
+            visibleRect: {
+              x: rectLeft - pageLeft,
+              y: rectTop,
+              width: rectRight - rectLeft,
+              height: rectBottom - rectTop
+            },
+            area: entry.area
+          };
+        })
+        .filter(Boolean);
+    }
+
+    function clearSeitePreviewObjectUrls() {
+      seitePreviewObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      seitePreviewObjectUrls = [];
+      if (seiteImageDragState) {
+        seiteImageDragState.box.classList.remove('adjusting');
+        seiteImageDragState = null;
+      }
+    }
+
+    function setSeiteViewMode(mode, persist = true) {
+      seiteViewMode = mode === 'double' ? 'double' : 'single';
+      seiteViewToggleButtons.forEach((button) => {
+        const isActive = button.dataset.seiteViewMode === seiteViewMode;
+        button.classList.toggle('active', isActive);
+        button.setAttribute('aria-pressed', String(isActive));
+      });
+      if (activeAppView === 'seite') {
+        renderSeitePageStrip();
+      }
+      if (persist) queueSnapshotSave();
+    }
+
+    function createSeitePlaceholder(message) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'seite-page-placeholder';
+      placeholder.textContent = message;
+      return placeholder;
+    }
+
+    function assignSelectionPathsToRects(page, kind, rects) {
+      const selectedPaths = ensureSeiteSelectionList(page, kind, rects.length);
+      const assignments = new Map();
+      if (rects.length === 0 || selectedPaths.length === 0) return assignments;
+
+      const heroPath = selectedPaths.find((path) => isHeroFilePath(path));
+      const availableRects = [...rects];
+      if (heroPath) {
+        availableRects.sort((a, b) => b.area - a.area);
+        const heroRect = availableRects.shift();
+        if (heroRect) assignments.set(heroRect, heroPath);
+      }
+
+      const remainingPaths = selectedPaths.filter((path) => path !== heroPath);
+      rects.forEach((rectInfo) => {
+        if (assignments.has(rectInfo)) return;
+        const nextPath = remainingPaths.shift();
+        if (nextPath) assignments.set(rectInfo, nextPath);
+      });
+      return assignments;
+    }
+
+    function getSeiteMediaAssignmentKey(layoutSlot, elementId) {
+      return `${layoutSlot}:${elementId}`;
+    }
+
+    function getSeiteMediaAssignments(page, kind) {
+      const category = getLayoutCategoryById(page?.layoutCategoryId || '');
+      const assignments = new Map();
+      if (!page || !category) return assignments;
+
+      const mediaSlots = [];
+      getRedaktionLayoutSlots(page)
+        .filter((slotInfo) => slotInfo && !slotInfo.covered)
+        .forEach((slotInfo) => {
+          getPreviewRectsForLayout(slotInfo.layout, category)
+            .filter((entry) => entry.element.type === kind)
+            .forEach((entry) => {
+              mediaSlots.push({
+                layoutSlot: slotInfo.slot,
+                elementId: entry.element.id,
+                area: entry.area
+              });
+            });
+        });
+
+      const selectedPaths = ensureSeiteSelectionList(page, kind, mediaSlots.length);
+      if (mediaSlots.length === 0 || selectedPaths.length === 0) return assignments;
+
+      const heroPath = selectedPaths.find((path) => isHeroFilePath(path));
+      const unassignedSlots = [...mediaSlots];
+      if (heroPath) {
+        unassignedSlots.sort((a, b) => b.area - a.area);
+        const heroSlot = unassignedSlots.shift();
+        if (heroSlot) {
+          assignments.set(getSeiteMediaAssignmentKey(heroSlot.layoutSlot, heroSlot.elementId), heroPath);
+        }
+      }
+
+      const remainingPaths = selectedPaths.filter((path) => path !== heroPath);
+      mediaSlots.forEach((slotInfo) => {
+        const key = getSeiteMediaAssignmentKey(slotInfo.layoutSlot, slotInfo.elementId);
+        if (assignments.has(key)) return;
+        const nextPath = remainingPaths.shift();
+        if (nextPath) assignments.set(key, nextPath);
+      });
+
+      return assignments;
+    }
+
+    function getImageViewSetting(page, path) {
+      if (!page || !path) return { zoom: 1, offsetX: 0, offsetY: 0 };
+      page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
+      if (!page.imageViewSettings[path]) {
+        page.imageViewSettings[path] = { zoom: 1, offsetX: 0, offsetY: 0 };
+      }
+      return page.imageViewSettings[path];
+    }
+
+    function clampImageViewSetting(setting) {
+      setting.zoom = Math.min(5, Math.max(1, Number(setting.zoom) || 1));
+      setting.offsetX = Math.min(500, Math.max(-500, Number(setting.offsetX) || 0));
+      setting.offsetY = Math.min(500, Math.max(-500, Number(setting.offsetY) || 0));
+      return setting;
+    }
+
+    function applyImageViewStyle(image, setting) {
+      const nextSetting = clampImageViewSetting(setting);
+      const box = image.parentElement;
+      const boxRect = box?.getBoundingClientRect();
+      const boxWidth = boxRect?.width || 0;
+      const boxHeight = boxRect?.height || 0;
+      const naturalWidth = image.naturalWidth || boxWidth;
+      const naturalHeight = image.naturalHeight || boxHeight;
+      if (!boxWidth || !boxHeight || !naturalWidth || !naturalHeight) return;
+
+      const imageRatio = naturalWidth / naturalHeight;
+      const boxRatio = boxWidth / boxHeight;
+      const baseWidth = imageRatio > boxRatio ? boxHeight * imageRatio : boxWidth;
+      const baseHeight = imageRatio > boxRatio ? boxHeight : boxWidth / imageRatio;
+      const displayWidth = baseWidth * nextSetting.zoom;
+      const displayHeight = baseHeight * nextSetting.zoom;
+      const maxOffsetX = Math.max(0, (displayWidth - boxWidth) / 2);
+      const maxOffsetY = Math.max(0, (displayHeight - boxHeight) / 2);
+      const offsetPxX = Math.min(maxOffsetX, Math.max(-maxOffsetX, (nextSetting.offsetX / 100) * boxWidth));
+      const offsetPxY = Math.min(maxOffsetY, Math.max(-maxOffsetY, (nextSetting.offsetY / 100) * boxHeight));
+
+      nextSetting.offsetX = (offsetPxX / boxWidth) * 100;
+      nextSetting.offsetY = (offsetPxY / boxHeight) * 100;
+      image.style.width = `${displayWidth}px`;
+      image.style.height = `${displayHeight}px`;
+      image.style.left = `${(boxWidth - displayWidth) / 2 + offsetPxX}px`;
+      image.style.top = `${(boxHeight - displayHeight) / 2 + offsetPxY}px`;
+    }
+
+    function applyImageViewStyleToVisibleImages(pageId, imagePath, setting) {
+      if (!seiteStage || !pageId || !imagePath) return;
+      seiteStage
+        .querySelectorAll(`.seite-preview-element.image[data-page-id="${CSS.escape(pageId)}"][data-image-path="${CSS.escape(imagePath)}"] img`)
+        .forEach((image) => applyImageViewStyle(image, setting));
+    }
+
+    function getSeiteSpreadNumbers(pageNumber) {
+      const cells = getRedaktionNumberedPageCells();
+      const existingNumbers = new Set(cells.map((cell) => cell.number));
+      if (!existingNumbers.has(pageNumber)) return [];
+      if (pageNumber <= 1) return [pageNumber];
+      const pairStart = pageNumber % 2 === 0 ? pageNumber : pageNumber - 1;
+      return [pairStart, pairStart + 1].filter((number) => existingNumbers.has(number));
+    }
+
+    function getSeiteActiveNumbers() {
+      if (seiteViewMode === 'double') return new Set(getSeiteSpreadNumbers(activeSeitePageNumber));
+      return new Set(Number.isInteger(activeSeitePageNumber) ? [activeSeitePageNumber] : []);
+    }
+
+    function moveActiveSeiteSelection(direction) {
+      if (activeAppView !== 'seite') return false;
+      const cells = getRedaktionNumberedPageCells();
+      if (cells.length === 0) return false;
+      const numbers = cells.map((cell) => cell.number);
+      let nextPageNumber = activeSeitePageNumber;
+
+      if (seiteViewMode === 'double') {
+        const currentSpread = getSeiteSpreadNumbers(activeSeitePageNumber);
+        const currentStart = currentSpread[0] || numbers[0];
+        const pairStarts = numbers.filter((number) => number === 1 || (number >= 2 && number % 2 === 0));
+        const currentIndex = Math.max(0, pairStarts.findIndex((number) => number === currentStart));
+        const nextIndex = Math.min(Math.max(currentIndex + direction, 0), pairStarts.length - 1);
+        nextPageNumber = pairStarts[nextIndex] || currentStart;
+      } else {
+        const currentIndex = Math.max(0, numbers.indexOf(activeSeitePageNumber));
+        const nextIndex = Math.min(Math.max(currentIndex + direction, 0), numbers.length - 1);
+        nextPageNumber = numbers[nextIndex];
+      }
+
+      if (!Number.isInteger(nextPageNumber) || nextPageNumber === activeSeitePageNumber) return false;
+      activeSeitePageNumber = nextPageNumber;
+      renderSeitePageStrip();
+      queueSnapshotSave();
+      return true;
+    }
+
+    async function renderSeitePreviewPage(pageNumber, parent, token, spreadClass = '') {
+      const context = getSeiteContextByNumber(pageNumber);
+      if (!context?.page) {
+        parent.appendChild(createSeitePlaceholder('Waehle unten eine Seite aus.'));
+        return;
+      }
+      normalizeRedaktionPageFields(context.page);
+      const category = getLayoutCategoryById(context.page.layoutCategoryId);
+      if (!context.layout || !category) {
+        parent.appendChild(createSeitePlaceholder('Fuer diese Seite ist kein Layout verfuegbar.'));
+        return;
+      }
+
+      const previewRects = getPreviewRectsForActivePage(context.layout, category, context.spreadPageIndex);
+      const firstGeometry = previewRects[0]?.geometry || getLayoutPageGeometry(context.layout, category);
+      const pagePreview = document.createElement('div');
+      pagePreview.className = `seite-page-preview${firstGeometry.pageOrientation === 'landscape' ? ' landscape' : ''}${spreadClass ? ` ${spreadClass}` : ''}`;
+      pagePreview.setAttribute('aria-label', `Seite ${context.pageNumber}`);
+      parent.appendChild(pagePreview);
+
+      const imageAssignments = getSeiteMediaAssignments(context.page, 'image');
+      const textAssignments = getSeiteMediaAssignments(context.page, 'text');
+
+      const createElementBox = (entry) => {
+        const box = document.createElement('div');
+        box.className = `seite-preview-element ${entry.element.type === 'text' ? 'seite-preview-text' : 'image'}`;
+        box.style.left = `${(entry.rect.x / entry.geometry.pageWidth) * 100}%`;
+        box.style.top = `${(entry.rect.y / entry.geometry.pageHeight) * 100}%`;
+        box.style.width = `${(entry.rect.width / entry.geometry.pageWidth) * 100}%`;
+        box.style.height = `${(entry.rect.height / entry.geometry.pageHeight) * 100}%`;
+        return box;
+      };
+
+      for (const entry of previewRects) {
+        if (token !== seitePreviewRenderToken) return;
+        const box = createElementBox(entry);
+        const mediaKey = getSeiteMediaAssignmentKey(context.layoutSlot.slot, entry.element.id);
+        const path = entry.element.type === 'image'
+          ? imageAssignments.get(mediaKey)
+          : textAssignments.get(mediaKey);
+        if (!path) {
+          const empty = document.createElement('div');
+          empty.className = 'seite-preview-empty-slot';
+          empty.textContent = entry.element.type === 'image' ? 'Bild' : 'Text';
+          box.appendChild(empty);
+          pagePreview.appendChild(box);
+          continue;
+        }
+
+        if (entry.element.type === 'image') {
+          const file = await getImportedFile(path);
+          if (token !== seitePreviewRenderToken) return;
+          if (file) {
+            const image = document.createElement('img');
+            const objectUrl = URL.createObjectURL(file);
+            seitePreviewObjectUrls.push(objectUrl);
+            image.src = objectUrl;
+            image.alt = path.split('/').pop() || 'Bild';
+            image.draggable = false;
+            box.dataset.pageId = context.page.id;
+            box.dataset.imagePath = path;
+            image.addEventListener('load', () => {
+              applyImageViewStyle(image, getImageViewSetting(context.page, path));
+            }, { once: true });
+            applyImageViewStyle(image, getImageViewSetting(context.page, path));
+            box.appendChild(image);
+          } else {
+            const empty = document.createElement('div');
+            empty.className = 'seite-preview-empty-slot';
+            empty.textContent = 'Bild fehlt';
+            box.appendChild(empty);
+          }
+        } else {
+          const file = await getImportedFile(path);
+          if (token !== seitePreviewRenderToken) return;
+          box.textContent = file ? await file.text() : 'Text fehlt';
+        }
+        pagePreview.appendChild(box);
+      }
+
+      queueSnapshotSave();
+    }
+
+    async function renderSeitePreview(pageNumber = activeSeitePageNumber) {
+      if (!seiteStage) return;
+      const token = ++seitePreviewRenderToken;
+      clearSeitePreviewObjectUrls();
+      seiteStage.replaceChildren();
+
+      if (seiteViewMode !== 'double') {
+        await renderSeitePreviewPage(pageNumber, seiteStage, token);
+        return;
+      }
+
+      const spreadNumbers = getSeiteSpreadNumbers(pageNumber);
+      if (spreadNumbers.length === 0) {
+        seiteStage.appendChild(createSeitePlaceholder('Waehle unten eine Seite aus.'));
+        return;
+      }
+
+      const spread = document.createElement('div');
+      spread.className = 'seite-spread-preview';
+      seiteStage.appendChild(spread);
+      for (let index = 0; index < spreadNumbers.length; index++) {
+        await renderSeitePreviewPage(spreadNumbers[index], spread, token, index === 0 ? 'spread-left' : 'spread-right');
+      }
+    }
+
+    function renderSeitePageStrip() {
+      if (!seitePageStrip) return;
+      seitePageStrip.replaceChildren();
+      const cells = getRedaktionNumberedPageCells();
+      if (cells.length === 0) {
+        activeSeitePageNumber = null;
+        const empty = document.createElement('div');
+        empty.className = 'seite-empty';
+        empty.textContent = 'Noch keine Seiten in Redaktion angelegt.';
+        seitePageStrip.appendChild(empty);
+        if (activeAppView === 'seite') void renderSeitePreview(null);
+        return;
+      }
+
+      if (!cells.some((cell) => cell.number === activeSeitePageNumber)) {
+        activeSeitePageNumber = cells[0].number;
+      }
+      const lastPageNumber = cells[cells.length - 1]?.number || 0;
+      const activeNumbers = getSeiteActiveNumbers();
+      cells.forEach((cell) => {
+        const item = document.createElement('div');
+        item.className = 'seite-page-cell';
+        const highlightClass = getRedaktionOrderHighlightClass(cell.number, 1, lastPageNumber);
+        if (highlightClass) item.classList.add(highlightClass);
+        const categoryColor = getLayoutCategoryById(cell.layoutCategoryId)?.color;
+        if (categoryColor) {
+          const colorStyle = getCategoryColorStyle(categoryColor);
+          item.style.background = colorStyle.background;
+          item.style.borderColor = colorStyle.border;
+        }
+        if (cell.number >= 2 && cell.number % 2 === 0) item.classList.add('pair-start');
+        item.classList.toggle('active', activeNumbers.has(cell.number));
+        item.dataset.pageId = cell.pageId;
+        item.dataset.pageNumber = String(cell.number);
+        item.title = `${cell.number}: ${cell.title}`;
+
+        const number = document.createElement('div');
+        number.className = 'seite-page-number';
+        number.textContent = String(cell.number);
+        const title = document.createElement('div');
+        title.className = 'seite-page-title';
+        title.textContent = cell.title;
+
+        item.append(number, title);
+        if (cell.status === 'pruefen' || cell.status === 'kritisch') {
+          const status = document.createElement('span');
+          status.className = `seite-page-status ${cell.status === 'kritisch' ? 'critical' : 'review'}`;
+          status.textContent = cell.status === 'kritisch' ? '!' : '?';
+          item.appendChild(status);
+        }
+        seitePageStrip.appendChild(item);
+      });
+      if (activeAppView === 'seite') void renderSeitePreview(activeSeitePageNumber);
+    }
+
     function renderRedaktionPages() {
       if (!redaktionPages) return;
       redaktionPages.replaceChildren();
@@ -2407,6 +3695,7 @@
         empty.textContent = 'Ziehe eine neue Seite aus der Werkzeugleiste hierher.';
         redaktionPages.appendChild(empty);
         refreshRedaktionInspector();
+        renderSeitePageStrip();
         return;
       }
 
@@ -2468,17 +3757,33 @@
         titleText.classList.toggle('redaktion-page-status', page.status === 'kritisch' || page.status === 'pruefen');
         titleText.classList.toggle('redaktion-page-critical', page.status === 'kritisch');
         titleText.classList.toggle('redaktion-page-review', page.status === 'pruefen');
+        const layoutPreviewStrip = document.createElement('div');
+        layoutPreviewStrip.className = 'redaktion-layout-preview-strip';
+        const invalidDoubleSlots = getInvalidRedaktionDoubleLayoutSlots(page, pageOrderNumber);
+        getRedaktionLayoutSlots(page)
+          .filter((slotInfo) => slotInfo && !slotInfo.covered)
+          .forEach((slotInfo) => {
+            const preview = document.createElement('span');
+            preview.className = `redaktion-layout-preview${isDoubleSpreadLayout(slotInfo.layout) ? ' double' : ''}`;
+            preview.classList.toggle('invalid', invalidDoubleSlots.has(slotInfo.slot));
+            preview.title = slotInfo.layout.name;
+            layoutPreviewStrip.appendChild(preview);
+          });
         const resizeHandle = document.createElement('div');
         resizeHandle.className = 'redaktion-page-resize-handle';
         resizeHandle.dataset.pageId = page.id;
 
         title.append(toggle, titleText);
-        card.appendChild(title);
+        const content = document.createElement('div');
+        content.className = 'redaktion-page-content';
+        content.append(title, layoutPreviewStrip);
+        card.appendChild(content);
         card.appendChild(resizeHandle);
         row.append(orderNumber, card);
         redaktionPages.appendChild(row);
       });
       refreshRedaktionInspector();
+      renderSeitePageStrip();
     }
 
     function setRedaktionPages(pages, collapsedPageIds = []) {
@@ -2839,6 +4144,12 @@
         const afterAssets = beforeAssets.filter((asset) => !shouldRemovePath(asset.path));
         if (afterAssets.length !== beforeAssets.length) {
           page.status = 'kritisch';
+          page.selectedImagePaths = normalizeMediaSelectionList(page.selectedImagePaths).filter((path) => !shouldRemovePath(path));
+          page.selectedTextPaths = normalizeMediaSelectionList(page.selectedTextPaths).filter((path) => !shouldRemovePath(path));
+          page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
+          Object.keys(page.imageViewSettings).forEach((path) => {
+            if (shouldRemovePath(path)) delete page.imageViewSettings[path];
+          });
         }
         page.assets = afterAssets;
       });
@@ -2922,6 +4233,38 @@
         }
       }
       return false;
+    }
+
+    async function getFileFromDirectoryHandle(directoryHandle, relativePath) {
+      if (!directoryHandle || !relativePath) return null;
+      const originalSegments = relativePath.split('/').filter(Boolean);
+      const pathVariants = [originalSegments];
+      if (originalSegments[0] === directoryHandle.name) pathVariants.push(originalSegments.slice(1));
+      if (originalSegments.length > 1) pathVariants.push(originalSegments.slice(1));
+
+      for (const pathSegments of pathVariants) {
+        if (pathSegments.length === 0) continue;
+        try {
+          let currentHandle = directoryHandle;
+          for (let index = 0; index < pathSegments.length - 1; index++) {
+            currentHandle = await currentHandle.getDirectoryHandle(pathSegments[index]);
+          }
+          const fileHandle = await currentHandle.getFileHandle(pathSegments[pathSegments.length - 1]);
+          return await fileHandle.getFile();
+        } catch {
+          // Try the next path variant.
+        }
+      }
+      return null;
+    }
+
+    async function getImportedFile(relativePath) {
+      for (const entry of importedProjectDirectoryHandles) {
+        if (!await hasDirectoryHandlePermission(entry?.handle)) continue;
+        const file = await getFileFromDirectoryHandle(entry.handle, relativePath);
+        if (file) return file;
+      }
+      return null;
     }
 
     async function verifyImportedProjectFiles() {
@@ -3235,6 +4578,8 @@
         activeTab,
         activeCategoryId,
         activeLayoutId,
+        activeSeitePageNumber,
+        seiteViewMode,
         importedProject: {
           files: importedProjectFiles.map((entry) => ({
             id: entry.id,
@@ -3257,7 +4602,11 @@
           childLayoutCategoryId: page.childLayoutCategoryId,
           layoutCategoryId: page.layoutCategoryId,
           layoutId: page.layoutId,
+          layoutIds: normalizeRedaktionLayoutIds(page),
           assets: normalizeRedaktionAssets(page.assets),
+          selectedImagePaths: normalizeMediaSelectionList(page.selectedImagePaths),
+          selectedTextPaths: normalizeMediaSelectionList(page.selectedTextPaths),
+          imageViewSettings: normalizeImageViewSettings(page.imageViewSettings),
           status: normalizeRedaktionStatus(page.status),
           parentId: page.parentId
         })),
@@ -3399,6 +4748,8 @@
       });
 
       activeAppView = typeof snapshot.activeAppView === 'string' ? snapshot.activeAppView : 'layout';
+      activeSeitePageNumber = Number.isInteger(snapshot.activeSeitePageNumber) ? snapshot.activeSeitePageNumber : null;
+      setSeiteViewMode(snapshot.seiteViewMode === 'double' ? 'double' : 'single', false);
       activeProjectSidebarTab = snapshot.activeProjectSidebarTab === 'importieren' ? 'importieren' : 'laden';
       const snapshotFiles = Array.isArray(snapshot.importedProject?.files) ? snapshot.importedProject.files : [];
       importedProjectDirectoryHandles = Array.isArray(snapshot.importedProject?.directoryHandles)
@@ -4342,7 +5693,16 @@
       const index = categories.findIndex((category) => category.id === activeCategoryId);
       if (index < 0) return;
       const currentName = categories[index].name;
+      const deletedCategoryId = categories[index].id;
       categories.splice(index, 1);
+      redaktionPagesData.forEach((page) => {
+        if (page.layoutCategoryId === deletedCategoryId) {
+          page.layoutCategoryId = '';
+          page.layoutIds = [];
+          page.layoutId = '';
+        }
+        if (page.childLayoutCategoryId === deletedCategoryId) page.childLayoutCategoryId = '';
+      });
 
       const fallbackIndex = Math.min(index, categories.length - 1);
       const fallbackCategory = categories[fallbackIndex];
@@ -4355,6 +5715,7 @@
       loadLayoutIntoEditor(fallbackLayout);
       refreshCategorySelector();
       refreshLayoutSelector();
+      renderRedaktionPages();
       draw();
       queueSnapshotSave();
       setStatus(`Kategorie "${currentName}" geloescht.`, false);
@@ -4399,6 +5760,8 @@
       currentCategory.activeLayoutId = newLayout.id;
       loadLayoutIntoEditor(newLayout);
       refreshLayoutSelector();
+      normalizeAllRedaktionPageLayouts();
+      renderRedaktionPages();
       draw();
       queueSnapshotSave();
       setStatus(`Layout "${trimmedName}" erstellt.`, false);
@@ -4411,6 +5774,7 @@
       if (index < 0) return;
       const currentName = currentCategory.layouts[index].name;
       currentCategory.layouts.splice(index, 1);
+      normalizeAllRedaktionPageLayouts(currentCategory.id);
 
       const fallbackIndex = Math.min(index, currentCategory.layouts.length - 1);
       const fallbackLayout = currentCategory.layouts[fallbackIndex];
@@ -4418,6 +5782,7 @@
       currentCategory.activeLayoutId = fallbackLayout.id;
       loadLayoutIntoEditor(fallbackLayout);
       refreshLayoutSelector();
+      renderRedaktionPages();
       draw();
       queueSnapshotSave();
       setStatus(`Layout "${currentName}" geloescht.`, false);
@@ -4428,7 +5793,9 @@
 
       normalizeLayoutSpreadMode(currentLayout);
       currentLayout.spreadMode = currentLayout.spreadMode === 'double' ? 'single' : 'double';
+      normalizeAllRedaktionPageLayouts(activeCategoryId);
       refreshLayoutModeButton();
+      renderRedaktionPages();
       draw();
       queueSnapshotSave();
       setStatus(
@@ -4510,6 +5877,83 @@
         renderRedaktionAssetsTree();
       });
     });
+    seiteViewToggleButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setSeiteViewMode(button.dataset.seiteViewMode || 'single');
+      });
+    });
+    if (seiteStage) {
+      seiteStage.addEventListener('wheel', (event) => {
+        const imageBox = event.target.closest?.('.seite-preview-element.image[data-image-path]');
+        if (!imageBox) return;
+        const page = getRedaktionPageById(imageBox.dataset.pageId);
+        const image = imageBox.querySelector('img');
+        if (!page || !image) return;
+        event.preventDefault();
+        const setting = getImageViewSetting(page, imageBox.dataset.imagePath);
+        setting.zoom *= event.deltaY < 0 ? 1.08 : 0.92;
+        applyImageViewStyleToVisibleImages(page.id, imageBox.dataset.imagePath, setting);
+        queueSnapshotSave();
+      }, { passive: false });
+
+      seiteStage.addEventListener('pointerdown', (event) => {
+        const imageBox = event.target.closest?.('.seite-preview-element.image[data-image-path]');
+        if (!imageBox) return;
+        const page = getRedaktionPageById(imageBox.dataset.pageId);
+        const image = imageBox.querySelector('img');
+        if (!page || !image) return;
+        const setting = getImageViewSetting(page, imageBox.dataset.imagePath);
+        const rect = imageBox.getBoundingClientRect();
+        seiteImageDragState = {
+          box: imageBox,
+          image,
+          setting,
+          startX: event.clientX,
+          startY: event.clientY,
+          startOffsetX: setting.offsetX,
+          startOffsetY: setting.offsetY,
+          startOffsetPxX: (setting.offsetX / 100) * Math.max(1, rect.width),
+          startOffsetPxY: (setting.offsetY / 100) * Math.max(1, rect.height),
+          pageId: page.id,
+          imagePath: imageBox.dataset.imagePath
+        };
+        imageBox.classList.add('adjusting');
+        imageBox.setPointerCapture?.(event.pointerId);
+        event.preventDefault();
+      });
+
+      seiteStage.addEventListener('pointermove', (event) => {
+        if (!seiteImageDragState) return;
+        const rect = seiteImageDragState.box.getBoundingClientRect();
+        seiteImageDragState.setting.offsetX = ((seiteImageDragState.startOffsetPxX + event.clientX - seiteImageDragState.startX) / Math.max(1, rect.width)) * 100;
+        seiteImageDragState.setting.offsetY = ((seiteImageDragState.startOffsetPxY + event.clientY - seiteImageDragState.startY) / Math.max(1, rect.height)) * 100;
+        applyImageViewStyleToVisibleImages(seiteImageDragState.pageId, seiteImageDragState.imagePath, seiteImageDragState.setting);
+        event.preventDefault();
+      });
+    }
+    if (seitePageStrip) {
+      seitePageStrip.addEventListener('click', (event) => {
+        const pageCell = event.target.closest?.('.seite-page-cell');
+        if (!pageCell?.dataset.pageNumber) return;
+        const nextPageNumber = Number(pageCell.dataset.pageNumber);
+        if (!Number.isInteger(nextPageNumber)) return;
+        if (seiteViewMode === 'double') {
+          const currentSpread = getSeiteSpreadNumbers(activeSeitePageNumber);
+          const nextSpread = getSeiteSpreadNumbers(nextPageNumber);
+          if (
+            currentSpread.length === nextSpread.length &&
+            currentSpread.every((pageNumber, index) => pageNumber === nextSpread[index])
+          ) {
+            return;
+          }
+        } else if (activeSeitePageNumber === nextPageNumber) {
+          return;
+        }
+        activeSeitePageNumber = nextPageNumber;
+        renderSeitePageStrip();
+        queueSnapshotSave();
+      });
+    }
     if (redaktionAssetsTree) {
       redaktionAssetsTree.addEventListener('click', (event) => {
         const assetNode = event.target.closest?.('.project-asset-node');
@@ -4555,9 +5999,19 @@
         if (!removeButton?.dataset.assetPath) return;
         const page = getRedaktionPageById(selectedRedaktionPageId);
         if (!page) return;
-        page.assets = normalizeRedaktionAssets(page.assets).filter((asset) => asset.path !== removeButton.dataset.assetPath);
+        const removedPath = removeButton.dataset.assetPath;
+        const removedPrefix = `${removedPath}/`;
+        const isRemovedPath = (path) => path === removedPath || path.startsWith(removedPrefix);
+        page.assets = normalizeRedaktionAssets(page.assets).filter((asset) => asset.path !== removedPath);
+        page.selectedImagePaths = normalizeMediaSelectionList(page.selectedImagePaths).filter((path) => !isRemovedPath(path));
+        page.selectedTextPaths = normalizeMediaSelectionList(page.selectedTextPaths).filter((path) => !isRemovedPath(path));
+        page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
+        Object.keys(page.imageViewSettings).forEach((path) => {
+          if (isRemovedPath(path)) delete page.imageViewSettings[path];
+        });
         renderAssignedAssets(page);
         renderRedaktionAssetsTree();
+        renderSeitePageStrip();
         queueSnapshotSave();
       });
     }
@@ -4712,19 +6166,21 @@
         if (!page) return;
         page.count = normalizeRedaktionCount(redaktionCountInput.value);
         redaktionCountInput.value = String(page.count);
+        normalizeRedaktionLayoutIds(page);
         renderRedaktionPages();
         queueSnapshotSave();
       });
     }
-    if (redaktionStatusSelect) {
-      redaktionStatusSelect.addEventListener('change', () => {
+    redaktionStatusInputs.forEach((statusInput) => {
+      statusInput.addEventListener('change', () => {
+        if (!statusInput.checked) return;
         const page = getRedaktionPageById(selectedRedaktionPageId);
         if (!page) return;
-        page.status = normalizeRedaktionStatus(redaktionStatusSelect.value);
+        page.status = normalizeRedaktionStatus(statusInput.value);
         renderRedaktionPages();
         queueSnapshotSave();
       });
-    }
+    });
     if (redaktionChildCategorySelect) {
       redaktionChildCategorySelect.addEventListener('change', () => {
         const page = getRedaktionPageById(selectedRedaktionPageId);
@@ -4746,16 +6202,21 @@
         const page = getRedaktionPageById(selectedRedaktionPageId);
         if (!page) return;
         page.layoutCategoryId = redaktionCategorySelect.value || '';
-        page.layoutId = 'auto';
+        normalizeRedaktionLayoutIds(page, !!page.layoutCategoryId);
         refreshRedaktionInspector();
+        renderRedaktionPages();
         queueSnapshotSave();
       });
     }
-    if (redaktionLayoutSelect) {
-      redaktionLayoutSelect.addEventListener('change', () => {
+    if (redaktionLayoutList) {
+      redaktionLayoutList.addEventListener('change', (event) => {
+        const select = event.target.closest?.('select[data-layout-slot]');
+        if (!select) return;
         const page = getRedaktionPageById(selectedRedaktionPageId);
         if (!page) return;
-        page.layoutId = redaktionLayoutSelect.value || 'auto';
+        setRedaktionPageLayoutAtSlot(page, Number(select.dataset.layoutSlot), select.value);
+        refreshRedaktionInspector();
+        renderRedaktionPages();
         queueSnapshotSave();
       });
     }
@@ -4767,6 +6228,7 @@
       const nextCount = getRedaktionCountFromHeight(nextHeight);
       if (page.count !== nextCount) {
         page.count = nextCount;
+        normalizeRedaktionLayoutIds(page);
         if (redaktionCountInput && selectedRedaktionPageId === page.id) {
           redaktionCountInput.value = String(page.count);
         }
@@ -4785,6 +6247,24 @@
       redaktionResizeState = null;
       releaseRedaktionClickSuppression();
       queueSnapshotSave();
+    });
+    window.addEventListener('pointerup', () => {
+      if (!seiteImageDragState) return;
+      seiteImageDragState.box.classList.remove('adjusting');
+      seiteImageDragState = null;
+      queueSnapshotSave();
+    });
+    window.addEventListener('pointercancel', () => {
+      if (!seiteImageDragState) return;
+      seiteImageDragState.box.classList.remove('adjusting');
+      seiteImageDragState = null;
+      queueSnapshotSave();
+    });
+    window.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+      if (event.target?.closest?.('input, textarea, select, button')) return;
+      const didMove = moveActiveSeiteSelection(event.key === 'ArrowRight' ? 1 : -1);
+      if (didMove) event.preventDefault();
     });
     if (redaktionBoard) {
       redaktionBoard.addEventListener('dragover', (event) => {
