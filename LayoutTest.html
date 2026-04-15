@@ -95,6 +95,144 @@
       display: none;
     }
 
+    .project-sidebar {
+      height: 100%;
+      min-height: 420px;
+      display: grid;
+      grid-template-rows: minmax(0, 1fr) auto;
+      gap: 12px;
+    }
+
+    .project-sidebar[hidden] {
+      display: none !important;
+    }
+
+    .project-upper {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto 1fr;
+      gap: 10px;
+    }
+
+    .project-tabs {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      padding: 4px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: #10151f;
+    }
+
+    .project-tab-btn {
+      min-height: 38px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .project-tab-btn:hover {
+      color: var(--text);
+      background: #1d2636;
+    }
+
+    .project-tab-btn.active {
+      color: #93c5fd;
+      background: #1f304a;
+    }
+
+    .project-tab-panel[hidden] {
+      display: none;
+    }
+
+    .project-panel-section {
+      display: grid;
+      gap: 10px;
+      align-content: start;
+    }
+
+    .project-panel-title {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .project-panel-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.4;
+    }
+
+    .project-import-btn {
+      justify-self: start;
+    }
+
+    .project-tree-wrap {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #10151f;
+      padding: 10px;
+      max-height: 280px;
+      overflow: auto;
+    }
+
+    .project-tree-wrap.empty {
+      color: var(--muted);
+      font-style: italic;
+    }
+
+    .project-tree {
+      margin: 0;
+      padding-left: 20px;
+      list-style: none;
+      display: grid;
+      gap: 4px;
+    }
+
+    .project-tree details > summary {
+      cursor: pointer;
+      list-style: none;
+      font-weight: 600;
+    }
+
+    .project-tree details > summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .project-tree details > summary::before {
+      content: '▸ ';
+      color: #93c5fd;
+    }
+
+    .project-tree details[open] > summary::before {
+      content: '▾ ';
+    }
+
+    .project-tree-file {
+      color: #dbeafe;
+      word-break: break-word;
+    }
+
+    #projectMainContent {
+      height: 100%;
+      padding: 24px;
+      overflow: auto;
+    }
+
+    .project-main-card {
+      max-width: 980px;
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: #111827;
+      padding: 16px;
+      display: grid;
+      gap: 12px;
+    }
+
     .sidebar {
       grid-area: sidebar;
       background: var(--panel);
@@ -389,19 +527,6 @@
       overflow: auto;
     }
 
-    .main-placeholder {
-      min-height: 220px;
-      display: grid;
-      place-items: center;
-      color: var(--muted);
-      font-size: 1.02rem;
-      text-align: center;
-      padding: 24px;
-      border: 1px dashed var(--border);
-      border-radius: 8px;
-      background: #141a25;
-    }
-
     .canvas-wrap {
       width: max-content;
       min-width: 100%;
@@ -602,6 +727,30 @@
         </div>
       </section>
       </div>
+      <div id="projectSidebarContent" class="project-sidebar" hidden>
+        <div class="project-upper">
+          <div class="project-tabs" role="tablist" aria-label="Projektmodus">
+            <button class="project-tab-btn active" type="button" data-project-tab="laden">Laden</button>
+            <button class="project-tab-btn" type="button" data-project-tab="importieren">Importieren</button>
+          </div>
+          <div id="projectLadenPanel" class="control project-tab-panel">
+            <div class="project-panel-section">
+              <h3 class="project-panel-title">Projektdaten</h3>
+              <p id="projectImportSummary" class="project-panel-note">Noch kein Ordner importiert.</p>
+            </div>
+          </div>
+          <div id="projectImportPanel" class="control project-tab-panel" hidden>
+            <div class="project-panel-section">
+              <h3 class="project-panel-title">Dateiordner importieren</h3>
+              <p class="project-panel-note">In der indexedDB werden keine Dateien gespeichert. Gespeichert werden nur Dateinamen und Dateipfade (Ordnerstruktur).</p>
+              <button id="projectFolderSelectBtn" class="btn project-import-btn" type="button">Ordner vom PC auswaehlen</button>
+              <input id="projectFolderInput" type="file" webkitdirectory directory multiple hidden>
+              <div id="projectImportTree" class="project-tree-wrap empty">Nach dem Import erscheint hier die erkannte Struktur.</div>
+            </div>
+          </div>
+        </div>
+        <div class="control project-lower">Placeholder</div>
+      </div>
     </aside>
 
     <main class="main">
@@ -612,7 +761,13 @@
           </div>
         </div>
       </div>
-      <div id="mainPlaceholder" class="main-placeholder" hidden></div>
+      <div id="projectMainContent" hidden>
+        <section class="project-main-card">
+          <h2 class="project-panel-title">Dateistruktur</h2>
+          <p class="project-panel-note">Die Struktur entspricht dem importierten Dateiordner (auf- und zuklappbar).</p>
+          <div id="projectMainTree" class="project-tree-wrap empty">Noch kein Ordner importiert.</div>
+        </section>
+      </div>
     </main>
   </div>
 
@@ -625,9 +780,20 @@
     const sidebarToggleIcon = document.getElementById('sidebarToggleIcon');
     const sidebarToggleLabel = document.getElementById('sidebarToggleLabel');
     const topMenuButtons = Array.from(document.querySelectorAll('.app-menu-button[data-app-view]'));
+    const projectTabButtons = Array.from(document.querySelectorAll('.project-tab-btn'));
+    const projectTabPanels = {
+      laden: document.getElementById('projectLadenPanel'),
+      importieren: document.getElementById('projectImportPanel')
+    };
     const layoutSidebarContent = document.getElementById('layoutSidebarContent');
+    const projectSidebarContent = document.getElementById('projectSidebarContent');
     const layoutMainContent = document.getElementById('layoutMainContent');
-    const mainPlaceholder = document.getElementById('mainPlaceholder');
+    const projectMainContent = document.getElementById('projectMainContent');
+    const projectFolderSelectBtn = document.getElementById('projectFolderSelectBtn');
+    const projectFolderInput = document.getElementById('projectFolderInput');
+    const projectImportSummary = document.getElementById('projectImportSummary');
+    const projectImportTree = document.getElementById('projectImportTree');
+    const projectMainTree = document.getElementById('projectMainTree');
 
     const pageFormats = {
       portrait: {
@@ -699,6 +865,7 @@
     let hoveredElementId = null;
     let isSidebarCollapsed = false;
     let activeAppView = 'layout';
+    let activeProjectSidebarTab = 'laden';
     let activeTab = 'setup';
     let activeCategoryId = null;
     let activeLayoutId = null;
@@ -706,6 +873,9 @@
     let snapshotDbPromise = null;
     let snapshotSaveTimer = null;
     let lastViewportLayoutKey = '';
+    let importedProjectFiles = [];
+    let importedProjectTree = null;
+    let projectTreeExpandedPaths = new Set();
 
     const SNAPSHOT_DB_NAME = 'jahrbuch-generator-db';
     const SNAPSHOT_STORE_NAME = 'snapshots';
@@ -821,13 +991,18 @@
       });
     }
 
-    function getAppViewTitle(view) {
-      if (view === 'projekt') return 'Projekt';
-      if (view === 'redaktion') return 'Redaktion';
-      if (view === 'overlay') return 'Overlay';
-      if (view === 'seite') return 'Seite';
-      if (view === 'druck') return 'Druck';
-      return 'Layout';
+    function setProjectSidebarTab(tabName) {
+      const nextTab = tabName === 'importieren' ? 'importieren' : 'laden';
+      activeProjectSidebarTab = nextTab;
+
+      projectTabButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.projectTab === nextTab);
+      });
+
+      Object.entries(projectTabPanels).forEach(([key, panel]) => {
+        if (!panel) return;
+        panel.hidden = key !== nextTab;
+      });
     }
 
     function setActiveAppView(view, persist = true) {
@@ -840,18 +1015,21 @@
       });
 
       const isLayoutView = nextView === 'layout';
+      const isProjektView = nextView === 'projekt';
       layoutSidebarContent.hidden = !isLayoutView;
+      projectSidebarContent.hidden = !isProjektView;
       layoutMainContent.hidden = !isLayoutView;
-      mainPlaceholder.hidden = isLayoutView;
+      if (projectMainContent) projectMainContent.hidden = !isProjektView;
 
       if (!isLayoutView) {
-        mainPlaceholder.textContent = `${getAppViewTitle(nextView)}: TODO`;
+        if (isProjektView) {
+          setProjectSidebarTab(activeProjectSidebarTab);
+        }
         if (mainArea) {
           mainArea.scrollLeft = 0;
           mainArea.scrollTop = 0;
         }
       } else {
-        mainPlaceholder.textContent = '';
         draw();
       }
 
@@ -880,6 +1058,196 @@
       if (persist) {
         queueSnapshotSave();
       }
+    }
+
+    function sortProjectTree(node) {
+      if (!node || !Array.isArray(node.children)) return;
+      node.children.forEach((child) => sortProjectTree(child));
+      node.children.sort((a, b) => {
+        const aIsDir = a.type === 'directory';
+        const bIsDir = b.type === 'directory';
+        if (aIsDir !== bIsDir) return aIsDir ? -1 : 1;
+        return a.name.localeCompare(b.name, 'de', { sensitivity: 'base' });
+      });
+    }
+
+    function buildProjectTreeFromFiles(files) {
+      if (!Array.isArray(files) || files.length === 0) return null;
+      const rootMap = new Map();
+      const uniquePathSet = new Set();
+
+      files.forEach((file) => {
+        if (!file || typeof file.relativePath !== 'string') return;
+        const relativePath = file.relativePath.replace(/\\/g, '/').trim();
+        if (!relativePath || uniquePathSet.has(relativePath)) return;
+        uniquePathSet.add(relativePath);
+
+        const segments = relativePath.split('/').filter(Boolean);
+        if (segments.length === 0) return;
+
+        const rootName = segments[0];
+        if (!rootMap.has(rootName)) {
+          rootMap.set(rootName, {
+            type: 'directory',
+            name: rootName,
+            path: rootName,
+            children: []
+          });
+        }
+
+        let currentNode = rootMap.get(rootName);
+        let runningPath = rootName;
+
+        for (let i = 1; i < segments.length - 1; i++) {
+          const folderName = segments[i];
+          runningPath = `${runningPath}/${folderName}`;
+          let folderNode = currentNode.children.find((child) => child.type === 'directory' && child.name === folderName);
+          if (!folderNode) {
+            folderNode = {
+              type: 'directory',
+              name: folderName,
+              path: runningPath,
+              children: []
+            };
+            currentNode.children.push(folderNode);
+          }
+          currentNode = folderNode;
+        }
+
+        const fileName = segments[segments.length - 1];
+        currentNode.children.push({
+          type: 'file',
+          name: fileName,
+          path: relativePath
+        });
+      });
+
+      const roots = Array.from(rootMap.values());
+      roots.forEach((root) => sortProjectTree(root));
+      if (roots.length === 1) return roots[0];
+
+      const syntheticRoot = {
+        type: 'directory',
+        name: 'Importierte Ordner',
+        path: '',
+        children: roots
+      };
+      sortProjectTree(syntheticRoot);
+      return syntheticRoot;
+    }
+
+    function ensureProjectTreeOpenDefaults() {
+      const nextExpanded = new Set();
+      if (!importedProjectTree) {
+        projectTreeExpandedPaths = nextExpanded;
+        return;
+      }
+
+      if (importedProjectTree.path) {
+        nextExpanded.add(importedProjectTree.path);
+      } else if (Array.isArray(importedProjectTree.children)) {
+        nextExpanded.add('');
+        importedProjectTree.children
+          .filter((child) => child.type === 'directory' && child.path)
+          .forEach((child) => nextExpanded.add(child.path));
+      }
+      projectTreeExpandedPaths = nextExpanded;
+    }
+
+    function createProjectTreeNode(node) {
+      if (!node || typeof node !== 'object') return null;
+      if (node.type === 'file') {
+        const item = document.createElement('li');
+        item.className = 'project-tree-file';
+        item.textContent = node.name;
+        item.title = node.path;
+        return item;
+      }
+
+      const item = document.createElement('li');
+      const details = document.createElement('details');
+      details.dataset.dirPath = node.path || '';
+      details.open = node.path
+        ? projectTreeExpandedPaths.has(node.path)
+        : (projectTreeExpandedPaths.size === 0 || projectTreeExpandedPaths.has(''));
+      const summary = document.createElement('summary');
+      summary.textContent = node.name;
+      details.appendChild(summary);
+
+      const childrenList = document.createElement('ul');
+      childrenList.className = 'project-tree';
+      (Array.isArray(node.children) ? node.children : []).forEach((child) => {
+        const childNode = createProjectTreeNode(child);
+        if (childNode) childrenList.appendChild(childNode);
+      });
+      details.appendChild(childrenList);
+      item.appendChild(details);
+      return item;
+    }
+
+    function renderTreeIntoContainer(container) {
+      if (!container) return;
+      container.replaceChildren();
+
+      if (!importedProjectTree) {
+        container.classList.add('empty');
+        container.textContent = 'Noch kein Ordner importiert.';
+        return;
+      }
+
+      container.classList.remove('empty');
+      const rootList = document.createElement('ul');
+      rootList.className = 'project-tree';
+      const rootNode = createProjectTreeNode(importedProjectTree);
+      if (rootNode) rootList.appendChild(rootNode);
+      container.appendChild(rootList);
+    }
+
+    function refreshImportedProjectUi() {
+      renderTreeIntoContainer(projectImportTree);
+      renderTreeIntoContainer(projectMainTree);
+      if (projectImportSummary) {
+        if (importedProjectFiles.length === 0) {
+          projectImportSummary.textContent = 'Noch kein Ordner importiert.';
+        } else {
+          const rootName = importedProjectTree?.name || 'Ordner';
+          projectImportSummary.textContent = `${rootName}: ${importedProjectFiles.length} Datei(en) importiert.`;
+        }
+      }
+    }
+
+    function setImportedProjectFiles(files, preserveExpanded = false) {
+      importedProjectFiles = Array.isArray(files) ? files : [];
+      importedProjectTree = buildProjectTreeFromFiles(importedProjectFiles);
+      if (!preserveExpanded) {
+        ensureProjectTreeOpenDefaults();
+      } else {
+        const nextExpanded = new Set();
+        projectTreeExpandedPaths.forEach((path) => {
+          if (typeof path === 'string') nextExpanded.add(path);
+        });
+        projectTreeExpandedPaths = nextExpanded;
+      }
+      refreshImportedProjectUi();
+    }
+
+    function readFilesFromFolderInput(fileList) {
+      return Array.from(fileList || [])
+        .map((file) => {
+          const relativePath = String(file.webkitRelativePath || file.name || '').replace(/\\/g, '/').trim();
+          if (!relativePath) return null;
+          const segments = relativePath.split('/').filter(Boolean);
+          if (segments.length === 0) return null;
+          const name = segments[segments.length - 1];
+          const folderPath = segments.slice(0, -1).join('/');
+          return {
+            id: relativePath,
+            name,
+            folderPath,
+            relativePath
+          };
+        })
+        .filter((entry) => !!entry);
     }
 
     function serializeElements() {
@@ -1120,13 +1488,23 @@
     function getSnapshotData() {
       saveCurrentCategoryIntoCollection();
       return {
-        version: 3,
+        version: 4,
         savedAt: Date.now(),
         activeSidebarCollapsed: isSidebarCollapsed,
         activeAppView,
+        activeProjectSidebarTab,
         activeTab,
         activeCategoryId,
         activeLayoutId,
+        importedProject: {
+          files: importedProjectFiles.map((entry) => ({
+            id: entry.id,
+            name: entry.name,
+            folderPath: entry.folderPath,
+            relativePath: entry.relativePath
+          })),
+          expandedPaths: Array.from(projectTreeExpandedPaths)
+        },
         categories: categories.map((category) => ({
           id: category.id,
           name: category.name,
@@ -1261,6 +1639,17 @@
       });
 
       activeAppView = typeof snapshot.activeAppView === 'string' ? snapshot.activeAppView : 'layout';
+      activeProjectSidebarTab = snapshot.activeProjectSidebarTab === 'importieren' ? 'importieren' : 'laden';
+      const snapshotFiles = Array.isArray(snapshot.importedProject?.files) ? snapshot.importedProject.files : [];
+      setImportedProjectFiles(snapshotFiles, false);
+      const snapshotExpanded = Array.isArray(snapshot.importedProject?.expandedPaths)
+        ? snapshot.importedProject.expandedPaths.filter((path) => typeof path === 'string')
+        : [];
+      if (snapshotExpanded.length > 0) {
+        projectTreeExpandedPaths = new Set(snapshotExpanded);
+        refreshImportedProjectUi();
+      }
+      setProjectSidebarTab(activeProjectSidebarTab);
       setActiveAppView(activeAppView, false);
       setSidebarCollapsed(!!snapshot.activeSidebarCollapsed, false);
     }
@@ -2114,6 +2503,11 @@
     controls.colsRange.addEventListener('input', handleSettingsInput);
     controls.rowsRange.addEventListener('input', handleSettingsInput);
     controls.cellGapRange.addEventListener('input', handleSettingsInput);
+    projectTabButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        setProjectSidebarTab(button.dataset.projectTab || 'laden');
+      });
+    });
     if (sidebarToggleBtn) {
       sidebarToggleBtn.addEventListener('click', () => {
         setSidebarCollapsed(!isSidebarCollapsed);
@@ -2272,6 +2666,36 @@
     });
     tabButtons.forEach((button) => {
       button.addEventListener('click', () => setActiveTab(button.dataset.tab));
+    });
+    if (projectFolderSelectBtn && projectFolderInput) {
+      projectFolderSelectBtn.addEventListener('click', () => {
+        projectFolderInput.click();
+      });
+      projectFolderInput.addEventListener('change', () => {
+        const importedFiles = readFilesFromFolderInput(projectFolderInput.files);
+        setImportedProjectFiles(importedFiles);
+        if (importedFiles.length > 0) {
+          const rootName = importedProjectTree?.name || 'Ordner';
+          setStatus(`Ordner "${rootName}" importiert (${importedFiles.length} Datei(en)).`, false);
+          queueSnapshotSave();
+        } else {
+          setStatus('Keine Dateien im ausgewaehlten Ordner gefunden.', true);
+        }
+      });
+    }
+    [projectImportTree, projectMainTree].forEach((treeContainer) => {
+      if (!treeContainer) return;
+      treeContainer.addEventListener('toggle', (event) => {
+        const details = event.target;
+        if (!(details instanceof HTMLDetailsElement)) return;
+        const dirPath = details.dataset.dirPath || '';
+        if (details.open) {
+          projectTreeExpandedPaths.add(dirPath);
+        } else {
+          projectTreeExpandedPaths.delete(dirPath);
+        }
+        queueSnapshotSave();
+      });
     });
     elementOptions.forEach((option) => {
       option.addEventListener('dragstart', (event) => {
@@ -2549,7 +2973,9 @@
         refreshLayoutSelector();
         setActiveAppView('layout', false);
         setSidebarCollapsed(false, false);
+        setImportedProjectFiles([], false);
       }
+      setProjectSidebarTab(activeProjectSidebarTab);
       draw();
     }
 
