@@ -148,6 +148,141 @@
       display: none !important;
     }
 
+    .seite-sidebar {
+      height: 100%;
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+      gap: 12px;
+      overflow: auto;
+    }
+
+    .seite-sidebar[hidden] {
+      display: none !important;
+    }
+
+    .seite-sidebar-title {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .seite-sidebar-section {
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #10151f;
+      padding: 10px;
+      display: grid;
+      gap: 8px;
+      min-height: 0;
+    }
+
+    .seite-sidebar-section.scroll {
+      overflow: visible;
+    }
+
+    .seite-sidebar-section-title {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .seite-sidebar-filters {
+      display: grid;
+      gap: 8px;
+    }
+
+    .seite-filter-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+
+    .seite-filter-btn {
+      min-height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #141a25;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.76rem;
+      font-weight: 800;
+      cursor: pointer;
+    }
+
+    .seite-filter-btn.active {
+      color: var(--text);
+      background: rgba(96, 165, 250, 0.20);
+      border-color: rgba(96, 165, 250, 0.45);
+    }
+
+    .seite-asset-size-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+    }
+
+    .seite-asset-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(var(--seite-asset-size, 74px), 1fr));
+      gap: 8px;
+      align-content: start;
+    }
+
+    .seite-asset-card {
+      min-width: 0;
+      border: 1px solid rgba(154, 163, 178, 0.24);
+      border-radius: 8px;
+      background: rgba(20, 26, 37, 0.72);
+      overflow: hidden;
+    }
+
+    .seite-asset-card.visible {
+      border-color: rgba(251, 191, 36, 0.46);
+      background: rgba(251, 191, 36, 0.10);
+      box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.10);
+    }
+
+    .seite-asset-thumb {
+      height: var(--seite-asset-size, 74px);
+      display: grid;
+      place-items: center;
+      background: #0f172a;
+      color: var(--muted);
+      font-weight: 900;
+      font-size: 0.78rem;
+    }
+
+    .seite-asset-thumb img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .seite-asset-name {
+      padding: 6px;
+      color: var(--text);
+      font-size: 0.72rem;
+      line-height: 1.2;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .seite-sidebar-empty {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.35;
+      font-style: italic;
+    }
+
     .project-upper {
       min-height: 0;
       display: grid;
@@ -308,6 +443,7 @@
     #seiteMainContent {
       height: 100%;
       min-height: 0;
+      overflow: hidden;
     }
 
     .seite-workspace {
@@ -360,7 +496,7 @@
       display: grid;
       place-items: center;
       padding: 24px;
-      overflow: auto;
+      overflow: hidden;
       background:
         radial-gradient(circle at top left, rgba(96, 165, 250, 0.08), transparent 34%),
         #111318;
@@ -1506,6 +1642,16 @@
       overflow: auto;
     }
 
+    .app.seite-view .main {
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .app.seite-view .sidebar {
+      min-height: 0;
+      overflow: hidden;
+    }
+
     .app.main-only .main {
       overflow: hidden;
     }
@@ -1737,6 +1883,36 @@
         </div>
         <div class="control project-lower">Placeholder</div>
       </div>
+      <div id="seiteSidebarContent" class="seite-sidebar" hidden>
+        <h2 class="seite-sidebar-title">Assets der Seite</h2>
+        <section id="seiteVisibleAssetsSection" class="seite-sidebar-section">
+          <h3 class="seite-sidebar-section-title">Angezeigt</h3>
+          <div id="seiteVisibleAssets" class="seite-asset-grid"></div>
+        </section>
+        <section class="seite-sidebar-section">
+          <h3 class="seite-sidebar-section-title">Filter</h3>
+          <div class="seite-sidebar-filters">
+            <div class="seite-filter-row" aria-label="Asset-Typ Filter">
+              <button class="seite-filter-btn active" type="button" data-seite-asset-type="all">Alle</button>
+              <button class="seite-filter-btn" type="button" data-seite-asset-type="image">Bild</button>
+              <button class="seite-filter-btn" type="button" data-seite-asset-type="text">Text</button>
+            </div>
+            <div class="seite-filter-row" aria-label="Bildformat Filter">
+              <button class="seite-filter-btn active" type="button" data-seite-image-orientation="both">beide</button>
+              <button class="seite-filter-btn" type="button" data-seite-image-orientation="portrait">Hoch</button>
+              <button class="seite-filter-btn" type="button" data-seite-image-orientation="landscape">Quer</button>
+            </div>
+            <label class="seite-asset-size-row" for="seiteAssetSizeRange">
+              <span>Größe</span>
+              <input id="seiteAssetSizeRange" type="range" min="52" max="132" step="4" value="74">
+            </label>
+          </div>
+        </section>
+        <section class="seite-sidebar-section scroll">
+          <h3 class="seite-sidebar-section-title">Alle zugeordneten Assets</h3>
+          <div id="seiteAllAssets" class="seite-asset-grid"></div>
+        </section>
+      </div>
     </aside>
 
     <main class="main">
@@ -1864,6 +2040,7 @@
     };
     const layoutSidebarContent = document.getElementById('layoutSidebarContent');
     const projectSidebarContent = document.getElementById('projectSidebarContent');
+    const seiteSidebarContent = document.getElementById('seiteSidebarContent');
     const layoutMainContent = document.getElementById('layoutMainContent');
     const projectMainContent = document.getElementById('projectMainContent');
     const projectFolderSelectBtn = document.getElementById('projectFolderSelectBtn');
@@ -1876,6 +2053,12 @@
     const seiteStage = document.getElementById('seiteStage');
     const seitePageStrip = document.getElementById('seitePageStrip');
     const seiteViewToggleButtons = Array.from(document.querySelectorAll('.seite-view-toggle-btn'));
+    const seiteVisibleAssetsSection = document.getElementById('seiteVisibleAssetsSection');
+    const seiteVisibleAssets = document.getElementById('seiteVisibleAssets');
+    const seiteAllAssets = document.getElementById('seiteAllAssets');
+    const seiteAssetTypeFilterButtons = Array.from(document.querySelectorAll('.seite-filter-btn[data-seite-asset-type]'));
+    const seiteImageOrientationFilterButtons = Array.from(document.querySelectorAll('.seite-filter-btn[data-seite-image-orientation]'));
+    const seiteAssetSizeRange = document.getElementById('seiteAssetSizeRange');
     const redaktionPageTool = document.getElementById('redaktionPageTool');
     const redaktionAutomaticTool = document.getElementById('redaktionAutomaticTool');
     const redaktionTrashTool = document.getElementById('redaktionTrashTool');
@@ -1994,7 +2177,13 @@
     let seiteViewMode = 'single';
     let seitePreviewRenderToken = 0;
     let seitePreviewObjectUrls = [];
+    let seiteSidebarRenderToken = 0;
+    let seiteSidebarObjectUrls = [];
     let seiteImageDragState = null;
+    let seiteAssetTypeFilter = 'all';
+    let seiteImageOrientationFilter = 'both';
+    let seiteAssetDisplaySize = 74;
+    const assetImageOrientationCache = new Map();
 
     const SNAPSHOT_DB_NAME = 'jahrbuch-generator-db';
     const SNAPSHOT_STORE_NAME = 'snapshots';
@@ -2165,15 +2354,18 @@
       const isRedaktionView = nextView === 'redaktion';
       const isSeiteView = nextView === 'seite';
       if (appRoot) {
-        appRoot.classList.toggle('main-only', !isLayoutView && !isProjektView);
+        appRoot.classList.toggle('main-only', !isLayoutView && !isProjektView && !isSeiteView);
+        appRoot.classList.toggle('seite-view', isSeiteView);
       }
       layoutSidebarContent.hidden = !isLayoutView;
       projectSidebarContent.hidden = !isProjektView;
+      if (seiteSidebarContent) seiteSidebarContent.hidden = !isSeiteView;
       layoutMainContent.hidden = !isLayoutView;
       if (projectMainContent) projectMainContent.hidden = !isProjektView;
       if (redaktionMainContent) redaktionMainContent.hidden = !isRedaktionView;
       if (seiteMainContent) seiteMainContent.hidden = !isSeiteView;
       if (!isSeiteView) clearSeitePreviewObjectUrls();
+      if (!isSeiteView) clearSeiteSidebarObjectUrls();
 
       if (!isLayoutView) {
         if (isProjektView) {
@@ -2184,6 +2376,7 @@
         }
         if (isSeiteView) {
           renderSeitePageStrip();
+          void renderSeiteSidebarAssets();
         }
         if (mainArea) {
           mainArea.scrollLeft = 0;
@@ -3173,6 +3366,161 @@
       });
     }
 
+    function getSeiteAssetFileType(file) {
+      const extension = String(file?.relativePath || '').split('.').pop()?.toLowerCase() || '';
+      if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'svg'].includes(extension)) return 'image';
+      if (['txt', 'md', 'text'].includes(extension)) return 'text';
+      return 'other';
+    }
+
+    function getSeiteAssignedAssetFiles(page) {
+      const imageFiles = getAssetFileCandidates(page, 'image').map((file) => ({ ...file, assetType: 'image' }));
+      const textFiles = getAssetFileCandidates(page, 'text').map((file) => ({ ...file, assetType: 'text' }));
+      const seenPaths = new Set();
+      return [...imageFiles, ...textFiles]
+        .filter((file) => {
+          if (!file?.relativePath || seenPaths.has(file.relativePath)) return false;
+          seenPaths.add(file.relativePath);
+          return true;
+        })
+        .sort((a, b) => a.relativePath.localeCompare(b.relativePath, 'de', { sensitivity: 'base' }));
+    }
+
+    function clearSeiteSidebarObjectUrls() {
+      seiteSidebarObjectUrls.forEach((url) => URL.revokeObjectURL(url));
+      seiteSidebarObjectUrls = [];
+    }
+
+    async function getImageOrientationForPath(path) {
+      if (!path) return 'unknown';
+      if (assetImageOrientationCache.has(path)) return assetImageOrientationCache.get(path);
+      const file = await getImportedFile(path);
+      if (!file) {
+        assetImageOrientationCache.set(path, 'unknown');
+        return 'unknown';
+      }
+      const objectUrl = URL.createObjectURL(file);
+      try {
+        const orientation = await new Promise((resolve) => {
+          const image = new Image();
+          image.onload = () => resolve(image.naturalHeight > image.naturalWidth ? 'portrait' : 'landscape');
+          image.onerror = () => resolve('unknown');
+          image.src = objectUrl;
+        });
+        assetImageOrientationCache.set(path, orientation);
+        return orientation;
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+
+    function getDisplayedSeiteAssetPaths() {
+      const paths = new Set();
+      const pageNumbers = seiteViewMode === 'double' ? getSeiteSpreadNumbers(activeSeitePageNumber) : [activeSeitePageNumber];
+      pageNumbers.forEach((pageNumber) => {
+        const context = getSeiteContextByNumber(pageNumber);
+        if (!context?.page || !context.layoutSlot) return;
+        const category = getLayoutCategoryById(context.page.layoutCategoryId);
+        if (!context.layout || !category) return;
+        const imageAssignments = getSeiteMediaAssignments(context.page, 'image');
+        const textAssignments = getSeiteMediaAssignments(context.page, 'text');
+        getPreviewRectsForActivePage(context.layout, category, context.spreadPageIndex)
+          .forEach((entry) => {
+            const mediaKey = getSeiteMediaAssignmentKey(context.layoutSlot.slot, entry.element.id);
+            const path = entry.element.type === 'image'
+              ? imageAssignments.get(mediaKey)
+              : textAssignments.get(mediaKey);
+            if (path) paths.add(path);
+          });
+      });
+      return paths;
+    }
+
+    async function createSeiteAssetCard(file, visiblePaths, token) {
+      const card = document.createElement('div');
+      card.className = 'seite-asset-card';
+      card.classList.toggle('visible', visiblePaths.has(file.relativePath));
+      card.title = file.relativePath;
+
+      const thumb = document.createElement('div');
+      thumb.className = 'seite-asset-thumb';
+      if (file.assetType === 'image') {
+        const imageFile = await getImportedFile(file.relativePath);
+        if (token !== seiteSidebarRenderToken) return null;
+        if (imageFile) {
+          const objectUrl = URL.createObjectURL(imageFile);
+          seiteSidebarObjectUrls.push(objectUrl);
+          const image = document.createElement('img');
+          image.src = objectUrl;
+          image.alt = file.name;
+          thumb.appendChild(image);
+        } else {
+          thumb.textContent = 'Bild';
+        }
+      } else {
+        thumb.textContent = 'Text';
+      }
+
+      const name = document.createElement('div');
+      name.className = 'seite-asset-name';
+      name.textContent = file.name || file.relativePath.split('/').pop() || file.relativePath;
+      card.append(thumb, name);
+      return card;
+    }
+
+    async function renderSeiteAssetGrid(container, files, visiblePaths, token) {
+      if (!container) return;
+      container.replaceChildren();
+      container.style.setProperty('--seite-asset-size', `${seiteAssetDisplaySize}px`);
+      if (files.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'seite-sidebar-empty';
+        empty.textContent = 'Keine Assets fuer diese Auswahl.';
+        container.appendChild(empty);
+        return;
+      }
+      for (const file of files) {
+        const card = await createSeiteAssetCard(file, visiblePaths, token);
+        if (token !== seiteSidebarRenderToken) return;
+        if (card) container.appendChild(card);
+      }
+    }
+
+    async function renderSeiteSidebarAssets() {
+      if (!seiteSidebarContent || activeAppView !== 'seite') return;
+      const token = ++seiteSidebarRenderToken;
+      clearSeiteSidebarObjectUrls();
+      const context = getSeiteContextByNumber(activeSeitePageNumber);
+      const page = context?.page || null;
+      const visiblePaths = getDisplayedSeiteAssetPaths();
+      const allFiles = page ? getSeiteAssignedAssetFiles(page) : [];
+
+      const visibleFiles = allFiles.filter((file) => visiblePaths.has(file.relativePath));
+      let filteredFiles = allFiles.filter((file) => {
+        if (seiteAssetTypeFilter !== 'all' && file.assetType !== seiteAssetTypeFilter) return false;
+        return true;
+      });
+
+      if (seiteImageOrientationFilter !== 'both') {
+        const nextFiltered = [];
+        for (const file of filteredFiles) {
+          if (token !== seiteSidebarRenderToken) return;
+          if (file.assetType !== 'image') {
+            nextFiltered.push(file);
+            continue;
+          }
+          const orientation = await getImageOrientationForPath(file.relativePath);
+          if (orientation === seiteImageOrientationFilter) nextFiltered.push(file);
+        }
+        filteredFiles = nextFiltered;
+      }
+
+      await renderSeiteAssetGrid(seiteVisibleAssets, visibleFiles, visiblePaths, token);
+      if (seiteVisibleAssetsSection) seiteVisibleAssetsSection.hidden = visibleFiles.length === 0;
+      if (token !== seiteSidebarRenderToken) return;
+      await renderSeiteAssetGrid(seiteAllAssets, filteredFiles, visiblePaths, token);
+    }
+
     function isHeroFilePath(path) {
       const fileName = String(path || '').split('/').pop() || '';
       const baseName = fileName.replace(/\.[^.]+$/, '');
@@ -3350,6 +3698,16 @@
         renderSeitePageStrip();
       }
       if (persist) queueSnapshotSave();
+    }
+
+    function refreshSeiteSidebarControls() {
+      seiteAssetTypeFilterButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.seiteAssetType === seiteAssetTypeFilter);
+      });
+      seiteImageOrientationFilterButtons.forEach((button) => {
+        button.classList.toggle('active', button.dataset.seiteImageOrientation === seiteImageOrientationFilter);
+      });
+      if (seiteAssetSizeRange) seiteAssetSizeRange.value = String(seiteAssetDisplaySize);
     }
 
     function createSeitePlaceholder(message) {
@@ -3641,6 +3999,7 @@
         empty.textContent = 'Noch keine Seiten in Redaktion angelegt.';
         seitePageStrip.appendChild(empty);
         if (activeAppView === 'seite') void renderSeitePreview(null);
+        if (activeAppView === 'seite') void renderSeiteSidebarAssets();
         return;
       }
 
@@ -3683,6 +4042,7 @@
         seitePageStrip.appendChild(item);
       });
       if (activeAppView === 'seite') void renderSeitePreview(activeSeitePageNumber);
+      if (activeAppView === 'seite') void renderSeiteSidebarAssets();
     }
 
     function renderRedaktionPages() {
@@ -4067,6 +4427,7 @@
       renderTreeIntoContainer(projectImportTree);
       renderTreeIntoContainer(projectMainTree);
       renderRedaktionAssetsTree();
+      if (activeAppView === 'seite') void renderSeiteSidebarAssets();
       if (projectImportSummary) {
         if (missingProjectFilePaths.size > 0) {
           projectImportSummary.textContent = `${missingProjectFilePaths.size} Datei(en) fehlen lokal. Bitte importiere den passenden Ordner erneut.`;
@@ -4157,6 +4518,7 @@
       ensureProjectTreeOpenDefaults();
       refreshImportedProjectUi();
       refreshRedaktionInspector();
+      renderSeitePageStrip();
       queueSnapshotSave();
       return true;
     }
@@ -4580,6 +4942,9 @@
         activeLayoutId,
         activeSeitePageNumber,
         seiteViewMode,
+        seiteAssetTypeFilter,
+        seiteImageOrientationFilter,
+        seiteAssetDisplaySize,
         importedProject: {
           files: importedProjectFiles.map((entry) => ({
             id: entry.id,
@@ -4749,6 +5114,10 @@
 
       activeAppView = typeof snapshot.activeAppView === 'string' ? snapshot.activeAppView : 'layout';
       activeSeitePageNumber = Number.isInteger(snapshot.activeSeitePageNumber) ? snapshot.activeSeitePageNumber : null;
+      seiteAssetTypeFilter = ['all', 'image', 'text'].includes(snapshot.seiteAssetTypeFilter) ? snapshot.seiteAssetTypeFilter : 'all';
+      seiteImageOrientationFilter = ['both', 'portrait', 'landscape'].includes(snapshot.seiteImageOrientationFilter) ? snapshot.seiteImageOrientationFilter : 'both';
+      seiteAssetDisplaySize = Math.min(132, Math.max(52, Number(snapshot.seiteAssetDisplaySize) || 74));
+      refreshSeiteSidebarControls();
       setSeiteViewMode(snapshot.seiteViewMode === 'double' ? 'double' : 'single', false);
       activeProjectSidebarTab = snapshot.activeProjectSidebarTab === 'importieren' ? 'importieren' : 'laden';
       const snapshotFiles = Array.isArray(snapshot.importedProject?.files) ? snapshot.importedProject.files : [];
@@ -5882,6 +6251,29 @@
         setSeiteViewMode(button.dataset.seiteViewMode || 'single');
       });
     });
+    seiteAssetTypeFilterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        seiteAssetTypeFilter = button.dataset.seiteAssetType || 'all';
+        refreshSeiteSidebarControls();
+        void renderSeiteSidebarAssets();
+        queueSnapshotSave();
+      });
+    });
+    seiteImageOrientationFilterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        seiteImageOrientationFilter = button.dataset.seiteImageOrientation || 'both';
+        refreshSeiteSidebarControls();
+        void renderSeiteSidebarAssets();
+        queueSnapshotSave();
+      });
+    });
+    if (seiteAssetSizeRange) {
+      seiteAssetSizeRange.addEventListener('input', () => {
+        seiteAssetDisplaySize = Math.min(132, Math.max(52, Number(seiteAssetSizeRange.value) || 74));
+        void renderSeiteSidebarAssets();
+        queueSnapshotSave();
+      });
+    }
     if (seiteStage) {
       seiteStage.addEventListener('wheel', (event) => {
         const imageBox = event.target.closest?.('.seite-preview-element.image[data-image-path]');
