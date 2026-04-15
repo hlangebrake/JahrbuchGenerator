@@ -229,6 +229,13 @@
       word-break: break-word;
     }
 
+    .project-tree-missing {
+      background: rgba(248, 113, 113, 0.22);
+      color: #fecaca;
+      border-radius: 4px;
+      padding: 1px 4px;
+    }
+
     #projectMainContent {
       height: 100%;
       padding: 24px;
@@ -254,9 +261,112 @@
       height: 100%;
       min-height: 0;
       display: grid;
-      grid-template-columns: 82px minmax(260px, 360px) minmax(260px, 320px);
+      grid-template-columns: minmax(260px, 360px) 82px minmax(260px, 360px) minmax(260px, 320px);
       align-items: start;
       justify-content: center;
+    }
+
+    .redaktion-assets-panel {
+      height: 100%;
+      min-height: 0;
+      max-height: 100%;
+      padding: 14px;
+      border: 1px solid var(--border);
+      border-right: 0;
+      border-radius: 8px 0 0 8px;
+      background: #10151f;
+      overflow: auto;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .redaktion-assets-title {
+      margin: 0;
+      font-size: 1rem;
+    }
+
+    .redaktion-assets-filter {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 4px;
+    }
+
+    .redaktion-assets-filter-btn {
+      min-height: 30px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #141a25;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .redaktion-assets-filter-btn.active {
+      color: var(--text);
+      border-color: var(--accent);
+      background: #1f304a;
+    }
+
+    #redaktionAssetsTree {
+      height: 100%;
+      max-height: none;
+      min-height: 0;
+    }
+
+    .project-asset-node {
+      cursor: grab;
+      border-radius: 4px;
+      padding: 2px 4px;
+    }
+
+    .project-asset-node:active {
+      cursor: grabbing;
+    }
+
+    .project-asset-node.selected {
+      outline: 1px solid rgba(255, 255, 255, 0.65);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .assigned-assets {
+      display: grid;
+      gap: 6px;
+      max-height: 180px;
+      overflow: auto;
+    }
+
+    .assigned-asset-row {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 8px;
+      align-items: center;
+      padding: 6px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #10151f;
+    }
+
+    .assigned-asset-title {
+      min-width: 0;
+      color: var(--text);
+      font-size: 0.85rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .assigned-asset-remove {
+      min-height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #241a1d;
+      color: #fecaca;
+      font: inherit;
+      font-size: 0.8rem;
+      cursor: pointer;
     }
 
     .redaktion-toolbar {
@@ -299,27 +409,43 @@
       cursor: grabbing;
     }
 
-    .redaktion-trash-tool {
+    .redaktion-trash-tool,
+    .redaktion-automatic-tool {
       width: 58px;
       min-height: 58px;
       border: 1px solid var(--border);
       border-radius: 6px;
-      background: #241a1d;
-      color: #fecaca;
       display: grid;
       place-items: center;
-      cursor: grab;
       font-size: 1.4rem;
       line-height: 1;
+    }
+
+    .redaktion-trash-tool {
+      background: #241a1d;
+      color: #fecaca;
+      cursor: grab;
+    }
+
+    .redaktion-automatic-tool {
+      background: #17231f;
+      color: #bbf7d0;
+      cursor: default;
     }
 
     .redaktion-trash-tool:active {
       cursor: grabbing;
     }
 
-    .redaktion-trash-tool.drop-delete {
+    .redaktion-trash-tool.drop-delete,
+    .redaktion-automatic-tool.drop-automatic {
       border-color: var(--danger);
       box-shadow: 0 0 0 2px rgba(248, 113, 113, 0.25);
+    }
+
+    .redaktion-automatic-tool.drop-automatic {
+      border-color: #34d399;
+      box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.25);
     }
 
     .redaktion-board {
@@ -395,12 +521,34 @@
     }
 
     .redaktion-page-card {
+      position: relative;
       width: 260px;
       padding: 10px 12px;
       display: grid;
       align-content: center;
       cursor: grab;
       user-select: none;
+    }
+
+    .redaktion-page-resize-handle {
+      position: absolute;
+      left: 8px;
+      right: 8px;
+      bottom: -3px;
+      height: 8px;
+      cursor: ns-resize;
+      border-radius: 999px;
+    }
+
+    .redaktion-page-resize-handle::after {
+      content: '';
+      position: absolute;
+      left: 35%;
+      right: 35%;
+      bottom: 3px;
+      height: 2px;
+      border-radius: 999px;
+      background: rgba(229, 231, 235, 0.38);
     }
 
     .redaktion-page-card.compact {
@@ -535,7 +683,7 @@
 
     @media (max-width: 920px) {
       .redaktion-workspace {
-        grid-template-columns: 70px minmax(0, 1fr);
+        grid-template-columns: minmax(0, 1fr) 70px minmax(0, 1fr);
         justify-content: stretch;
       }
 
@@ -1118,9 +1266,20 @@
       </div>
       <div id="redaktionMainContent" hidden>
         <div class="redaktion-workspace">
+          <aside id="redaktionAssetsPanel" class="redaktion-assets-panel" aria-label="Assets">
+            <h2 class="redaktion-assets-title">Assets</h2>
+            <div class="redaktion-assets-filter" role="group" aria-label="Assets Filter">
+              <button class="redaktion-assets-filter-btn active" type="button" data-assets-filter="all">Alle</button>
+              <button class="redaktion-assets-filter-btn" type="button" data-assets-filter="assigned">Zugeordnet</button>
+              <button class="redaktion-assets-filter-btn" type="button" data-assets-filter="unassigned">Nicht zugeordnet</button>
+            </div>
+            <div id="redaktionAssetsTree" class="project-tree-wrap empty">Noch keine Assets importiert.</div>
+          </aside>
           <aside class="redaktion-toolbar" aria-label="Werkzeuge fuer Seiten">
             <div id="redaktionPageTool" class="redaktion-page-tool" draggable="true" role="button" tabindex="0" aria-label="Neue Seite"></div>
             <div class="redaktion-toolbar-label">Neue Seite</div>
+            <div id="redaktionAutomaticTool" class="redaktion-automatic-tool" role="button" tabindex="0" aria-label="Automatik">&#129302;</div>
+            <div class="redaktion-toolbar-label">Automatik</div>
             <div id="redaktionTrashTool" class="redaktion-trash-tool" draggable="true" role="button" tabindex="0" aria-label="Loeschen">&#128465;</div>
             <div class="redaktion-toolbar-label">Loeschen</div>
           </aside>
@@ -1157,6 +1316,10 @@
                   <select id="redaktionLayoutSelect"></select>
                 </div>
               </fieldset>
+              <fieldset class="redaktion-fieldset">
+                <legend>Zugeordnete Assets</legend>
+                <div id="redaktionAssignedAssets" class="assigned-assets project-tree-wrap"></div>
+              </fieldset>
             </div>
           </aside>
         </div>
@@ -1189,7 +1352,10 @@
     const projectMainTree = document.getElementById('projectMainTree');
     const redaktionMainContent = document.getElementById('redaktionMainContent');
     const redaktionPageTool = document.getElementById('redaktionPageTool');
+    const redaktionAutomaticTool = document.getElementById('redaktionAutomaticTool');
     const redaktionTrashTool = document.getElementById('redaktionTrashTool');
+    const redaktionAssetsTree = document.getElementById('redaktionAssetsTree');
+    const redaktionAssetsFilterButtons = Array.from(document.querySelectorAll('.redaktion-assets-filter-btn'));
     const redaktionBoard = document.getElementById('redaktionBoard');
     const redaktionPages = document.getElementById('redaktionPages');
     const redaktionInspector = document.getElementById('redaktionInspector');
@@ -1200,6 +1366,7 @@
     const redaktionChildCategorySelect = document.getElementById('redaktionChildCategorySelect');
     const redaktionCategorySelect = document.getElementById('redaktionCategorySelect');
     const redaktionLayoutSelect = document.getElementById('redaktionLayoutSelect');
+    const redaktionAssignedAssets = document.getElementById('redaktionAssignedAssets');
 
     const pageFormats = {
       portrait: {
@@ -1282,6 +1449,8 @@
     let lastViewportLayoutKey = '';
     let importedProjectFiles = [];
     let importedProjectTree = null;
+    let importedProjectDirectoryHandles = [];
+    let missingProjectFilePaths = new Set();
     let projectTreeExpandedPaths = new Set();
     let redaktionPagesData = [];
     let nextRedaktionPageNumber = 1;
@@ -1292,6 +1461,9 @@
     let redaktionAutoScrollFrame = null;
     let redaktionAutoScrollSpeed = 0;
     let selectedRedaktionPageId = null;
+    let selectedAssetPaths = new Set();
+    let redaktionResizeState = null;
+    let redaktionAssetsFilter = 'all';
 
     const SNAPSHOT_DB_NAME = 'jahrbuch-generator-db';
     const SNAPSHOT_STORE_NAME = 'snapshots';
@@ -1576,6 +1748,12 @@
       return normalizedCount === 0 ? 27 : normalizedCount * 54;
     }
 
+    function getRedaktionCountFromHeight(height) {
+      const normalizedHeight = Math.max(27, Number(height) || 54);
+      if (normalizedHeight < 41) return 0;
+      return Math.max(1, Math.round(normalizedHeight / 54));
+    }
+
     function getRedaktionOrderNumbers() {
       const orderNumbers = new Map();
       let nextOrderNumber = 1;
@@ -1608,6 +1786,7 @@
       page.childLayoutCategoryId = typeof page.childLayoutCategoryId === 'string' ? page.childLayoutCategoryId : '';
       page.layoutCategoryId = typeof page.layoutCategoryId === 'string' ? page.layoutCategoryId : '';
       page.layoutId = typeof page.layoutId === 'string' ? page.layoutId : 'auto';
+      page.assets = normalizeRedaktionAssets(page.assets);
       if (page.childLayoutCategoryId && !getLayoutCategoryById(page.childLayoutCategoryId)) {
         page.childLayoutCategoryId = '';
       }
@@ -1620,6 +1799,26 @@
         const hasLayout = !!category?.layouts?.some((layout) => layout.id === page.layoutId);
         if (!hasLayout) page.layoutId = 'auto';
       }
+    }
+
+    function normalizeRedaktionAssets(assets) {
+      const seenPaths = new Set();
+      return (Array.isArray(assets) ? assets : [])
+        .filter((asset) => asset && typeof asset.path === 'string' && asset.path.trim())
+        .map((asset) => {
+          const path = asset.path.replace(/\\/g, '/').trim();
+          const segments = path.split('/').filter(Boolean);
+          return {
+            type: asset.type === 'directory' ? 'directory' : 'file',
+            name: typeof asset.name === 'string' && asset.name.trim() ? asset.name.trim() : segments[segments.length - 1] || path,
+            path
+          };
+        })
+        .filter((asset) => {
+          if (seenPaths.has(asset.path)) return false;
+          seenPaths.add(asset.path);
+          return true;
+        });
     }
 
     function applyLayoutCategoryToRedaktionPage(page, categoryId) {
@@ -1674,7 +1873,8 @@
           parentId: typeof page.parentId === 'string' ? page.parentId : null,
           childLayoutCategoryId: typeof page.childLayoutCategoryId === 'string' ? page.childLayoutCategoryId : '',
           layoutCategoryId: typeof page.layoutCategoryId === 'string' ? page.layoutCategoryId : '',
-          layoutId: typeof page.layoutId === 'string' ? page.layoutId : 'auto'
+          layoutId: typeof page.layoutId === 'string' ? page.layoutId : 'auto',
+          assets: normalizeRedaktionAssets(page.assets)
         });
       });
 
@@ -1705,7 +1905,8 @@
         parentId,
         childLayoutCategoryId: '',
         layoutCategoryId: '',
-        layoutId: 'auto'
+        layoutId: 'auto',
+        assets: []
       };
       nextRedaktionPageNumber++;
       const inheritedCategoryId = getInheritedLayoutCategoryId(page);
@@ -1735,6 +1936,7 @@
         node.classList.remove('drop-delete');
       });
       if (redaktionTrashTool) redaktionTrashTool.classList.remove('drop-delete');
+      if (redaktionAutomaticTool) redaktionAutomaticTool.classList.remove('drop-automatic');
       currentRedaktionDrop = null;
     }
 
@@ -1810,20 +2012,42 @@
       if (dropTarget.mode === 'inside') row.querySelector('.redaktion-page-card')?.classList.add('drop-into');
     }
 
+    function askRedaktionChildDeleteMode(page) {
+      const answer = prompt(
+        `"${page.title}" hat untergeordnete Seiten.\n\n` +
+        '1 = untergeordnete loeschen\n' +
+        '2 = untergeordnete behalten\n\n' +
+        'Abbrechen = nichts loeschen',
+        '2'
+      );
+      if (answer === null) return 'cancel';
+      const normalizedAnswer = answer.trim().toLowerCase();
+      if (normalizedAnswer === '1' || normalizedAnswer === 'loeschen') return 'delete-children';
+      if (normalizedAnswer === '2' || normalizedAnswer === 'behalten') return 'keep-children';
+      return 'cancel';
+    }
+
     function deleteRedaktionPage(pageId) {
       const page = getRedaktionPageById(pageId);
       if (!page) return false;
 
       const descendantIds = getRedaktionDescendantIds(page.id);
+      let deleteIds = new Set([page.id]);
       if (descendantIds.size > 0) {
-        const shouldDelete = confirm(
-          `"${page.title}" hat untergeordnete Seiten. Wenn du fortfaehrst, werden alle zugehoerigen Unterseiten ebenfalls geloescht.`
-        );
-        if (!shouldDelete) return false;
+        const deleteMode = askRedaktionChildDeleteMode(page);
+        if (deleteMode === 'cancel') return false;
+        if (deleteMode === 'delete-children') {
+          deleteIds = new Set(descendantIds);
+          deleteIds.add(page.id);
+        } else {
+          redaktionPagesData.forEach((candidate) => {
+            if (candidate.parentId === page.id) {
+              candidate.parentId = page.parentId || null;
+            }
+          });
+        }
       }
 
-      const deleteIds = new Set(descendantIds);
-      deleteIds.add(page.id);
       redaktionPagesData = redaktionPagesData.filter((candidate) => !deleteIds.has(candidate.id));
       if (deleteIds.has(selectedRedaktionPageId)) selectedRedaktionPageId = null;
       redaktionCollapsedPageIds = new Set(
@@ -1948,6 +2172,156 @@
       populateLayoutCategorySelect(redaktionChildCategorySelect, page.childLayoutCategoryId, true);
       populateLayoutCategorySelect(redaktionCategorySelect, page.layoutCategoryId, true);
       populateRedaktionLayoutSelect(page);
+      renderAssignedAssets(page);
+    }
+
+    function renderAssignedAssets(page) {
+      if (!redaktionAssignedAssets) return;
+      redaktionAssignedAssets.replaceChildren();
+      const assets = normalizeRedaktionAssets(page?.assets);
+      if (assets.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'redaktion-inspector-empty';
+        empty.textContent = 'Keine Assets zugeordnet.';
+        redaktionAssignedAssets.appendChild(empty);
+        return;
+      }
+
+      assets.forEach((asset) => {
+        const row = document.createElement('div');
+        row.className = 'assigned-asset-row';
+        const title = document.createElement('div');
+        title.className = 'assigned-asset-title';
+        title.textContent = asset.name;
+        title.title = asset.path;
+        const removeButton = document.createElement('button');
+        removeButton.className = 'assigned-asset-remove';
+        removeButton.type = 'button';
+        removeButton.textContent = 'Loeschen';
+        removeButton.dataset.assetPath = asset.path;
+        row.append(title, removeButton);
+        redaktionAssignedAssets.appendChild(row);
+      });
+    }
+
+    function getSelectedAssetPayloads(fallbackPayload) {
+      const selectedPayloads = [];
+      if (redaktionAssetsTree) {
+        selectedAssetPaths.forEach((assetPath) => {
+          const node = Array.from(redaktionAssetsTree.querySelectorAll('.project-asset-node'))
+            .find((candidate) => candidate.dataset.assetPath === assetPath);
+          if (!node?.dataset.assetPayload) return;
+          try {
+            selectedPayloads.push(JSON.parse(node.dataset.assetPayload));
+          } catch {
+            // Ignore stale selection entries.
+          }
+        });
+      }
+
+      if (fallbackPayload && !selectedPayloads.some((asset) => asset.path === fallbackPayload.path)) {
+        selectedPayloads.push(fallbackPayload);
+      }
+      return normalizeRedaktionAssets(selectedPayloads);
+    }
+
+    function getAssetTitleSuggestion(assets) {
+      const normalizedAssets = normalizeRedaktionAssets(assets);
+      if (normalizedAssets.length === 0) return '';
+      return normalizedAssets[0].name;
+    }
+
+    function assignAssetsToRedaktionPage(pageId, assets) {
+      const page = getRedaktionPageById(pageId);
+      const normalizedAssets = normalizeRedaktionAssets(assets);
+      if (!page || normalizedAssets.length === 0) return false;
+
+      page.assets = normalizeRedaktionAssets([...(page.assets || []), ...normalizedAssets]);
+      const suggestedTitle = getAssetTitleSuggestion(normalizedAssets);
+      if (suggestedTitle && confirm(`Soll der Titel der Seite automatisch zu "${suggestedTitle}" angepasst werden?`)) {
+        page.title = suggestedTitle;
+      }
+      selectedRedaktionPageId = page.id;
+      renderRedaktionPages();
+      renderRedaktionAssetsTree();
+      queueSnapshotSave();
+      return true;
+    }
+
+    function findImportedProjectNodeByPath(path, node = importedProjectTree) {
+      if (!node || !path) return null;
+      if ((node.path || node.name) === path) return node;
+      const children = Array.isArray(node.children) ? node.children : [];
+      for (const child of children) {
+        const foundNode = findImportedProjectNodeByPath(path, child);
+        if (foundNode) return foundNode;
+      }
+      return null;
+    }
+
+    function createRedaktionPageFromAsset(asset, parentId = null) {
+      const page = createRedaktionPage(parentId);
+      page.title = asset.name || 'Seitenbereich';
+      page.count = 1;
+      page.childLayoutCategoryId = '';
+      page.layoutCategoryId = '';
+      page.layoutId = 'auto';
+      page.assets = normalizeRedaktionAssets([asset]);
+      return page;
+    }
+
+    function buildAutomaticPagesForAssetNode(node, parentId = null, pages = []) {
+      if (!node) return pages;
+      const asset = createAssetPayloadFromNode(node);
+      const page = createRedaktionPageFromAsset(asset, parentId);
+      pages.push(page);
+
+      if (node.type === 'directory') {
+        (Array.isArray(node.children) ? node.children : [])
+          .filter((child) => child.type === 'directory')
+          .forEach((childDirectory) => {
+            buildAutomaticPagesForAssetNode(childDirectory, page.id, pages);
+          });
+      }
+      return pages;
+    }
+
+    function createAutomaticPagesFromAsset(asset) {
+      const normalizedAssets = normalizeRedaktionAssets([asset]);
+      if (normalizedAssets.length === 0) return false;
+      const rootAsset = normalizedAssets[0];
+      const assetNode = findImportedProjectNodeByPath(rootAsset.path);
+      const createdPages = assetNode
+        ? buildAutomaticPagesForAssetNode(assetNode)
+        : [createRedaktionPageFromAsset(rootAsset)];
+      if (createdPages.length === 0) return false;
+
+      redaktionPagesData.push(...createdPages);
+      selectedRedaktionPageId = createdPages[0].id;
+      renderRedaktionPages();
+      renderRedaktionAssetsTree();
+      queueSnapshotSave();
+      return true;
+    }
+
+    function getRedaktionPayloadFromDataTransfer(dataTransfer, fallbackPayload = redaktionDragPayload) {
+      const serializedPayload = dataTransfer?.getData('application/x-redaktion-page');
+      if (serializedPayload) {
+        try {
+          return JSON.parse(serializedPayload);
+        } catch {
+          return fallbackPayload;
+        }
+      }
+      return fallbackPayload;
+    }
+
+    function getRedaktionDragSourceFromEvent(event) {
+      if (redaktionDragPayload?.source) return redaktionDragPayload.source;
+      const types = Array.from(event.dataTransfer?.types || []);
+      if (types.includes('application/x-redaktion-assets')) return 'assets';
+      if (types.includes('application/x-redaktion-page')) return 'unknown';
+      return '';
     }
 
     function selectRedaktionPage(pageId) {
@@ -2024,9 +2398,13 @@
         toggle.textContent = hasChildren ? (isCollapsed ? '>' : 'v') : '>';
         const titleText = document.createElement('span');
         titleText.textContent = page.title;
+        const resizeHandle = document.createElement('div');
+        resizeHandle.className = 'redaktion-page-resize-handle';
+        resizeHandle.dataset.pageId = page.id;
 
         title.append(toggle, titleText);
         card.appendChild(title);
+        card.appendChild(resizeHandle);
         row.append(orderNumber, card);
         redaktionPages.appendChild(row);
       });
@@ -2142,6 +2520,7 @@
       if (node.type === 'file') {
         const item = document.createElement('li');
         item.className = 'project-tree-file';
+        item.classList.toggle('project-tree-missing', isProjectTreeNodeMissing(node));
         item.textContent = node.name;
         item.title = node.path;
         return item;
@@ -2154,6 +2533,7 @@
         ? projectTreeExpandedPaths.has(node.path)
         : (projectTreeExpandedPaths.size === 0 || projectTreeExpandedPaths.has(''));
       const summary = document.createElement('summary');
+      summary.classList.toggle('project-tree-missing', isProjectTreeNodeMissing(node));
       summary.textContent = node.name;
       details.appendChild(summary);
 
@@ -2166,6 +2546,15 @@
       details.appendChild(childrenList);
       item.appendChild(details);
       return item;
+    }
+
+    function isProjectTreeNodeMissing(node) {
+      if (!node || missingProjectFilePaths.size === 0) return false;
+      const nodePath = node.path || node.name || '';
+      if (!nodePath) return false;
+      if (node.type === 'file') return missingProjectFilePaths.has(nodePath);
+      const prefix = `${nodePath}/`;
+      return Array.from(missingProjectFilePaths).some((missingPath) => missingPath === nodePath || missingPath.startsWith(prefix));
     }
 
     function renderTreeIntoContainer(container) {
@@ -2186,11 +2575,112 @@
       container.appendChild(rootList);
     }
 
+    function createAssetPayloadFromNode(node) {
+      return {
+        type: node.type === 'directory' ? 'directory' : 'file',
+        name: node.name,
+        path: node.path || node.name
+      };
+    }
+
+    function createRedaktionAssetTreeNode(node) {
+      if (!node || typeof node !== 'object') return null;
+      const item = document.createElement('li');
+      const assetPayload = createAssetPayloadFromNode(node);
+
+      if (node.type === 'file') {
+        const label = document.createElement('div');
+        label.className = 'project-tree-file project-asset-node';
+        label.draggable = true;
+        label.dataset.assetPath = assetPayload.path;
+        label.dataset.assetPayload = JSON.stringify(assetPayload);
+        label.textContent = node.name;
+        label.title = node.path;
+        label.classList.toggle('selected', selectedAssetPaths.has(assetPayload.path));
+        item.appendChild(label);
+        return item;
+      }
+
+      const details = document.createElement('details');
+      details.dataset.dirPath = node.path || '';
+      const childDirectories = (Array.isArray(node.children) ? node.children : []).filter((child) => child.type === 'directory');
+      details.open = childDirectories.length > 0;
+
+      const summary = document.createElement('summary');
+      summary.className = 'project-asset-node';
+      summary.draggable = true;
+      summary.dataset.assetPath = assetPayload.path;
+      summary.dataset.assetPayload = JSON.stringify(assetPayload);
+      summary.textContent = node.name;
+      summary.title = node.path || node.name;
+      summary.classList.toggle('selected', selectedAssetPaths.has(assetPayload.path));
+      details.appendChild(summary);
+
+      const childrenList = document.createElement('ul');
+      childrenList.className = 'project-tree';
+      (Array.isArray(node.children) ? node.children : []).forEach((child) => {
+        const childNode = createRedaktionAssetTreeNode(child);
+        if (childNode) childrenList.appendChild(childNode);
+      });
+      details.appendChild(childrenList);
+      item.appendChild(details);
+      return item;
+    }
+
+    function getAssignedAssetPathSet() {
+      const assignedPaths = new Set();
+      redaktionPagesData.forEach((page) => {
+        normalizeRedaktionAssets(page.assets).forEach((asset) => assignedPaths.add(asset.path));
+      });
+      return assignedPaths;
+    }
+
+    function filterAssetTreeNode(node, assignedPaths, filterMode) {
+      if (!node) return null;
+      if (filterMode === 'all') return node;
+
+      const assetPath = node.path || node.name;
+      const isAssigned = assignedPaths.has(assetPath);
+      const children = Array.isArray(node.children)
+        ? node.children.map((child) => filterAssetTreeNode(child, assignedPaths, filterMode)).filter(Boolean)
+        : [];
+
+      const shouldShowSelf = filterMode === 'assigned' ? isAssigned : !isAssigned;
+      if (!shouldShowSelf && children.length === 0) return null;
+
+      return {
+        ...node,
+        children
+      };
+    }
+
+    function renderRedaktionAssetsTree() {
+      if (!redaktionAssetsTree) return;
+      redaktionAssetsTree.replaceChildren();
+
+      const filteredTree = filterAssetTreeNode(importedProjectTree, getAssignedAssetPathSet(), redaktionAssetsFilter);
+      if (!filteredTree) {
+        redaktionAssetsTree.classList.add('empty');
+        redaktionAssetsTree.textContent = importedProjectTree ? 'Keine Assets fuer diesen Filter.' : 'Noch keine Assets importiert.';
+        return;
+      }
+
+      redaktionAssetsTree.classList.remove('empty');
+      const rootList = document.createElement('ul');
+      rootList.className = 'project-tree';
+      const rootNode = createRedaktionAssetTreeNode(filteredTree);
+      if (rootNode) rootList.appendChild(rootNode);
+      redaktionAssetsTree.appendChild(rootList);
+    }
+
     function refreshImportedProjectUi() {
       renderTreeIntoContainer(projectImportTree);
       renderTreeIntoContainer(projectMainTree);
+      renderRedaktionAssetsTree();
       if (projectImportSummary) {
-        if (importedProjectFiles.length === 0) {
+        if (missingProjectFilePaths.size > 0) {
+          projectImportSummary.textContent = `${missingProjectFilePaths.size} Datei(en) fehlen lokal. Bitte importiere den passenden Ordner erneut.`;
+        } else if (importedProjectFiles.length === 0) {
           projectImportSummary.textContent = 'Noch kein Ordner importiert.';
         } else {
           const rootName = importedProjectTree?.name || 'Ordner';
@@ -2212,6 +2702,117 @@
         projectTreeExpandedPaths = nextExpanded;
       }
       refreshImportedProjectUi();
+    }
+
+    function rememberImportedDirectoryHandle(handle) {
+      if (!handle || handle.kind !== 'directory') return;
+      importedProjectDirectoryHandles = importedProjectDirectoryHandles.filter((entry) => entry?.name !== handle.name);
+      importedProjectDirectoryHandles.push({
+        name: handle.name,
+        handle
+      });
+    }
+
+    async function readFilesFromDirectoryHandle(directoryHandle) {
+      const files = [];
+      async function walk(currentHandle, pathParts) {
+        for await (const [name, childHandle] of currentHandle.entries()) {
+          const nextPathParts = [...pathParts, name];
+          if (childHandle.kind === 'directory') {
+            await walk(childHandle, nextPathParts);
+          } else if (childHandle.kind === 'file') {
+            const relativePath = nextPathParts.join('/');
+            files.push({
+              id: relativePath,
+              name,
+              folderPath: nextPathParts.slice(0, -1).join('/'),
+              relativePath
+            });
+          }
+        }
+      }
+
+      await walk(directoryHandle, [directoryHandle.name]);
+      return files;
+    }
+
+    async function hasDirectoryHandlePermission(directoryHandle) {
+      if (!directoryHandle?.queryPermission) return false;
+      try {
+        const permission = await directoryHandle.queryPermission({ mode: 'read' });
+        if (permission === 'granted') return true;
+        if (permission === 'prompt' && directoryHandle.requestPermission) {
+          return (await directoryHandle.requestPermission({ mode: 'read' })) === 'granted';
+        }
+        return false;
+      } catch {
+        return false;
+      }
+    }
+
+    async function fileExistsInDirectoryHandle(directoryHandle, relativePath) {
+      if (!directoryHandle || !relativePath) return false;
+      const originalSegments = relativePath.split('/').filter(Boolean);
+      const pathVariants = [];
+      pathVariants.push(originalSegments);
+      if (originalSegments[0] === directoryHandle.name) {
+        pathVariants.push(originalSegments.slice(1));
+      }
+      if (originalSegments.length > 1) {
+        pathVariants.push(originalSegments.slice(1));
+      }
+
+      for (const pathSegments of pathVariants) {
+        if (pathSegments.length === 0) continue;
+        try {
+          let currentHandle = directoryHandle;
+          for (let index = 0; index < pathSegments.length - 1; index++) {
+            currentHandle = await currentHandle.getDirectoryHandle(pathSegments[index]);
+          }
+          await currentHandle.getFileHandle(pathSegments[pathSegments.length - 1]);
+          return true;
+        } catch {
+          // Try the next path variant.
+        }
+      }
+      return false;
+    }
+
+    async function verifyImportedProjectFiles() {
+      missingProjectFilePaths = new Set();
+      if (importedProjectFiles.length === 0) {
+        refreshImportedProjectUi();
+        return;
+      }
+
+      const readableHandles = [];
+      for (const entry of importedProjectDirectoryHandles) {
+        if (await hasDirectoryHandlePermission(entry?.handle)) {
+          readableHandles.push(entry.handle);
+        }
+      }
+
+      if (readableHandles.length === 0) {
+        importedProjectFiles.forEach((file) => missingProjectFilePaths.add(file.relativePath));
+      } else {
+        for (const file of importedProjectFiles) {
+          let exists = false;
+          for (const directoryHandle of readableHandles) {
+            if (await fileExistsInDirectoryHandle(directoryHandle, file.relativePath)) {
+              exists = true;
+              break;
+            }
+          }
+          if (!exists) missingProjectFilePaths.add(file.relativePath);
+        }
+      }
+
+      refreshImportedProjectUi();
+      if (missingProjectFilePaths.size > 0) {
+        setProjectSidebarTab('importieren');
+        setActiveAppView('projekt', false);
+        setStatus(`${missingProjectFilePaths.size} importierte Datei(en) fehlen lokal. Bitte importiere den passenden Ordner erneut.`, true);
+      }
     }
 
     function readFilesFromFolderInput(fileList) {
@@ -2495,6 +3096,12 @@
             folderPath: entry.folderPath,
             relativePath: entry.relativePath
           })),
+          directoryHandles: importedProjectDirectoryHandles
+            .filter((entry) => entry?.handle)
+            .map((entry) => ({
+              name: entry.name,
+              handle: entry.handle
+            })),
           expandedPaths: Array.from(projectTreeExpandedPaths)
         },
         redaktionPages: redaktionPagesData.map((page) => ({
@@ -2504,6 +3111,7 @@
           childLayoutCategoryId: page.childLayoutCategoryId,
           layoutCategoryId: page.layoutCategoryId,
           layoutId: page.layoutId,
+          assets: normalizeRedaktionAssets(page.assets),
           parentId: page.parentId
         })),
         redaktionCollapsedPageIds: Array.from(redaktionCollapsedPageIds),
@@ -2646,6 +3254,9 @@
       activeAppView = typeof snapshot.activeAppView === 'string' ? snapshot.activeAppView : 'layout';
       activeProjectSidebarTab = snapshot.activeProjectSidebarTab === 'importieren' ? 'importieren' : 'laden';
       const snapshotFiles = Array.isArray(snapshot.importedProject?.files) ? snapshot.importedProject.files : [];
+      importedProjectDirectoryHandles = Array.isArray(snapshot.importedProject?.directoryHandles)
+        ? snapshot.importedProject.directoryHandles.filter((entry) => entry?.handle?.kind === 'directory')
+        : [];
       setImportedProjectFiles(snapshotFiles, false);
       const snapshotExpanded = Array.isArray(snapshot.importedProject?.expandedPaths)
         ? snapshot.importedProject.expandedPaths.filter((path) => typeof path === 'string')
@@ -3684,15 +4295,38 @@
       button.addEventListener('click', () => setActiveTab(button.dataset.tab));
     });
     if (projectFolderSelectBtn && projectFolderInput) {
-      projectFolderSelectBtn.addEventListener('click', () => {
+      projectFolderSelectBtn.addEventListener('click', async () => {
+        if ('showDirectoryPicker' in window) {
+          try {
+            const directoryHandle = await window.showDirectoryPicker({ mode: 'read' });
+            rememberImportedDirectoryHandle(directoryHandle);
+            const importedFiles = await readFilesFromDirectoryHandle(directoryHandle);
+            setImportedProjectFiles(importedFiles);
+            await verifyImportedProjectFiles();
+            if (importedFiles.length > 0) {
+              if (missingProjectFilePaths.size === 0) {
+                setStatus(`Ordner "${directoryHandle.name}" importiert (${importedFiles.length} Datei(en)).`, false);
+              }
+              queueSnapshotSave();
+            } else {
+              setStatus('Keine Dateien im ausgewaehlten Ordner gefunden.', true);
+            }
+            return;
+          } catch (error) {
+            if (error?.name === 'AbortError') return;
+          }
+        }
         projectFolderInput.click();
       });
       projectFolderInput.addEventListener('change', () => {
         const importedFiles = readFilesFromFolderInput(projectFolderInput.files);
+        importedProjectDirectoryHandles = [];
         setImportedProjectFiles(importedFiles);
+        missingProjectFilePaths = new Set();
+        refreshImportedProjectUi();
         if (importedFiles.length > 0) {
           const rootName = importedProjectTree?.name || 'Ordner';
-          setStatus(`Ordner "${rootName}" importiert (${importedFiles.length} Datei(en)).`, false);
+          setStatus(`Ordner "${rootName}" importiert (${importedFiles.length} Datei(en)). Der Ordnerzugriff konnte in diesem Browser nicht dauerhaft gemerkt werden.`, false);
           queueSnapshotSave();
         } else {
           setStatus('Keine Dateien im ausgewaehlten Ordner gefunden.', true);
@@ -3713,6 +4347,67 @@
         queueSnapshotSave();
       });
     });
+    redaktionAssetsFilterButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        redaktionAssetsFilter = button.dataset.assetsFilter || 'all';
+        redaktionAssetsFilterButtons.forEach((filterButton) => {
+          filterButton.classList.toggle('active', filterButton === button);
+        });
+        selectedAssetPaths.clear();
+        renderRedaktionAssetsTree();
+      });
+    });
+    if (redaktionAssetsTree) {
+      redaktionAssetsTree.addEventListener('click', (event) => {
+        const assetNode = event.target.closest?.('.project-asset-node');
+        if (!assetNode?.dataset.assetPath) return;
+        const assetPath = assetNode.dataset.assetPath;
+        selectedAssetPaths.clear();
+        selectedAssetPaths.add(assetPath);
+        redaktionAssetsTree.querySelectorAll('.project-asset-node.selected').forEach((node) => {
+          node.classList.remove('selected');
+        });
+        assetNode.classList.add('selected');
+      });
+      redaktionAssetsTree.addEventListener('dragstart', (event) => {
+        const assetNode = event.target.closest?.('.project-asset-node');
+        if (!assetNode?.dataset.assetPayload) return;
+        let fallbackPayload = null;
+        try {
+          fallbackPayload = JSON.parse(assetNode.dataset.assetPayload);
+        } catch {
+          return;
+        }
+        selectedAssetPaths.clear();
+        selectedAssetPaths.add(fallbackPayload.path);
+        redaktionAssetsTree.querySelectorAll('.project-asset-node.selected').forEach((node) => {
+          node.classList.remove('selected');
+        });
+        assetNode.classList.add('selected');
+        const assets = normalizeRedaktionAssets([fallbackPayload]);
+        redaktionDragPayload = { source: 'assets', assets };
+        event.dataTransfer.effectAllowed = 'copy';
+        event.dataTransfer.setData('application/x-redaktion-page', JSON.stringify(redaktionDragPayload));
+        event.dataTransfer.setData('application/x-redaktion-assets', JSON.stringify(assets));
+        event.dataTransfer.setData('text/plain', 'redaktion-assets');
+      });
+      redaktionAssetsTree.addEventListener('dragend', () => {
+        redaktionDragPayload = null;
+        clearRedaktionDropMarkers();
+      });
+    }
+    if (redaktionAssignedAssets) {
+      redaktionAssignedAssets.addEventListener('click', (event) => {
+        const removeButton = event.target.closest?.('.assigned-asset-remove');
+        if (!removeButton?.dataset.assetPath) return;
+        const page = getRedaktionPageById(selectedRedaktionPageId);
+        if (!page) return;
+        page.assets = normalizeRedaktionAssets(page.assets).filter((asset) => asset.path !== removeButton.dataset.assetPath);
+        renderAssignedAssets(page);
+        renderRedaktionAssetsTree();
+        queueSnapshotSave();
+      });
+    }
     if (redaktionPageTool) {
       redaktionPageTool.addEventListener('dragstart', (event) => {
         redaktionDragPayload = { source: 'tool' };
@@ -3724,6 +4419,28 @@
         redaktionDragPayload = null;
         stopRedaktionBoardAutoScroll();
         clearRedaktionDropMarkers();
+      });
+    }
+    if (redaktionAutomaticTool) {
+      redaktionAutomaticTool.addEventListener('dragover', (event) => {
+        const dragSource = getRedaktionDragSourceFromEvent(event);
+        if (dragSource !== 'assets') return;
+        event.preventDefault();
+        event.dataTransfer.dropEffect = 'copy';
+        redaktionAutomaticTool.classList.add('drop-automatic');
+      });
+      redaktionAutomaticTool.addEventListener('dragleave', (event) => {
+        if (redaktionAutomaticTool.contains(event.relatedTarget)) return;
+        redaktionAutomaticTool.classList.remove('drop-automatic');
+      });
+      redaktionAutomaticTool.addEventListener('drop', (event) => {
+        const payload = getRedaktionPayloadFromDataTransfer(event.dataTransfer);
+        if (!payload || payload.source !== 'assets') return;
+        event.preventDefault();
+        const didCreate = createAutomaticPagesFromAsset(payload.assets?.[0]);
+        redaktionDragPayload = null;
+        clearRedaktionDropMarkers();
+        setStatus(didCreate ? 'Seiten automatisch aus Asset erstellt.' : 'Automatik konnte keine Seiten erstellen.', !didCreate);
       });
     }
     if (redaktionTrashTool) {
@@ -3770,7 +4487,27 @@
       });
     }
     if (redaktionPages) {
+      redaktionPages.addEventListener('pointerdown', (event) => {
+        const resizeHandle = event.target.closest?.('.redaktion-page-resize-handle');
+        if (!resizeHandle?.dataset.pageId) return;
+        const page = getRedaktionPageById(resizeHandle.dataset.pageId);
+        if (!page) return;
+        redaktionResizeState = {
+          pageId: page.id,
+          startY: event.clientY,
+          startHeight: getRedaktionPageHeight(page.count)
+        };
+        selectedRedaktionPageId = page.id;
+        redaktionSuppressNextClick = true;
+        event.preventDefault();
+        event.stopPropagation();
+        resizeHandle.setPointerCapture?.(event.pointerId);
+      });
       redaktionPages.addEventListener('dragstart', (event) => {
+        if (event.target.closest?.('.redaktion-page-resize-handle')) {
+          event.preventDefault();
+          return;
+        }
         const card = event.target.closest?.('.redaktion-page-card');
         if (!card) return;
         redaktionSuppressNextClick = true;
@@ -3860,17 +4597,47 @@
         queueSnapshotSave();
       });
     }
+    window.addEventListener('pointermove', (event) => {
+      if (!redaktionResizeState) return;
+      const page = getRedaktionPageById(redaktionResizeState.pageId);
+      if (!page) return;
+      const nextHeight = redaktionResizeState.startHeight + (event.clientY - redaktionResizeState.startY);
+      const nextCount = getRedaktionCountFromHeight(nextHeight);
+      if (page.count !== nextCount) {
+        page.count = nextCount;
+        if (redaktionCountInput && selectedRedaktionPageId === page.id) {
+          redaktionCountInput.value = String(page.count);
+        }
+        renderRedaktionPages();
+      }
+      event.preventDefault();
+    });
+    window.addEventListener('pointerup', () => {
+      if (!redaktionResizeState) return;
+      redaktionResizeState = null;
+      releaseRedaktionClickSuppression();
+      queueSnapshotSave();
+    });
+    window.addEventListener('pointercancel', () => {
+      if (!redaktionResizeState) return;
+      redaktionResizeState = null;
+      releaseRedaktionClickSuppression();
+      queueSnapshotSave();
+    });
     if (redaktionBoard) {
       redaktionBoard.addEventListener('dragover', (event) => {
-        if (!redaktionDragPayload) return;
+        const dragSource = getRedaktionDragSourceFromEvent(event);
+        if (!dragSource) return;
         event.preventDefault();
-        event.dataTransfer.dropEffect = redaktionDragPayload.source === 'tool' ? 'copy' : 'move';
-        if (redaktionDragPayload.source !== 'trash') {
+        event.dataTransfer.dropEffect = dragSource === 'tool' || dragSource === 'assets' ? 'copy' : 'move';
+        if (dragSource !== 'trash' && dragSource !== 'assets') {
           updateRedaktionBoardAutoScroll(event);
         }
         const dropTarget = getRedaktionDropTarget(event);
-        if (redaktionDragPayload.source === 'trash') {
+        if (dragSource === 'trash') {
           markRedaktionDrop(dropTarget.targetId ? { mode: 'delete', targetId: dropTarget.targetId } : { mode: 'end', targetId: null });
+        } else if (dragSource === 'assets') {
+          markRedaktionDrop(dropTarget.targetId ? { mode: 'inside', targetId: dropTarget.targetId } : { mode: 'end', targetId: null });
         } else {
           markRedaktionDrop(dropTarget);
         }
@@ -3881,30 +4648,23 @@
         clearRedaktionDropMarkers();
       });
       redaktionBoard.addEventListener('drop', (event) => {
-        if (!redaktionDragPayload) return;
+        const payload = getRedaktionPayloadFromDataTransfer(event.dataTransfer);
+        if (!payload) return;
         event.preventDefault();
-        let payload = redaktionDragPayload;
-        const serializedPayload = event.dataTransfer.getData('application/x-redaktion-page');
-        if (serializedPayload) {
-          try {
-            payload = JSON.parse(serializedPayload);
-          } catch {
-            payload = redaktionDragPayload;
-          }
-        }
-
         const dropTarget = currentRedaktionDrop || getRedaktionDropTarget(event);
         const didMove = payload.source === 'trash'
           ? deleteRedaktionPage(dropTarget.targetId)
-          : moveRedaktionPages(payload, dropTarget);
+          : payload.source === 'assets'
+            ? assignAssetsToRedaktionPage(dropTarget.targetId, payload.assets)
+            : moveRedaktionPages(payload, dropTarget);
         stopRedaktionBoardAutoScroll();
         clearRedaktionDropMarkers();
         redaktionDragPayload = null;
         releaseRedaktionClickSuppression();
         setStatus(
           didMove
-            ? (payload.source === 'trash' ? 'Seite geloescht.' : 'Seitenstruktur aktualisiert.')
-            : (payload.source === 'trash' ? 'Loeschen abgebrochen.' : 'Diese Seite kann dort nicht eingeordnet werden.'),
+            ? (payload.source === 'trash' ? 'Seite geloescht.' : payload.source === 'assets' ? 'Assets zugeordnet.' : 'Seitenstruktur aktualisiert.')
+            : (payload.source === 'trash' ? 'Loeschen abgebrochen.' : payload.source === 'assets' ? 'Assets konnten nicht zugeordnet werden.' : 'Diese Seite kann dort nicht eingeordnet werden.'),
           !didMove
         );
       });
@@ -4174,6 +4934,7 @@
       const snapshot = await loadSnapshot();
       if (snapshot) {
         applySnapshot(snapshot);
+        await verifyImportedProjectFiles();
       } else {
         const defaultCategory = createDefaultCategory('Kategorie 1');
         categories.push(defaultCategory);
@@ -4186,6 +4947,8 @@
         setActiveAppView('layout', false);
         setSidebarCollapsed(false, false);
         setImportedProjectFiles([], false);
+        importedProjectDirectoryHandles = [];
+        missingProjectFilePaths = new Set();
         selectedRedaktionPageId = null;
         setRedaktionPages([]);
       }
