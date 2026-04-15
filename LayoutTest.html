@@ -229,6 +229,25 @@
       word-break: break-word;
     }
 
+    .project-tree-entry {
+      display: inline-grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      max-width: 100%;
+    }
+
+    .project-tree-delete {
+      min-height: 24px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #241a1d;
+      color: #fecaca;
+      font: inherit;
+      font-size: 0.75rem;
+      cursor: pointer;
+    }
+
     .project-tree-missing {
       background: rgba(248, 113, 113, 0.22);
       color: #fecaca;
@@ -566,6 +585,35 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .redaktion-page-critical {
+      color: #fecaca;
+      font-weight: 800;
+    }
+
+    .redaktion-page-status::before {
+      content: '!';
+      display: inline-grid;
+      place-items: center;
+      width: 16px;
+      height: 16px;
+      margin-right: 6px;
+      border-radius: 999px;
+      background: rgba(248, 113, 113, 0.24);
+      color: #fecaca;
+      font-size: 0.75rem;
+    }
+
+    .redaktion-page-review {
+      color: #fde68a;
+      font-weight: 800;
+    }
+
+    .redaktion-page-review::before {
+      content: '?';
+      background: rgba(251, 191, 36, 0.24);
+      color: #fde68a;
     }
 
     .redaktion-page-toggle {
@@ -1300,6 +1348,14 @@
                   <label for="redaktionCountInput">Anzahl</label>
                   <input id="redaktionCountInput" type="number" min="0" step="1">
                 </div>
+                <div class="redaktion-field">
+                  <label for="redaktionStatusSelect">Status</label>
+                  <select id="redaktionStatusSelect">
+                    <option value="fertig">fertig</option>
+                    <option value="pruefen">prüfen</option>
+                    <option value="kritisch">kritisch</option>
+                  </select>
+                </div>
               </fieldset>
               <fieldset class="redaktion-fieldset">
                 <legend>Layout</legend>
@@ -1363,6 +1419,7 @@
     const redaktionInspectorForm = document.getElementById('redaktionInspectorForm');
     const redaktionTitleInput = document.getElementById('redaktionTitleInput');
     const redaktionCountInput = document.getElementById('redaktionCountInput');
+    const redaktionStatusSelect = document.getElementById('redaktionStatusSelect');
     const redaktionChildCategorySelect = document.getElementById('redaktionChildCategorySelect');
     const redaktionCategorySelect = document.getElementById('redaktionCategorySelect');
     const redaktionLayoutSelect = document.getElementById('redaktionLayoutSelect');
@@ -1743,6 +1800,12 @@
       return Math.max(0, Math.floor(parsedValue));
     }
 
+    function normalizeRedaktionStatus(status) {
+      if (status === 'fertig' || status === 'kritisch') return status;
+      if (status === 'prüfen' || status === 'pruefen' || status === '') return 'pruefen';
+      return 'pruefen';
+    }
+
     function getRedaktionPageHeight(count) {
       const normalizedCount = normalizeRedaktionCount(count);
       return normalizedCount === 0 ? 27 : normalizedCount * 54;
@@ -1787,6 +1850,7 @@
       page.layoutCategoryId = typeof page.layoutCategoryId === 'string' ? page.layoutCategoryId : '';
       page.layoutId = typeof page.layoutId === 'string' ? page.layoutId : 'auto';
       page.assets = normalizeRedaktionAssets(page.assets);
+      page.status = normalizeRedaktionStatus(page.status);
       if (page.childLayoutCategoryId && !getLayoutCategoryById(page.childLayoutCategoryId)) {
         page.childLayoutCategoryId = '';
       }
@@ -1874,7 +1938,8 @@
           childLayoutCategoryId: typeof page.childLayoutCategoryId === 'string' ? page.childLayoutCategoryId : '',
           layoutCategoryId: typeof page.layoutCategoryId === 'string' ? page.layoutCategoryId : '',
           layoutId: typeof page.layoutId === 'string' ? page.layoutId : 'auto',
-          assets: normalizeRedaktionAssets(page.assets)
+          assets: normalizeRedaktionAssets(page.assets),
+          status: normalizeRedaktionStatus(page.status)
         });
       });
 
@@ -1906,7 +1971,8 @@
         childLayoutCategoryId: '',
         layoutCategoryId: '',
         layoutId: 'auto',
-        assets: []
+        assets: [],
+        status: 'pruefen'
       };
       nextRedaktionPageNumber++;
       const inheritedCategoryId = getInheritedLayoutCategoryId(page);
@@ -2169,6 +2235,7 @@
       redaktionInspectorForm.hidden = false;
       if (redaktionTitleInput) redaktionTitleInput.value = page.title;
       if (redaktionCountInput) redaktionCountInput.value = String(page.count);
+      if (redaktionStatusSelect) redaktionStatusSelect.value = normalizeRedaktionStatus(page.status);
       populateLayoutCategorySelect(redaktionChildCategorySelect, page.childLayoutCategoryId, true);
       populateLayoutCategorySelect(redaktionCategorySelect, page.layoutCategoryId, true);
       populateRedaktionLayoutSelect(page);
@@ -2398,6 +2465,9 @@
         toggle.textContent = hasChildren ? (isCollapsed ? '>' : 'v') : '>';
         const titleText = document.createElement('span');
         titleText.textContent = page.title;
+        titleText.classList.toggle('redaktion-page-status', page.status === 'kritisch' || page.status === 'pruefen');
+        titleText.classList.toggle('redaktion-page-critical', page.status === 'kritisch');
+        titleText.classList.toggle('redaktion-page-review', page.status === 'pruefen');
         const resizeHandle = document.createElement('div');
         resizeHandle.className = 'redaktion-page-resize-handle';
         resizeHandle.dataset.pageId = page.id;
@@ -2521,8 +2591,8 @@
         const item = document.createElement('li');
         item.className = 'project-tree-file';
         item.classList.toggle('project-tree-missing', isProjectTreeNodeMissing(node));
-        item.textContent = node.name;
         item.title = node.path;
+        item.appendChild(createProjectTreeEntry(node));
         return item;
       }
 
@@ -2534,7 +2604,7 @@
         : (projectTreeExpandedPaths.size === 0 || projectTreeExpandedPaths.has(''));
       const summary = document.createElement('summary');
       summary.classList.toggle('project-tree-missing', isProjectTreeNodeMissing(node));
-      summary.textContent = node.name;
+      summary.appendChild(createProjectTreeEntry(node));
       details.appendChild(summary);
 
       const childrenList = document.createElement('ul');
@@ -2546,6 +2616,21 @@
       details.appendChild(childrenList);
       item.appendChild(details);
       return item;
+    }
+
+    function createProjectTreeEntry(node) {
+      const entry = document.createElement('span');
+      entry.className = 'project-tree-entry';
+      const title = document.createElement('span');
+      title.textContent = node.name;
+      const deleteButton = document.createElement('button');
+      deleteButton.className = 'project-tree-delete';
+      deleteButton.type = 'button';
+      deleteButton.textContent = 'Loeschen';
+      deleteButton.dataset.assetPath = node.path || node.name;
+      deleteButton.dataset.assetType = node.type === 'directory' ? 'directory' : 'file';
+      entry.append(title, deleteButton);
+      return entry;
     }
 
     function isProjectTreeNodeMissing(node) {
@@ -2702,6 +2787,67 @@
         projectTreeExpandedPaths = nextExpanded;
       }
       refreshImportedProjectUi();
+    }
+
+    function mergeImportedProjectFiles(files) {
+      const beforeCount = importedProjectFiles.length;
+      const knownPaths = new Set(importedProjectFiles.map((file) => file.relativePath));
+      (Array.isArray(files) ? files : []).forEach((file) => {
+        if (!file?.relativePath || knownPaths.has(file.relativePath)) return;
+        knownPaths.add(file.relativePath);
+        importedProjectFiles.push(file);
+      });
+      importedProjectTree = buildProjectTreeFromFiles(importedProjectFiles);
+      ensureProjectTreeOpenDefaults();
+      refreshImportedProjectUi();
+      return importedProjectFiles.length - beforeCount;
+    }
+
+    function markImportedFilesAsPresent(files) {
+      (Array.isArray(files) ? files : []).forEach((file) => {
+        if (file?.relativePath) missingProjectFilePaths.delete(file.relativePath);
+      });
+      refreshImportedProjectUi();
+    }
+
+    function removeManagedAsset(assetPath, assetType = 'file') {
+      if (!assetPath) return false;
+      const prefix = `${assetPath}/`;
+      const shouldRemovePath = (path) => assetType === 'directory'
+        ? (path === assetPath || path.startsWith(prefix))
+        : path === assetPath;
+      const beforeCount = importedProjectFiles.length;
+      if (beforeCount === 0 || !importedProjectFiles.some((file) => shouldRemovePath(file.relativePath))) return false;
+
+      const affectedPages = redaktionPagesData.filter((page) => {
+        return normalizeRedaktionAssets(page.assets).some((asset) => shouldRemovePath(asset.path));
+      });
+      if (affectedPages.length > 0) {
+        const affectedNames = affectedPages.map((page) => page.title).join(', ');
+        const shouldRemove = confirm(
+          `Dieses Asset ist ${affectedPages.length} Seite(n) zugeordnet: ${affectedNames}.\n\n` +
+          'Wenn du fortfaehrst, wird das Asset aus diesen Seiten entfernt und deren Status auf "kritisch" gesetzt.'
+        );
+        if (!shouldRemove) return false;
+      }
+
+      importedProjectFiles = importedProjectFiles.filter((file) => !shouldRemovePath(file.relativePath));
+
+      missingProjectFilePaths = new Set(Array.from(missingProjectFilePaths).filter((path) => !shouldRemovePath(path)));
+      redaktionPagesData.forEach((page) => {
+        const beforeAssets = normalizeRedaktionAssets(page.assets);
+        const afterAssets = beforeAssets.filter((asset) => !shouldRemovePath(asset.path));
+        if (afterAssets.length !== beforeAssets.length) {
+          page.status = 'kritisch';
+        }
+        page.assets = afterAssets;
+      });
+      importedProjectTree = buildProjectTreeFromFiles(importedProjectFiles);
+      ensureProjectTreeOpenDefaults();
+      refreshImportedProjectUi();
+      refreshRedaktionInspector();
+      queueSnapshotSave();
+      return true;
     }
 
     function rememberImportedDirectoryHandle(handle) {
@@ -3112,6 +3258,7 @@
           layoutCategoryId: page.layoutCategoryId,
           layoutId: page.layoutId,
           assets: normalizeRedaktionAssets(page.assets),
+          status: normalizeRedaktionStatus(page.status),
           parentId: page.parentId
         })),
         redaktionCollapsedPageIds: Array.from(redaktionCollapsedPageIds),
@@ -4301,11 +4448,11 @@
             const directoryHandle = await window.showDirectoryPicker({ mode: 'read' });
             rememberImportedDirectoryHandle(directoryHandle);
             const importedFiles = await readFilesFromDirectoryHandle(directoryHandle);
-            setImportedProjectFiles(importedFiles);
+            const addedCount = mergeImportedProjectFiles(importedFiles);
             await verifyImportedProjectFiles();
             if (importedFiles.length > 0) {
               if (missingProjectFilePaths.size === 0) {
-                setStatus(`Ordner "${directoryHandle.name}" importiert (${importedFiles.length} Datei(en)).`, false);
+                setStatus(`Ordner "${directoryHandle.name}" importiert (${addedCount} neue Datei(en), ${importedFiles.length - addedCount} bereits bekannt).`, false);
               }
               queueSnapshotSave();
             } else {
@@ -4320,13 +4467,11 @@
       });
       projectFolderInput.addEventListener('change', () => {
         const importedFiles = readFilesFromFolderInput(projectFolderInput.files);
-        importedProjectDirectoryHandles = [];
-        setImportedProjectFiles(importedFiles);
-        missingProjectFilePaths = new Set();
-        refreshImportedProjectUi();
+        const addedCount = mergeImportedProjectFiles(importedFiles);
+        markImportedFilesAsPresent(importedFiles);
         if (importedFiles.length > 0) {
           const rootName = importedProjectTree?.name || 'Ordner';
-          setStatus(`Ordner "${rootName}" importiert (${importedFiles.length} Datei(en)). Der Ordnerzugriff konnte in diesem Browser nicht dauerhaft gemerkt werden.`, false);
+          setStatus(`Ordner "${rootName}" importiert (${addedCount} neue Datei(en), ${importedFiles.length - addedCount} bereits bekannt). Der Ordnerzugriff konnte in diesem Browser nicht dauerhaft gemerkt werden.`, missingProjectFilePaths.size > 0);
           queueSnapshotSave();
         } else {
           setStatus('Keine Dateien im ausgewaehlten Ordner gefunden.', true);
@@ -4335,6 +4480,14 @@
     }
     [projectImportTree, projectMainTree].forEach((treeContainer) => {
       if (!treeContainer) return;
+      treeContainer.addEventListener('click', (event) => {
+        const deleteButton = event.target.closest?.('.project-tree-delete');
+        if (!deleteButton?.dataset.assetPath) return;
+        event.preventDefault();
+        event.stopPropagation();
+        const didRemove = removeManagedAsset(deleteButton.dataset.assetPath, deleteButton.dataset.assetType);
+        setStatus(didRemove ? 'Asset aus der App entfernt.' : 'Asset konnte nicht entfernt werden.', !didRemove);
+      });
       treeContainer.addEventListener('toggle', (event) => {
         const details = event.target;
         if (!(details instanceof HTMLDetailsElement)) return;
@@ -4559,6 +4712,15 @@
         if (!page) return;
         page.count = normalizeRedaktionCount(redaktionCountInput.value);
         redaktionCountInput.value = String(page.count);
+        renderRedaktionPages();
+        queueSnapshotSave();
+      });
+    }
+    if (redaktionStatusSelect) {
+      redaktionStatusSelect.addEventListener('change', () => {
+        const page = getRedaktionPageById(selectedRedaktionPageId);
+        if (!page) return;
+        page.status = normalizeRedaktionStatus(redaktionStatusSelect.value);
         renderRedaktionPages();
         queueSnapshotSave();
       });
