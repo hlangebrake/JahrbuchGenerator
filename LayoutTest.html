@@ -79,6 +79,13 @@
         "main main";
     }
 
+    .app.seite-view {
+      height: 100vh;
+      min-height: 100vh;
+      grid-template-rows: auto minmax(0, 1fr);
+      overflow: hidden;
+    }
+
     .top-menu {
       grid-area: menu;
       display: flex;
@@ -150,9 +157,10 @@
 
     .seite-sidebar {
       height: 100%;
+      max-height: 100%;
       min-height: 0;
       display: grid;
-      grid-template-rows: auto auto auto minmax(0, 1fr);
+      grid-template-rows: auto auto minmax(0, 1fr);
       gap: 12px;
       overflow: auto;
     }
@@ -241,12 +249,17 @@
       border-radius: 8px;
       background: rgba(20, 26, 37, 0.72);
       overflow: hidden;
+      cursor: grab;
     }
 
     .seite-asset-card.visible {
       border-color: rgba(251, 191, 36, 0.46);
       background: rgba(251, 191, 36, 0.10);
       box-shadow: inset 0 0 0 1px rgba(251, 191, 36, 0.10);
+    }
+
+    .seite-asset-card:active {
+      cursor: grabbing;
     }
 
     .seite-asset-thumb {
@@ -557,6 +570,18 @@
       background: #f8fafc;
     }
 
+    .seite-preview-element.asset-drop-target {
+      outline: 3px solid rgba(96, 165, 250, 0.82);
+      outline-offset: -3px;
+      box-shadow: inset 0 0 0 999px rgba(96, 165, 250, 0.12);
+    }
+
+    .seite-preview-element.asset-drop-invalid {
+      outline: 3px solid rgba(248, 113, 113, 0.82);
+      outline-offset: -3px;
+      box-shadow: inset 0 0 0 999px rgba(248, 113, 113, 0.12);
+    }
+
     .seite-preview-element.image {
       cursor: grab;
       touch-action: none;
@@ -647,6 +672,14 @@
       border-color: #ffffff;
       box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.36);
       z-index: 1;
+    }
+
+    .seite-page-cell.sidebar-active {
+      border-color: rgba(96, 165, 250, 0.92);
+      box-shadow:
+        0 0 0 2px rgba(96, 165, 250, 0.36),
+        inset 0 -4px 0 rgba(96, 165, 250, 0.78);
+      z-index: 2;
     }
 
     .seite-page-number {
@@ -1648,6 +1681,8 @@
     }
 
     .app.seite-view .sidebar {
+      height: 100%;
+      max-height: 100%;
       min-height: 0;
       overflow: hidden;
     }
@@ -1885,10 +1920,6 @@
       </div>
       <div id="seiteSidebarContent" class="seite-sidebar" hidden>
         <h2 class="seite-sidebar-title">Assets der Seite</h2>
-        <section id="seiteVisibleAssetsSection" class="seite-sidebar-section">
-          <h3 class="seite-sidebar-section-title">Angezeigt</h3>
-          <div id="seiteVisibleAssets" class="seite-asset-grid"></div>
-        </section>
         <section class="seite-sidebar-section">
           <h3 class="seite-sidebar-section-title">Filter</h3>
           <div class="seite-sidebar-filters">
@@ -1909,7 +1940,7 @@
           </div>
         </section>
         <section class="seite-sidebar-section scroll">
-          <h3 class="seite-sidebar-section-title">Alle zugeordneten Assets</h3>
+          <h3 class="seite-sidebar-section-title">Zugeordnete Assets</h3>
           <div id="seiteAllAssets" class="seite-asset-grid"></div>
         </section>
       </div>
@@ -2053,8 +2084,6 @@
     const seiteStage = document.getElementById('seiteStage');
     const seitePageStrip = document.getElementById('seitePageStrip');
     const seiteViewToggleButtons = Array.from(document.querySelectorAll('.seite-view-toggle-btn'));
-    const seiteVisibleAssetsSection = document.getElementById('seiteVisibleAssetsSection');
-    const seiteVisibleAssets = document.getElementById('seiteVisibleAssets');
     const seiteAllAssets = document.getElementById('seiteAllAssets');
     const seiteAssetTypeFilterButtons = Array.from(document.querySelectorAll('.seite-filter-btn[data-seite-asset-type]'));
     const seiteImageOrientationFilterButtons = Array.from(document.querySelectorAll('.seite-filter-btn[data-seite-image-orientation]'));
@@ -2180,6 +2209,7 @@
     let seiteSidebarRenderToken = 0;
     let seiteSidebarObjectUrls = [];
     let seiteImageDragState = null;
+    let seiteDraggedAssetPayload = null;
     let seiteAssetTypeFilter = 'all';
     let seiteImageOrientationFilter = 'both';
     let seiteAssetDisplaySize = 74;
@@ -2598,12 +2628,26 @@
       Object.entries(settings).forEach(([path, value]) => {
         if (typeof path !== 'string' || !value || typeof value !== 'object') return;
         normalizedSettings[path.replace(/\\/g, '/').trim()] = {
-          zoom: Math.min(5, Math.max(1, Number(value.zoom) || 1)),
-          offsetX: Math.min(500, Math.max(-500, Number(value.offsetX) || 0)),
-          offsetY: Math.min(500, Math.max(-500, Number(value.offsetY) || 0))
+          zoom: Math.min(30, Math.max(1, Number(value.zoom) || 1)),
+          offsetX: Number.isFinite(Number(value.offsetX)) ? Number(value.offsetX) : 0,
+          offsetY: Number.isFinite(Number(value.offsetY)) ? Number(value.offsetY) : 0
         };
       });
       return normalizedSettings;
+    }
+
+    function normalizeMediaSlotAssignments(assignments) {
+      const normalizedAssignments = { image: {}, text: {} };
+      if (!assignments || typeof assignments !== 'object') return normalizedAssignments;
+      ['image', 'text'].forEach((kind) => {
+        const source = assignments[kind];
+        if (!source || typeof source !== 'object') return;
+        Object.entries(source).forEach(([slotKey, path]) => {
+          if (typeof slotKey !== 'string' || !slotKey.trim() || typeof path !== 'string' || !path.trim()) return;
+          normalizedAssignments[kind][slotKey.replace(/\\/g, '/').trim()] = path.replace(/\\/g, '/').trim();
+        });
+      });
+      return normalizedAssignments;
     }
 
     function getRedaktionPageHeight(count) {
@@ -2653,6 +2697,7 @@
       page.assets = normalizeRedaktionAssets(page.assets);
       page.selectedImagePaths = normalizeMediaSelectionList(page.selectedImagePaths);
       page.selectedTextPaths = normalizeMediaSelectionList(page.selectedTextPaths);
+      page.mediaSlotAssignments = normalizeMediaSlotAssignments(page.mediaSlotAssignments);
       page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
       page.status = normalizeRedaktionStatus(page.status);
       if (page.childLayoutCategoryId && !getLayoutCategoryById(page.childLayoutCategoryId)) {
@@ -2686,8 +2731,10 @@
 
     function applyLayoutCategoryToRedaktionPage(page, categoryId) {
       if (!page || !categoryId) return;
+      const previousImageSequence = getSeiteImagePlacementSequence(page);
       page.layoutCategoryId = categoryId;
       normalizeRedaktionLayoutIds(page, true);
+      migrateSeiteImagePlacementSettings(page, previousImageSequence);
     }
 
     function confirmRedaktionLayoutCategoryChange() {
@@ -2739,6 +2786,7 @@
           assets: normalizeRedaktionAssets(page.assets),
           selectedImagePaths: normalizeMediaSelectionList(page.selectedImagePaths),
           selectedTextPaths: normalizeMediaSelectionList(page.selectedTextPaths),
+          mediaSlotAssignments: normalizeMediaSlotAssignments(page.mediaSlotAssignments),
           imageViewSettings: normalizeImageViewSettings(page.imageViewSettings),
           status: normalizeRedaktionStatus(page.status)
         });
@@ -2776,6 +2824,7 @@
         assets: [],
         selectedImagePaths: [],
         selectedTextPaths: [],
+        mediaSlotAssignments: { image: {}, text: {} },
         imageViewSettings: {},
         status: 'pruefen'
       };
@@ -3086,6 +3135,7 @@
       if (!page || !category || !selectedLayout || slotIndex < 0 || slotIndex >= count) return;
       const selectedSpan = getRedaktionLayoutSpan(selectedLayout);
       if (slotIndex + selectedSpan > count) return;
+      const previousImageSequence = getSeiteImagePlacementSequence(page);
 
       const nextLayoutIds = [];
       const preservedAfter = [];
@@ -3122,6 +3172,7 @@
 
       page.layoutIds = nextLayoutIds;
       normalizeRedaktionLayoutIds(page);
+      migrateSeiteImagePlacementSettings(page, previousImageSequence);
     }
 
     function refreshRedaktionInspector() {
@@ -3243,6 +3294,7 @@
       page.assets = normalizeRedaktionAssets([asset]);
       page.selectedImagePaths = [];
       page.selectedTextPaths = [];
+      page.mediaSlotAssignments = { image: {}, text: {} };
       page.imageViewSettings = {};
       return page;
     }
@@ -3441,6 +3493,10 @@
       card.className = 'seite-asset-card';
       card.classList.toggle('visible', visiblePaths.has(file.relativePath));
       card.title = file.relativePath;
+      card.draggable = true;
+      card.dataset.assetPath = file.relativePath;
+      card.dataset.assetType = file.assetType;
+      card.dataset.assetName = file.name || file.relativePath.split('/').pop() || file.relativePath;
 
       const thumb = document.createElement('div');
       thumb.className = 'seite-asset-thumb';
@@ -3453,6 +3509,7 @@
           const image = document.createElement('img');
           image.src = objectUrl;
           image.alt = file.name;
+          image.draggable = false;
           thumb.appendChild(image);
         } else {
           thumb.textContent = 'Bild';
@@ -3495,7 +3552,6 @@
       const visiblePaths = getDisplayedSeiteAssetPaths();
       const allFiles = page ? getSeiteAssignedAssetFiles(page) : [];
 
-      const visibleFiles = allFiles.filter((file) => visiblePaths.has(file.relativePath));
       let filteredFiles = allFiles.filter((file) => {
         if (seiteAssetTypeFilter !== 'all' && file.assetType !== seiteAssetTypeFilter) return false;
         return true;
@@ -3515,8 +3571,13 @@
         filteredFiles = nextFiltered;
       }
 
-      await renderSeiteAssetGrid(seiteVisibleAssets, visibleFiles, visiblePaths, token);
-      if (seiteVisibleAssetsSection) seiteVisibleAssetsSection.hidden = visibleFiles.length === 0;
+      filteredFiles.sort((assetA, assetB) => {
+        const assetAVisibleRank = visiblePaths.has(assetA.relativePath) ? 0 : 1;
+        const assetBVisibleRank = visiblePaths.has(assetB.relativePath) ? 0 : 1;
+        if (assetAVisibleRank !== assetBVisibleRank) return assetAVisibleRank - assetBVisibleRank;
+        return assetA.relativePath.localeCompare(assetB.relativePath, 'de', { sensitivity: 'base' });
+      });
+
       if (token !== seiteSidebarRenderToken) return;
       await renderSeiteAssetGrid(seiteAllAssets, filteredFiles, visiblePaths, token);
     }
@@ -3687,6 +3748,15 @@
       }
     }
 
+    function revokeSeitePreviewElementObjectUrls(element) {
+      element?.querySelectorAll?.('img[data-object-url]').forEach((image) => {
+        const objectUrl = image.dataset.objectUrl;
+        if (!objectUrl) return;
+        URL.revokeObjectURL(objectUrl);
+        seitePreviewObjectUrls = seitePreviewObjectUrls.filter((url) => url !== objectUrl);
+      });
+    }
+
     function setSeiteViewMode(mode, persist = true) {
       seiteViewMode = mode === 'double' ? 'double' : 'single';
       seiteViewToggleButtons.forEach((button) => {
@@ -3743,12 +3813,10 @@
       return `${layoutSlot}:${elementId}`;
     }
 
-    function getSeiteMediaAssignments(page, kind) {
+    function getSeiteOrderedMediaSlots(page, kind) {
       const category = getLayoutCategoryById(page?.layoutCategoryId || '');
-      const assignments = new Map();
-      if (!page || !category) return assignments;
-
       const mediaSlots = [];
+      if (!page || !category) return mediaSlots;
       getRedaktionLayoutSlots(page)
         .filter((slotInfo) => slotInfo && !slotInfo.covered)
         .forEach((slotInfo) => {
@@ -3762,14 +3830,38 @@
               });
             });
         });
+      return mediaSlots;
+    }
+
+    function getSeiteMediaAssignments(page, kind) {
+      const assignments = new Map();
+      if (!page) return assignments;
+
+      const mediaSlots = getSeiteOrderedMediaSlots(page, kind);
 
       const selectedPaths = ensureSeiteSelectionList(page, kind, mediaSlots.length);
-      if (mediaSlots.length === 0 || selectedPaths.length === 0) return assignments;
+      if (mediaSlots.length === 0) return assignments;
+
+      page.mediaSlotAssignments = normalizeMediaSlotAssignments(page.mediaSlotAssignments);
+      const candidatePaths = new Set(getAssetFileCandidates(page, kind).map((file) => file.relativePath));
+      const validSlotKeys = new Set(mediaSlots.map((slotInfo) => getSeiteMediaAssignmentKey(slotInfo.layoutSlot, slotInfo.elementId)));
+      Object.entries(page.mediaSlotAssignments[kind]).forEach(([slotKey, path]) => {
+        if (!validSlotKeys.has(slotKey) || !candidatePaths.has(path)) {
+          delete page.mediaSlotAssignments[kind][slotKey];
+          return;
+        }
+          assignments.set(slotKey, path);
+      });
+
+      if (selectedPaths.length === 0) return assignments;
 
       const heroPath = selectedPaths.find((path) => isHeroFilePath(path));
       const unassignedSlots = [...mediaSlots];
       if (heroPath) {
         unassignedSlots.sort((a, b) => b.area - a.area);
+        while (unassignedSlots.length > 0 && assignments.has(getSeiteMediaAssignmentKey(unassignedSlots[0].layoutSlot, unassignedSlots[0].elementId))) {
+          unassignedSlots.shift();
+        }
         const heroSlot = unassignedSlots.shift();
         if (heroSlot) {
           assignments.set(getSeiteMediaAssignmentKey(heroSlot.layoutSlot, heroSlot.elementId), heroPath);
@@ -3787,38 +3879,295 @@
       return assignments;
     }
 
-    function getImageViewSetting(page, path) {
-      if (!page || !path) return { zoom: 1, offsetX: 0, offsetY: 0 };
+    function createDefaultImageViewSetting() {
+      return { zoom: 1, offsetX: 0, offsetY: 0 };
+    }
+
+    function cloneImageViewSetting(setting) {
+      return clampImageViewSetting({ ...(setting || createDefaultImageViewSetting()) });
+    }
+
+    function getImageViewSettingKey(page, path, layoutSlot, elementId) {
+      if (!page?.id || !path) return path || '';
+      const normalizedPath = String(path).replace(/\\/g, '/').trim();
+      return `placement:${page.id}:${layoutSlot}:${elementId}:${normalizedPath}`;
+    }
+
+    function imageViewSettingReferencesPath(settingKey, assetPath) {
+      if (!settingKey || !assetPath) return false;
+      const normalizedKey = String(settingKey).replace(/\\/g, '/').trim();
+      const normalizedPath = String(assetPath).replace(/\\/g, '/').trim();
+      return normalizedKey === normalizedPath || normalizedKey.endsWith(`:${normalizedPath}`);
+    }
+
+    function imageViewSettingMatchesAssetRemoval(settingKey, assetPath, includeChildren = true) {
+      if (!settingKey || !assetPath) return false;
+      const normalizedKey = String(settingKey).replace(/\\/g, '/').trim();
+      const normalizedPath = String(assetPath).replace(/\\/g, '/').trim();
+      return imageViewSettingReferencesPath(normalizedKey, normalizedPath)
+        || (includeChildren && (normalizedKey.startsWith(`${normalizedPath}/`) || normalizedKey.includes(`:${normalizedPath}/`)));
+    }
+
+    function getImageViewSetting(page, path, settingKey = path) {
+      if (!page || !path) return createDefaultImageViewSetting();
       page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
-      if (!page.imageViewSettings[path]) {
-        page.imageViewSettings[path] = { zoom: 1, offsetX: 0, offsetY: 0 };
+      const normalizedPath = String(path).replace(/\\/g, '/').trim();
+      const normalizedSettingKey = String(settingKey || normalizedPath).replace(/\\/g, '/').trim();
+      if (!page.imageViewSettings[normalizedSettingKey]) {
+        page.imageViewSettings[normalizedSettingKey] = cloneImageViewSetting(page.imageViewSettings[normalizedPath]);
       }
-      return page.imageViewSettings[path];
+      return page.imageViewSettings[normalizedSettingKey];
+    }
+
+    function rememberImageViewSettingForPath(page, path, setting) {
+      if (!page || !path || !setting) return;
+      page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
+      const normalizedPath = String(path).replace(/\\/g, '/').trim();
+      page.imageViewSettings[normalizedPath] = cloneImageViewSetting(setting);
+    }
+
+    function getSeiteImagePlacementSequence(page) {
+      if (!page) return [];
+      page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
+      const imageAssignments = getSeiteMediaAssignments(page, 'image');
+      return getSeiteOrderedMediaSlots(page, 'image')
+        .map((slotInfo, index) => {
+          const slotKey = getSeiteMediaAssignmentKey(slotInfo.layoutSlot, slotInfo.elementId);
+          const path = imageAssignments.get(slotKey);
+          if (!path) return null;
+          const settingKey = getImageViewSettingKey(page, path, slotInfo.layoutSlot, slotInfo.elementId);
+          const setting = page.imageViewSettings[settingKey] || page.imageViewSettings[path] || createDefaultImageViewSetting();
+          return { index, slotKey, path, setting: cloneImageViewSetting(setting) };
+        })
+        .filter(Boolean);
+    }
+
+    function migrateSeiteImagePlacementSettings(page, previousSequence) {
+      if (!page || !Array.isArray(previousSequence) || previousSequence.length === 0) return;
+      page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
+      const previousPaths = previousSequence.map((entry) => entry.path).filter(Boolean);
+      const selectedImagePaths = normalizeMediaSelectionList(page.selectedImagePaths);
+      previousPaths.forEach((path, index) => {
+        selectedImagePaths[index] = path;
+      });
+      page.selectedImagePaths = selectedImagePaths;
+      const imageAssignments = getSeiteMediaAssignments(page, 'image');
+      const usedPreviousIndexes = new Set();
+      getSeiteOrderedMediaSlots(page, 'image').forEach((slotInfo, index) => {
+        const slotKey = getSeiteMediaAssignmentKey(slotInfo.layoutSlot, slotInfo.elementId);
+        const path = imageAssignments.get(slotKey);
+        if (!path) return;
+        let previousIndex = previousSequence.findIndex((entry, entryIndex) => {
+          return !usedPreviousIndexes.has(entryIndex) && entry.path === path && entry.index === index;
+        });
+        if (previousIndex < 0) {
+          previousIndex = previousSequence.findIndex((entry, entryIndex) => {
+            return !usedPreviousIndexes.has(entryIndex) && entry.path === path;
+          });
+        }
+        if (previousIndex < 0) return;
+        usedPreviousIndexes.add(previousIndex);
+        const settingKey = getImageViewSettingKey(page, path, slotInfo.layoutSlot, slotInfo.elementId);
+        page.imageViewSettings[settingKey] = cloneImageViewSetting(previousSequence[previousIndex].setting);
+        rememberImageViewSettingForPath(page, path, previousSequence[previousIndex].setting);
+      });
+    }
+
+    function setSeiteMediaSlotAssignment(page, kind, slotKey, path) {
+      if (!page || !['image', 'text'].includes(kind) || !slotKey || !path) return false;
+      const candidates = getAssetFileCandidates(page, kind);
+      if (!candidates.some((file) => file.relativePath === path)) return false;
+      page.mediaSlotAssignments = normalizeMediaSlotAssignments(page.mediaSlotAssignments);
+      page.mediaSlotAssignments[kind][slotKey] = path;
+      const propertyName = kind === 'image' ? 'selectedImagePaths' : 'selectedTextPaths';
+      const slotIndex = getSeiteOrderedMediaSlots(page, kind)
+        .findIndex((slotInfo) => getSeiteMediaAssignmentKey(slotInfo.layoutSlot, slotInfo.elementId) === slotKey);
+      const selectedPaths = ensureSeiteSelectionList(page, kind, Math.max(slotIndex + 1, 0));
+      if (slotIndex >= 0) {
+        selectedPaths[slotIndex] = path;
+      } else if (!selectedPaths.includes(path)) {
+        selectedPaths.push(path);
+      }
+      page[propertyName] = selectedPaths;
+      return true;
+    }
+
+    function removeSeiteMediaSlotAssignments(page, shouldRemovePath) {
+      if (!page || typeof shouldRemovePath !== 'function') return;
+      page.mediaSlotAssignments = normalizeMediaSlotAssignments(page.mediaSlotAssignments);
+      ['image', 'text'].forEach((kind) => {
+        Object.entries(page.mediaSlotAssignments[kind]).forEach(([slotKey, path]) => {
+          if (shouldRemovePath(path)) delete page.mediaSlotAssignments[kind][slotKey];
+        });
+      });
+    }
+
+    function clearSeiteAssetDropMarkers() {
+      if (!seiteStage) return;
+      seiteStage.querySelectorAll('.asset-drop-target, .asset-drop-invalid').forEach((node) => {
+        node.classList.remove('asset-drop-target', 'asset-drop-invalid');
+      });
+    }
+
+    function getSeiteAssetDragPayload(dataTransfer) {
+      if (!dataTransfer) return null;
+      const rawPayload = dataTransfer.getData('application/x-seite-asset') || dataTransfer.getData('text/plain');
+      if (!rawPayload) return null;
+      try {
+        const payload = JSON.parse(rawPayload);
+        if (!payload || !['image', 'text'].includes(payload.assetType) || !payload.path) return null;
+        return {
+          assetType: payload.assetType,
+          path: String(payload.path).replace(/\\/g, '/').trim()
+        };
+      } catch {
+        return null;
+      }
+    }
+
+    function applySeiteAssetDropToSlot(slotElement, payload) {
+      if (!slotElement || !payload) return false;
+      const page = getRedaktionPageById(slotElement.dataset.pageId);
+      const mediaType = slotElement.dataset.mediaType;
+      const mediaKey = slotElement.dataset.mediaKey;
+      if (!page || mediaType !== payload.assetType || !mediaKey) return false;
+      const didAssign = setSeiteMediaSlotAssignment(page, mediaType, mediaKey, payload.path);
+      if (!didAssign) return false;
+      queueSnapshotSave();
+      return true;
+    }
+
+    function refreshSeiteSidebarVisibleHighlights() {
+      if (!seiteAllAssets) return;
+      const visiblePaths = getDisplayedSeiteAssetPaths();
+      const cards = Array.from(seiteAllAssets.querySelectorAll('.seite-asset-card[data-asset-path]'));
+      cards.forEach((card) => {
+        card.classList.toggle('visible', visiblePaths.has(card.dataset.assetPath));
+      });
+      cards
+        .sort((cardA, cardB) => {
+          const cardAVisibleRank = visiblePaths.has(cardA.dataset.assetPath) ? 0 : 1;
+          const cardBVisibleRank = visiblePaths.has(cardB.dataset.assetPath) ? 0 : 1;
+          if (cardAVisibleRank !== cardBVisibleRank) return cardAVisibleRank - cardBVisibleRank;
+          return String(cardA.dataset.assetPath || '').localeCompare(String(cardB.dataset.assetPath || ''), 'de', { sensitivity: 'base' });
+        })
+        .forEach((card) => seiteAllAssets.appendChild(card));
+    }
+
+    async function renderSeitePreviewSlotElement(slotElement, page, mediaType, path) {
+      if (!slotElement || !page || !mediaType || !path) return false;
+      revokeSeitePreviewElementObjectUrls(slotElement);
+      slotElement.replaceChildren();
+      slotElement.classList.toggle('image', mediaType === 'image');
+      slotElement.classList.toggle('seite-preview-text', mediaType === 'text');
+      delete slotElement.dataset.imagePath;
+      delete slotElement.dataset.imageSettingKey;
+
+      if (mediaType === 'image') {
+        const file = await getImportedFile(path);
+        if (!file) {
+          const empty = document.createElement('div');
+          empty.className = 'seite-preview-empty-slot';
+          empty.textContent = 'Bild fehlt';
+          slotElement.appendChild(empty);
+          return false;
+        }
+        const [layoutSlot, elementId] = String(slotElement.dataset.mediaKey || '').split(':');
+        const imageSettingKey = getImageViewSettingKey(page, path, layoutSlot, elementId);
+        const image = document.createElement('img');
+        const objectUrl = URL.createObjectURL(file);
+        seitePreviewObjectUrls.push(objectUrl);
+        image.src = objectUrl;
+        image.dataset.objectUrl = objectUrl;
+        image.alt = path.split('/').pop() || 'Bild';
+        image.draggable = false;
+        slotElement.dataset.imagePath = path;
+        slotElement.dataset.imageSettingKey = imageSettingKey;
+        image.addEventListener('load', () => {
+          applyImageViewStyle(image, getImageViewSetting(page, path, imageSettingKey));
+        }, { once: true });
+        slotElement.appendChild(image);
+        applyImageViewStyle(image, getImageViewSetting(page, path, imageSettingKey));
+        return true;
+      }
+
+      const file = await getImportedFile(path);
+      slotElement.textContent = file ? await file.text() : 'Text fehlt';
+      return !!file;
+    }
+
+    async function updateVisibleSeitePreviewSlotsForDrop(slotElement, payload) {
+      const page = getRedaktionPageById(slotElement?.dataset.pageId);
+      const mediaType = slotElement?.dataset.mediaType;
+      const mediaKey = slotElement?.dataset.mediaKey;
+      if (!seiteStage || !page || mediaType !== payload?.assetType || !mediaKey) return false;
+      const selector = `.seite-preview-element[data-page-id="${CSS.escape(page.id)}"][data-media-type="${CSS.escape(mediaType)}"][data-media-key="${CSS.escape(mediaKey)}"]`;
+      const matchingSlots = Array.from(seiteStage.querySelectorAll(selector));
+      if (matchingSlots.length === 0) return false;
+      const results = await Promise.all(
+        matchingSlots.map((matchingSlot) => renderSeitePreviewSlotElement(matchingSlot, page, mediaType, payload.path))
+      );
+      refreshSeiteSidebarVisibleHighlights();
+      return results.some(Boolean);
     }
 
     function clampImageViewSetting(setting) {
-      setting.zoom = Math.min(5, Math.max(1, Number(setting.zoom) || 1));
-      setting.offsetX = Math.min(500, Math.max(-500, Number(setting.offsetX) || 0));
-      setting.offsetY = Math.min(500, Math.max(-500, Number(setting.offsetY) || 0));
+      setting.zoom = Math.min(30, Math.max(1, Number(setting.zoom) || 1));
+      setting.offsetX = Number.isFinite(Number(setting.offsetX)) ? Number(setting.offsetX) : 0;
+      setting.offsetY = Number.isFinite(Number(setting.offsetY)) ? Number(setting.offsetY) : 0;
       return setting;
     }
 
-    function applyImageViewStyle(image, setting) {
-      const nextSetting = clampImageViewSetting(setting);
+    function getImageViewGeometry(image, zoom) {
       const box = image.parentElement;
       const boxRect = box?.getBoundingClientRect();
       const boxWidth = boxRect?.width || 0;
       const boxHeight = boxRect?.height || 0;
       const naturalWidth = image.naturalWidth || boxWidth;
       const naturalHeight = image.naturalHeight || boxHeight;
-      if (!boxWidth || !boxHeight || !naturalWidth || !naturalHeight) return;
+      if (!boxWidth || !boxHeight || !naturalWidth || !naturalHeight) return null;
 
       const imageRatio = naturalWidth / naturalHeight;
       const boxRatio = boxWidth / boxHeight;
       const baseWidth = imageRatio > boxRatio ? boxHeight * imageRatio : boxWidth;
       const baseHeight = imageRatio > boxRatio ? boxHeight : boxWidth / imageRatio;
-      const displayWidth = baseWidth * nextSetting.zoom;
-      const displayHeight = baseHeight * nextSetting.zoom;
+      const displayWidth = baseWidth * zoom;
+      const displayHeight = baseHeight * zoom;
+      return { box, boxRect, boxWidth, boxHeight, displayWidth, displayHeight };
+    }
+
+    function getCurrentImageViewPosition(image, setting) {
+      const nextSetting = clampImageViewSetting(setting);
+      const geometry = getImageViewGeometry(image, nextSetting.zoom);
+      if (!geometry) return null;
+      const { boxRect, boxWidth, boxHeight, displayWidth, displayHeight } = geometry;
+      const imageRect = image.getBoundingClientRect();
+      const currentWidth = imageRect.width || displayWidth;
+      const currentHeight = imageRect.height || displayHeight;
+      const currentLeft = Number.isFinite(imageRect.left)
+        ? imageRect.left - boxRect.left
+        : (boxWidth - displayWidth) / 2 + (nextSetting.offsetX / 100) * boxWidth;
+      const currentTop = Number.isFinite(imageRect.top)
+        ? imageRect.top - boxRect.top
+        : (boxHeight - displayHeight) / 2 + (nextSetting.offsetY / 100) * boxHeight;
+      const centeredLeft = (boxWidth - currentWidth) / 2;
+      const centeredTop = (boxHeight - currentHeight) / 2;
+      return {
+        ...geometry,
+        currentLeft,
+        currentTop,
+        currentWidth,
+        currentHeight,
+        offsetPxX: currentLeft - centeredLeft,
+        offsetPxY: currentTop - centeredTop
+      };
+    }
+
+    function applyImageViewStyle(image, setting) {
+      const nextSetting = clampImageViewSetting(setting);
+      const geometry = getImageViewGeometry(image, nextSetting.zoom);
+      if (!geometry) return;
+      const { boxWidth, boxHeight, displayWidth, displayHeight } = geometry;
       const maxOffsetX = Math.max(0, (displayWidth - boxWidth) / 2);
       const maxOffsetY = Math.max(0, (displayHeight - boxHeight) / 2);
       const offsetPxX = Math.min(maxOffsetX, Math.max(-maxOffsetX, (nextSetting.offsetX / 100) * boxWidth));
@@ -3832,10 +4181,34 @@
       image.style.top = `${(boxHeight - displayHeight) / 2 + offsetPxY}px`;
     }
 
-    function applyImageViewStyleToVisibleImages(pageId, imagePath, setting) {
-      if (!seiteStage || !pageId || !imagePath) return;
+    function zoomImageViewSettingAtPoint(image, setting, deltaY, clientX, clientY) {
+      const nextSetting = clampImageViewSetting(setting);
+      const currentPosition = getCurrentImageViewPosition(image, nextSetting);
+      if (!currentPosition) return nextSetting;
+      const { boxRect, boxWidth, boxHeight, currentLeft, currentTop, currentWidth, currentHeight } = currentPosition;
+      const cursorX = Math.min(boxWidth, Math.max(0, clientX - boxRect.left));
+      const cursorY = Math.min(boxHeight, Math.max(0, clientY - boxRect.top));
+      const imageAnchorX = (cursorX - currentLeft) / currentWidth;
+      const imageAnchorY = (cursorY - currentTop) / currentHeight;
+
+      nextSetting.zoom *= deltaY < 0 ? 1.18 : 0.86;
+      clampImageViewSetting(nextSetting);
+
+      const nextGeometry = getImageViewGeometry(image, nextSetting.zoom);
+      if (!nextGeometry) return nextSetting;
+      const nextLeft = cursorX - imageAnchorX * nextGeometry.displayWidth;
+      const nextTop = cursorY - imageAnchorY * nextGeometry.displayHeight;
+      const centeredNextLeft = (boxWidth - nextGeometry.displayWidth) / 2;
+      const centeredNextTop = (boxHeight - nextGeometry.displayHeight) / 2;
+      nextSetting.offsetX = ((nextLeft - centeredNextLeft) / boxWidth) * 100;
+      nextSetting.offsetY = ((nextTop - centeredNextTop) / boxHeight) * 100;
+      return clampImageViewSetting(nextSetting);
+    }
+
+    function applyImageViewStyleToVisibleImages(pageId, imageSettingKey, setting) {
+      if (!seiteStage || !pageId || !imageSettingKey) return;
       seiteStage
-        .querySelectorAll(`.seite-preview-element.image[data-page-id="${CSS.escape(pageId)}"][data-image-path="${CSS.escape(imagePath)}"] img`)
+        .querySelectorAll(`.seite-preview-element.image[data-page-id="${CSS.escape(pageId)}"][data-image-setting-key="${CSS.escape(imageSettingKey)}"] img`)
         .forEach((image) => applyImageViewStyle(image, setting));
     }
 
@@ -3851,6 +4224,16 @@
     function getSeiteActiveNumbers() {
       if (seiteViewMode === 'double') return new Set(getSeiteSpreadNumbers(activeSeitePageNumber));
       return new Set(Number.isInteger(activeSeitePageNumber) ? [activeSeitePageNumber] : []);
+    }
+
+    function refreshSeitePageStripActiveState() {
+      if (!seitePageStrip) return;
+      const activeNumbers = getSeiteActiveNumbers();
+      seitePageStrip.querySelectorAll('.seite-page-cell[data-page-number]').forEach((item) => {
+        const pageNumber = Number(item.dataset.pageNumber);
+        item.classList.toggle('active', activeNumbers.has(pageNumber));
+        item.classList.toggle('sidebar-active', pageNumber === activeSeitePageNumber);
+      });
     }
 
     function moveActiveSeiteSelection(direction) {
@@ -3917,6 +4300,9 @@
         if (token !== seitePreviewRenderToken) return;
         const box = createElementBox(entry);
         const mediaKey = getSeiteMediaAssignmentKey(context.layoutSlot.slot, entry.element.id);
+        box.dataset.pageId = context.page.id;
+        box.dataset.mediaType = entry.element.type;
+        box.dataset.mediaKey = mediaKey;
         const path = entry.element.type === 'image'
           ? imageAssignments.get(mediaKey)
           : textAssignments.get(mediaKey);
@@ -3937,14 +4323,16 @@
             const objectUrl = URL.createObjectURL(file);
             seitePreviewObjectUrls.push(objectUrl);
             image.src = objectUrl;
+            image.dataset.objectUrl = objectUrl;
             image.alt = path.split('/').pop() || 'Bild';
             image.draggable = false;
-            box.dataset.pageId = context.page.id;
+            const imageSettingKey = getImageViewSettingKey(context.page, path, context.layoutSlot.slot, entry.element.id);
             box.dataset.imagePath = path;
+            box.dataset.imageSettingKey = imageSettingKey;
             image.addEventListener('load', () => {
-              applyImageViewStyle(image, getImageViewSetting(context.page, path));
+              applyImageViewStyle(image, getImageViewSetting(context.page, path, imageSettingKey));
             }, { once: true });
-            applyImageViewStyle(image, getImageViewSetting(context.page, path));
+            applyImageViewStyle(image, getImageViewSetting(context.page, path, imageSettingKey));
             box.appendChild(image);
           } else {
             const empty = document.createElement('div');
@@ -4021,6 +4409,7 @@
         }
         if (cell.number >= 2 && cell.number % 2 === 0) item.classList.add('pair-start');
         item.classList.toggle('active', activeNumbers.has(cell.number));
+        item.classList.toggle('sidebar-active', cell.number === activeSeitePageNumber);
         item.dataset.pageId = cell.pageId;
         item.dataset.pageNumber = String(cell.number);
         item.title = `${cell.number}: ${cell.title}`;
@@ -4507,9 +4896,12 @@
           page.status = 'kritisch';
           page.selectedImagePaths = normalizeMediaSelectionList(page.selectedImagePaths).filter((path) => !shouldRemovePath(path));
           page.selectedTextPaths = normalizeMediaSelectionList(page.selectedTextPaths).filter((path) => !shouldRemovePath(path));
+          removeSeiteMediaSlotAssignments(page, shouldRemovePath);
           page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
-          Object.keys(page.imageViewSettings).forEach((path) => {
-            if (shouldRemovePath(path)) delete page.imageViewSettings[path];
+          Object.keys(page.imageViewSettings).forEach((settingKey) => {
+            if (shouldRemovePath(settingKey) || imageViewSettingMatchesAssetRemoval(settingKey, assetPath, assetType === 'directory')) {
+              delete page.imageViewSettings[settingKey];
+            }
           });
         }
         page.assets = afterAssets;
@@ -4971,6 +5363,7 @@
           assets: normalizeRedaktionAssets(page.assets),
           selectedImagePaths: normalizeMediaSelectionList(page.selectedImagePaths),
           selectedTextPaths: normalizeMediaSelectionList(page.selectedTextPaths),
+          mediaSlotAssignments: normalizeMediaSlotAssignments(page.mediaSlotAssignments),
           imageViewSettings: normalizeImageViewSettings(page.imageViewSettings),
           status: normalizeRedaktionStatus(page.status),
           parentId: page.parentId
@@ -6274,7 +6667,63 @@
         queueSnapshotSave();
       });
     }
+    if (seiteSidebarContent) {
+      seiteSidebarContent.addEventListener('dragstart', (event) => {
+        const card = event.target.closest?.('.seite-asset-card[data-asset-path][data-asset-type]');
+        if (!card) return;
+        const payload = {
+          assetType: card.dataset.assetType,
+          path: card.dataset.assetPath
+        };
+        if (!['image', 'text'].includes(payload.assetType) || !payload.path) {
+          event.preventDefault();
+          return;
+        }
+        seiteDraggedAssetPayload = payload;
+        event.dataTransfer.effectAllowed = 'copy';
+        event.dataTransfer.setData('application/x-seite-asset', JSON.stringify(payload));
+        event.dataTransfer.setData('text/plain', JSON.stringify(payload));
+      });
+      seiteSidebarContent.addEventListener('dragend', () => {
+        seiteDraggedAssetPayload = null;
+        clearSeiteAssetDropMarkers();
+      });
+    }
     if (seiteStage) {
+      seiteStage.addEventListener('dragover', (event) => {
+        const payload = seiteDraggedAssetPayload || getSeiteAssetDragPayload(event.dataTransfer);
+        if (!payload) return;
+        const slotElement = event.target.closest?.('.seite-preview-element[data-media-type][data-media-key]');
+        clearSeiteAssetDropMarkers();
+        if (!slotElement) return;
+        event.preventDefault();
+        const isValidSlot = slotElement.dataset.mediaType === payload.assetType;
+        slotElement.classList.add(isValidSlot ? 'asset-drop-target' : 'asset-drop-invalid');
+        event.dataTransfer.dropEffect = isValidSlot ? 'copy' : 'none';
+      });
+
+      seiteStage.addEventListener('dragleave', (event) => {
+        if (seiteStage.contains(event.relatedTarget)) return;
+        clearSeiteAssetDropMarkers();
+      });
+
+      seiteStage.addEventListener('drop', async (event) => {
+        const payload = seiteDraggedAssetPayload || getSeiteAssetDragPayload(event.dataTransfer);
+        if (!payload) return;
+        const slotElement = event.target.closest?.('.seite-preview-element[data-media-type][data-media-key]');
+        clearSeiteAssetDropMarkers();
+        if (!slotElement) return;
+        event.preventDefault();
+        const didAssign = applySeiteAssetDropToSlot(slotElement, payload);
+        seiteDraggedAssetPayload = null;
+        if (!didAssign) {
+          setStatus('Dieses Asset passt nicht zu diesem Layoutplatz.', true);
+          return;
+        }
+        await updateVisibleSeitePreviewSlotsForDrop(slotElement, payload);
+        setStatus(payload.assetType === 'image' ? 'Bildplatz ersetzt.' : 'Textplatz ersetzt.');
+      });
+
       seiteStage.addEventListener('wheel', (event) => {
         const imageBox = event.target.closest?.('.seite-preview-element.image[data-image-path]');
         if (!imageBox) return;
@@ -6282,9 +6731,10 @@
         const image = imageBox.querySelector('img');
         if (!page || !image) return;
         event.preventDefault();
-        const setting = getImageViewSetting(page, imageBox.dataset.imagePath);
-        setting.zoom *= event.deltaY < 0 ? 1.08 : 0.92;
-        applyImageViewStyleToVisibleImages(page.id, imageBox.dataset.imagePath, setting);
+        const setting = getImageViewSetting(page, imageBox.dataset.imagePath, imageBox.dataset.imageSettingKey);
+        zoomImageViewSettingAtPoint(image, setting, event.deltaY, event.clientX, event.clientY);
+        rememberImageViewSettingForPath(page, imageBox.dataset.imagePath, setting);
+        applyImageViewStyleToVisibleImages(page.id, imageBox.dataset.imageSettingKey, setting);
         queueSnapshotSave();
       }, { passive: false });
 
@@ -6294,8 +6744,9 @@
         const page = getRedaktionPageById(imageBox.dataset.pageId);
         const image = imageBox.querySelector('img');
         if (!page || !image) return;
-        const setting = getImageViewSetting(page, imageBox.dataset.imagePath);
-        const rect = imageBox.getBoundingClientRect();
+        const setting = getImageViewSetting(page, imageBox.dataset.imagePath, imageBox.dataset.imageSettingKey);
+        const currentPosition = getCurrentImageViewPosition(image, setting);
+        if (!currentPosition) return;
         seiteImageDragState = {
           box: imageBox,
           image,
@@ -6304,10 +6755,11 @@
           startY: event.clientY,
           startOffsetX: setting.offsetX,
           startOffsetY: setting.offsetY,
-          startOffsetPxX: (setting.offsetX / 100) * Math.max(1, rect.width),
-          startOffsetPxY: (setting.offsetY / 100) * Math.max(1, rect.height),
+          startOffsetPxX: currentPosition.offsetPxX,
+          startOffsetPxY: currentPosition.offsetPxY,
           pageId: page.id,
-          imagePath: imageBox.dataset.imagePath
+          imagePath: imageBox.dataset.imagePath,
+          imageSettingKey: imageBox.dataset.imageSettingKey
         };
         imageBox.classList.add('adjusting');
         imageBox.setPointerCapture?.(event.pointerId);
@@ -6319,7 +6771,9 @@
         const rect = seiteImageDragState.box.getBoundingClientRect();
         seiteImageDragState.setting.offsetX = ((seiteImageDragState.startOffsetPxX + event.clientX - seiteImageDragState.startX) / Math.max(1, rect.width)) * 100;
         seiteImageDragState.setting.offsetY = ((seiteImageDragState.startOffsetPxY + event.clientY - seiteImageDragState.startY) / Math.max(1, rect.height)) * 100;
-        applyImageViewStyleToVisibleImages(seiteImageDragState.pageId, seiteImageDragState.imagePath, seiteImageDragState.setting);
+        const page = getRedaktionPageById(seiteImageDragState.pageId);
+        rememberImageViewSettingForPath(page, seiteImageDragState.imagePath, seiteImageDragState.setting);
+        applyImageViewStyleToVisibleImages(seiteImageDragState.pageId, seiteImageDragState.imageSettingKey, seiteImageDragState.setting);
         event.preventDefault();
       });
     }
@@ -6336,6 +6790,12 @@
             currentSpread.length === nextSpread.length &&
             currentSpread.every((pageNumber, index) => pageNumber === nextSpread[index])
           ) {
+            if (activeSeitePageNumber !== nextPageNumber) {
+              activeSeitePageNumber = nextPageNumber;
+              refreshSeitePageStripActiveState();
+              void renderSeiteSidebarAssets();
+              queueSnapshotSave();
+            }
             return;
           }
         } else if (activeSeitePageNumber === nextPageNumber) {
@@ -6397,9 +6857,12 @@
         page.assets = normalizeRedaktionAssets(page.assets).filter((asset) => asset.path !== removedPath);
         page.selectedImagePaths = normalizeMediaSelectionList(page.selectedImagePaths).filter((path) => !isRemovedPath(path));
         page.selectedTextPaths = normalizeMediaSelectionList(page.selectedTextPaths).filter((path) => !isRemovedPath(path));
+        removeSeiteMediaSlotAssignments(page, isRemovedPath);
         page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
-        Object.keys(page.imageViewSettings).forEach((path) => {
-          if (isRemovedPath(path)) delete page.imageViewSettings[path];
+        Object.keys(page.imageViewSettings).forEach((settingKey) => {
+          if (isRemovedPath(settingKey) || imageViewSettingMatchesAssetRemoval(settingKey, removedPath, true)) {
+            delete page.imageViewSettings[settingKey];
+          }
         });
         renderAssignedAssets(page);
         renderRedaktionAssetsTree();
@@ -6556,9 +7019,11 @@
       redaktionCountInput.addEventListener('input', () => {
         const page = getRedaktionPageById(selectedRedaktionPageId);
         if (!page) return;
+        const previousImageSequence = getSeiteImagePlacementSequence(page);
         page.count = normalizeRedaktionCount(redaktionCountInput.value);
         redaktionCountInput.value = String(page.count);
         normalizeRedaktionLayoutIds(page);
+        migrateSeiteImagePlacementSettings(page, previousImageSequence);
         renderRedaktionPages();
         queueSnapshotSave();
       });
@@ -6593,8 +7058,10 @@
       redaktionCategorySelect.addEventListener('change', () => {
         const page = getRedaktionPageById(selectedRedaktionPageId);
         if (!page) return;
+        const previousImageSequence = getSeiteImagePlacementSequence(page);
         page.layoutCategoryId = redaktionCategorySelect.value || '';
         normalizeRedaktionLayoutIds(page, !!page.layoutCategoryId);
+        migrateSeiteImagePlacementSettings(page, previousImageSequence);
         refreshRedaktionInspector();
         renderRedaktionPages();
         queueSnapshotSave();
@@ -6619,8 +7086,10 @@
       const nextHeight = redaktionResizeState.startHeight + (event.clientY - redaktionResizeState.startY);
       const nextCount = getRedaktionCountFromHeight(nextHeight);
       if (page.count !== nextCount) {
+        const previousImageSequence = getSeiteImagePlacementSequence(page);
         page.count = nextCount;
         normalizeRedaktionLayoutIds(page);
+        migrateSeiteImagePlacementSettings(page, previousImageSequence);
         if (redaktionCountInput && selectedRedaktionPageId === page.id) {
           redaktionCountInput.value = String(page.count);
         }
