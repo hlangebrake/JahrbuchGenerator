@@ -14,6 +14,8 @@
       --accent: #60a5fa;
       --danger: #f87171;
       --shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
+      --seite-a5-width: 520px;
+      --seite-a5-height: 737.84px;
     }
 
     * { box-sizing: border-box; }
@@ -517,8 +519,9 @@
 
     .seite-page-preview {
       position: relative;
-      width: min(72vh, 520px);
-      aspect-ratio: 148 / 210;
+      width: var(--seite-a5-width);
+      height: var(--seite-a5-height);
+      flex: 0 0 auto;
       background: #ffffff;
       color: #111827;
       box-shadow: 0 24px 60px rgba(0, 0, 0, 0.48);
@@ -526,8 +529,8 @@
     }
 
     .seite-page-preview.landscape {
-      width: min(82vw, 760px);
-      aspect-ratio: 210 / 148;
+      width: var(--seite-a5-height);
+      height: var(--seite-a5-width);
     }
 
     .seite-spread-preview {
@@ -583,6 +586,8 @@
     }
 
     .seite-preview-element.image {
+      border: 0;
+      box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.10);
       cursor: grab;
       touch-action: none;
     }
@@ -2184,6 +2189,8 @@
     let currentDragPayload = null;
     let snapshotDbPromise = null;
     let snapshotSaveTimer = null;
+    let snapshotSaveInProgress = false;
+    let pendingSnapshotToSave = null;
     let lastViewportLayoutKey = '';
     let importedProjectFiles = [];
     let importedProjectTree = null;
@@ -2627,10 +2634,32 @@
       if (!settings || typeof settings !== 'object') return normalizedSettings;
       Object.entries(settings).forEach(([path, value]) => {
         if (typeof path !== 'string' || !value || typeof value !== 'object') return;
+        const widthPx = Number(value.widthPx);
+        const heightPx = Number(value.heightPx);
+        const boxWidthPx = Number(value.boxWidthPx);
+        const boxHeightPx = Number(value.boxHeightPx);
+        const hasValidPixelTransform = Number.isFinite(widthPx)
+          && Number.isFinite(heightPx)
+          && Number.isFinite(boxWidthPx)
+          && Number.isFinite(boxHeightPx)
+          && widthPx > 0
+          && heightPx > 0
+          && boxWidthPx > 0
+          && boxHeightPx > 0;
         normalizedSettings[path.replace(/\\/g, '/').trim()] = {
           zoom: Math.min(30, Math.max(1, Number(value.zoom) || 1)),
           offsetX: Number.isFinite(Number(value.offsetX)) ? Number(value.offsetX) : 0,
-          offsetY: Number.isFinite(Number(value.offsetY)) ? Number(value.offsetY) : 0
+          offsetY: Number.isFinite(Number(value.offsetY)) ? Number(value.offsetY) : 0,
+          leftPct: Number.isFinite(Number(value.leftPct)) ? Number(value.leftPct) : null,
+          topPct: Number.isFinite(Number(value.topPct)) ? Number(value.topPct) : null,
+          widthPct: Number.isFinite(Number(value.widthPct)) && Number(value.widthPct) > 0 ? Number(value.widthPct) : null,
+          heightPct: Number.isFinite(Number(value.heightPct)) && Number(value.heightPct) > 0 ? Number(value.heightPct) : null,
+          leftPx: hasValidPixelTransform && Number.isFinite(Number(value.leftPx)) ? Number(value.leftPx) : null,
+          topPx: hasValidPixelTransform && Number.isFinite(Number(value.topPx)) ? Number(value.topPx) : null,
+          widthPx: hasValidPixelTransform ? widthPx : null,
+          heightPx: hasValidPixelTransform ? heightPx : null,
+          boxWidthPx: hasValidPixelTransform ? boxWidthPx : null,
+          boxHeightPx: hasValidPixelTransform ? boxHeightPx : null
         };
       });
       return normalizedSettings;
@@ -3880,7 +3909,21 @@
     }
 
     function createDefaultImageViewSetting() {
-      return { zoom: 1, offsetX: 0, offsetY: 0 };
+      return {
+        zoom: 1,
+        offsetX: 0,
+        offsetY: 0,
+        leftPct: null,
+        topPct: null,
+        widthPct: null,
+        heightPct: null,
+        leftPx: null,
+        topPx: null,
+        widthPx: null,
+        heightPx: null,
+        boxWidthPx: null,
+        boxHeightPx: null
+      };
     }
 
     function cloneImageViewSetting(setting) {
@@ -3913,7 +3956,9 @@
       page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
       const normalizedPath = String(path).replace(/\\/g, '/').trim();
       const normalizedSettingKey = String(settingKey || normalizedPath).replace(/\\/g, '/').trim();
-      if (!page.imageViewSettings[normalizedSettingKey]) {
+      const currentSetting = page.imageViewSettings[normalizedSettingKey];
+      const fallbackSetting = page.imageViewSettings[normalizedPath];
+      if (!currentSetting || (!hasUsableImageViewSetting(currentSetting) && hasUsableImageViewSetting(fallbackSetting))) {
         page.imageViewSettings[normalizedSettingKey] = cloneImageViewSetting(page.imageViewSettings[normalizedPath]);
       }
       return page.imageViewSettings[normalizedSettingKey];
@@ -4077,17 +4122,14 @@
         const image = document.createElement('img');
         const objectUrl = URL.createObjectURL(file);
         seitePreviewObjectUrls.push(objectUrl);
-        image.src = objectUrl;
         image.dataset.objectUrl = objectUrl;
         image.alt = path.split('/').pop() || 'Bild';
         image.draggable = false;
         slotElement.dataset.imagePath = path;
         slotElement.dataset.imageSettingKey = imageSettingKey;
-        image.addEventListener('load', () => {
-          applyImageViewStyle(image, getImageViewSetting(page, path, imageSettingKey));
-        }, { once: true });
         slotElement.appendChild(image);
-        applyImageViewStyle(image, getImageViewSetting(page, path, imageSettingKey));
+        applyImageViewStyleWhenReady(image, getImageViewSetting(page, path, imageSettingKey));
+        image.src = objectUrl;
         return true;
       }
 
@@ -4115,16 +4157,38 @@
       setting.zoom = Math.min(30, Math.max(1, Number(setting.zoom) || 1));
       setting.offsetX = Number.isFinite(Number(setting.offsetX)) ? Number(setting.offsetX) : 0;
       setting.offsetY = Number.isFinite(Number(setting.offsetY)) ? Number(setting.offsetY) : 0;
+      setting.leftPct = Number.isFinite(Number(setting.leftPct)) ? Number(setting.leftPct) : null;
+      setting.topPct = Number.isFinite(Number(setting.topPct)) ? Number(setting.topPct) : null;
+      setting.widthPct = Number.isFinite(Number(setting.widthPct)) && Number(setting.widthPct) > 0 ? Number(setting.widthPct) : null;
+      setting.heightPct = Number.isFinite(Number(setting.heightPct)) && Number(setting.heightPct) > 0 ? Number(setting.heightPct) : null;
+      const widthPx = Number(setting.widthPx);
+      const heightPx = Number(setting.heightPx);
+      const boxWidthPx = Number(setting.boxWidthPx);
+      const boxHeightPx = Number(setting.boxHeightPx);
+      const hasValidPixelTransform = Number.isFinite(widthPx)
+        && Number.isFinite(heightPx)
+        && Number.isFinite(boxWidthPx)
+        && Number.isFinite(boxHeightPx)
+        && widthPx > 0
+        && heightPx > 0
+        && boxWidthPx > 0
+        && boxHeightPx > 0;
+      setting.leftPx = hasValidPixelTransform && Number.isFinite(Number(setting.leftPx)) ? Number(setting.leftPx) : null;
+      setting.topPx = hasValidPixelTransform && Number.isFinite(Number(setting.topPx)) ? Number(setting.topPx) : null;
+      setting.widthPx = hasValidPixelTransform ? widthPx : null;
+      setting.heightPx = hasValidPixelTransform ? heightPx : null;
+      setting.boxWidthPx = hasValidPixelTransform ? boxWidthPx : null;
+      setting.boxHeightPx = hasValidPixelTransform ? boxHeightPx : null;
       return setting;
     }
 
-    function getImageViewGeometry(image, zoom) {
+    function getImageViewGeometry(image, zoom = 1) {
       const box = image.parentElement;
       const boxRect = box?.getBoundingClientRect();
       const boxWidth = boxRect?.width || 0;
       const boxHeight = boxRect?.height || 0;
-      const naturalWidth = image.naturalWidth || boxWidth;
-      const naturalHeight = image.naturalHeight || boxHeight;
+      const naturalWidth = image.naturalWidth;
+      const naturalHeight = image.naturalHeight;
       if (!boxWidth || !boxHeight || !naturalWidth || !naturalHeight) return null;
 
       const imageRatio = naturalWidth / naturalHeight;
@@ -4133,23 +4197,138 @@
       const baseHeight = imageRatio > boxRatio ? boxHeight : boxWidth / imageRatio;
       const displayWidth = baseWidth * zoom;
       const displayHeight = baseHeight * zoom;
-      return { box, boxRect, boxWidth, boxHeight, displayWidth, displayHeight };
+      return { box, boxRect, boxWidth, boxHeight, baseWidth, baseHeight, displayWidth, displayHeight };
+    }
+
+    function hasStoredImageTransform(setting) {
+      const normalizedSetting = clampImageViewSetting({ ...(setting || createDefaultImageViewSetting()) });
+      return normalizedSetting.leftPx !== null
+        && normalizedSetting.topPx !== null
+        && normalizedSetting.widthPx > 0
+        && normalizedSetting.heightPx > 0
+        && normalizedSetting.boxWidthPx > 0
+        && normalizedSetting.boxHeightPx > 0;
+    }
+
+    function hasStoredImageTransformPercent(setting) {
+      const normalizedSetting = clampImageViewSetting({ ...(setting || createDefaultImageViewSetting()) });
+      return normalizedSetting.leftPct !== null
+        && normalizedSetting.topPct !== null
+        && normalizedSetting.widthPct !== null
+        && normalizedSetting.heightPct !== null;
+    }
+
+    function hasUsableImageViewSetting(setting) {
+      return hasStoredImageTransform(setting) || hasStoredImageTransformPercent(setting);
+    }
+
+    function getImageViewTransform(image, setting) {
+      const nextSetting = clampImageViewSetting({ ...(setting || createDefaultImageViewSetting()) });
+      const geometry = getImageViewGeometry(image, nextSetting.zoom);
+      if (!geometry) return null;
+      const { boxWidth, boxHeight, baseWidth, baseHeight } = geometry;
+      if (hasStoredImageTransform(nextSetting)) {
+        return {
+          ...geometry,
+          left: nextSetting.leftPx,
+          top: nextSetting.topPx,
+          width: nextSetting.widthPx,
+          height: nextSetting.heightPx
+        };
+      }
+      if (hasStoredImageTransformPercent(nextSetting)) {
+        return {
+          ...geometry,
+          left: (nextSetting.leftPct / 100) * boxWidth,
+          top: (nextSetting.topPct / 100) * boxHeight,
+          width: (nextSetting.widthPct / 100) * boxWidth,
+          height: (nextSetting.heightPct / 100) * boxHeight
+        };
+      }
+      const width = geometry.displayWidth;
+      const height = geometry.displayHeight;
+      const left = (boxWidth - width) / 2 + (nextSetting.offsetX / 100) * boxWidth;
+      const top = (boxHeight - height) / 2 + (nextSetting.offsetY / 100) * boxHeight;
+      return { ...geometry, left, top, width, height, baseWidth, baseHeight };
+    }
+
+    function getInitialImageViewTransform(image, setting) {
+      return clampImageViewTransform(getImageViewTransform(image, setting));
+    }
+
+    function clampImageViewTransform(transform) {
+      if (!transform) return null;
+      const nextTransform = { ...transform };
+      if (!nextTransform.boxWidth || !nextTransform.boxHeight) return nextTransform;
+      const scaleToCover = Math.max(
+        nextTransform.boxWidth / Math.max(1, nextTransform.width),
+        nextTransform.boxHeight / Math.max(1, nextTransform.height),
+        1
+      );
+      if (scaleToCover > 1) {
+        const centerX = nextTransform.left + nextTransform.width / 2;
+        const centerY = nextTransform.top + nextTransform.height / 2;
+        nextTransform.width *= scaleToCover;
+        nextTransform.height *= scaleToCover;
+        nextTransform.left = centerX - nextTransform.width / 2;
+        nextTransform.top = centerY - nextTransform.height / 2;
+      }
+      const minLeft = Math.min(0, nextTransform.boxWidth - nextTransform.width);
+      const minTop = Math.min(0, nextTransform.boxHeight - nextTransform.height);
+      nextTransform.left = Math.min(0, Math.max(minLeft, nextTransform.left));
+      nextTransform.top = Math.min(0, Math.max(minTop, nextTransform.top));
+      return nextTransform;
+    }
+
+    function writeImageTransformToSetting(setting, transform) {
+      if (!setting || !transform) return setting;
+      const left = Number(transform.left);
+      const top = Number(transform.top);
+      const width = Number(transform.width);
+      const height = Number(transform.height);
+      const boxWidth = Math.max(1, Number(transform.boxWidth) || 1);
+      const boxHeight = Math.max(1, Number(transform.boxHeight) || 1);
+      if (![left, top, width, height].every(Number.isFinite) || width <= 0 || height <= 0) {
+        return setting;
+      }
+      setting.leftPct = (left / boxWidth) * 100;
+      setting.topPct = (top / boxHeight) * 100;
+      setting.widthPct = (width / boxWidth) * 100;
+      setting.heightPct = (height / boxHeight) * 100;
+      setting.leftPx = left;
+      setting.topPx = top;
+      setting.widthPx = width;
+      setting.heightPx = height;
+      setting.boxWidthPx = boxWidth;
+      setting.boxHeightPx = boxHeight;
+      setting.zoom = transform.baseWidth
+        ? Math.min(30, Math.max(1, width / transform.baseWidth))
+        : Math.min(30, Math.max(1, Number(setting.zoom) || 1));
+      const centeredLeft = (boxWidth - width) / 2;
+      const centeredTop = (boxHeight - height) / 2;
+      setting.offsetX = ((left - centeredLeft) / boxWidth) * 100;
+      setting.offsetY = ((top - centeredTop) / boxHeight) * 100;
+      return clampImageViewSetting(setting);
     }
 
     function getCurrentImageViewPosition(image, setting) {
-      const nextSetting = clampImageViewSetting(setting);
+      const nextSetting = clampImageViewSetting(setting || createDefaultImageViewSetting());
       const geometry = getImageViewGeometry(image, nextSetting.zoom);
       if (!geometry) return null;
       const { boxRect, boxWidth, boxHeight, displayWidth, displayHeight } = geometry;
       const imageRect = image.getBoundingClientRect();
-      const currentWidth = imageRect.width || displayWidth;
-      const currentHeight = imageRect.height || displayHeight;
-      const currentLeft = Number.isFinite(imageRect.left)
-        ? imageRect.left - boxRect.left
-        : (boxWidth - displayWidth) / 2 + (nextSetting.offsetX / 100) * boxWidth;
-      const currentTop = Number.isFinite(imageRect.top)
-        ? imageRect.top - boxRect.top
-        : (boxHeight - displayHeight) / 2 + (nextSetting.offsetY / 100) * boxHeight;
+      const styleLeft = Number.parseFloat(image.style.left);
+      const styleTop = Number.parseFloat(image.style.top);
+      const styleWidth = Number.parseFloat(image.style.width);
+      const styleHeight = Number.parseFloat(image.style.height);
+      const currentWidth = Number.isFinite(styleWidth) ? styleWidth : (imageRect.width || displayWidth);
+      const currentHeight = Number.isFinite(styleHeight) ? styleHeight : (imageRect.height || displayHeight);
+      const currentLeft = Number.isFinite(styleLeft)
+        ? styleLeft
+        : (Number.isFinite(imageRect.left) ? imageRect.left - boxRect.left : (boxWidth - displayWidth) / 2 + (nextSetting.offsetX / 100) * boxWidth);
+      const currentTop = Number.isFinite(styleTop)
+        ? styleTop
+        : (Number.isFinite(imageRect.top) ? imageRect.top - boxRect.top : (boxHeight - displayHeight) / 2 + (nextSetting.offsetY / 100) * boxHeight);
       const centeredLeft = (boxWidth - currentWidth) / 2;
       const centeredTop = (boxHeight - currentHeight) / 2;
       return {
@@ -4163,46 +4342,76 @@
       };
     }
 
-    function applyImageViewStyle(image, setting) {
-      const nextSetting = clampImageViewSetting(setting);
-      const geometry = getImageViewGeometry(image, nextSetting.zoom);
-      if (!geometry) return;
-      const { boxWidth, boxHeight, displayWidth, displayHeight } = geometry;
-      const maxOffsetX = Math.max(0, (displayWidth - boxWidth) / 2);
-      const maxOffsetY = Math.max(0, (displayHeight - boxHeight) / 2);
-      const offsetPxX = Math.min(maxOffsetX, Math.max(-maxOffsetX, (nextSetting.offsetX / 100) * boxWidth));
-      const offsetPxY = Math.min(maxOffsetY, Math.max(-maxOffsetY, (nextSetting.offsetY / 100) * boxHeight));
+    function syncImageViewSettingFromRenderedImage(image, setting) {
+      const currentPosition = getCurrentImageViewPosition(image, setting);
+      if (!currentPosition || !setting) return setting;
+      return writeImageTransformToSetting(setting, {
+        ...currentPosition,
+        left: currentPosition.currentLeft,
+        top: currentPosition.currentTop,
+        width: currentPosition.currentWidth,
+        height: currentPosition.currentHeight
+      });
+    }
 
-      nextSetting.offsetX = (offsetPxX / boxWidth) * 100;
-      nextSetting.offsetY = (offsetPxY / boxHeight) * 100;
-      image.style.width = `${displayWidth}px`;
-      image.style.height = `${displayHeight}px`;
-      image.style.left = `${(boxWidth - displayWidth) / 2 + offsetPxX}px`;
-      image.style.top = `${(boxHeight - displayHeight) / 2 + offsetPxY}px`;
+    function persistRenderedImageView(imageBox, image, page, setting, imagePath, imageSettingKey) {
+      if (!imageBox || !image || !page || !setting || !imagePath || !imageSettingKey) return;
+      syncImageViewSettingFromRenderedImage(image, setting);
+      page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
+      page.imageViewSettings[String(imageSettingKey).replace(/\\/g, '/').trim()] = cloneImageViewSetting(setting);
+      rememberImageViewSettingForPath(page, imagePath, setting);
+    }
+
+    function applyImageViewStyle(image, setting) {
+      const transform = hasStoredImageTransform(setting)
+        ? getImageViewTransform(image, setting)
+        : getInitialImageViewTransform(image, setting);
+      if (!transform) return;
+
+      image.style.width = `${transform.width}px`;
+      image.style.height = `${transform.height}px`;
+      image.style.left = `${transform.left}px`;
+      image.style.top = `${transform.top}px`;
+    }
+
+    function applyImageViewStyleWhenReady(image, setting) {
+      if (!image) return;
+      const applyWhenLoaded = () => applyImageViewStyle(image, setting);
+      image.addEventListener('load', applyWhenLoaded, { once: true });
+      if (image.complete && image.naturalWidth && image.naturalHeight) {
+        requestAnimationFrame(applyWhenLoaded);
+      }
     }
 
     function zoomImageViewSettingAtPoint(image, setting, deltaY, clientX, clientY) {
-      const nextSetting = clampImageViewSetting(setting);
-      const currentPosition = getCurrentImageViewPosition(image, nextSetting);
-      if (!currentPosition) return nextSetting;
+      const currentTransform = getImageViewTransform(image, setting);
+      if (!currentTransform) return setting;
+      const currentPosition = getCurrentImageViewPosition(image, setting) || {
+        boxRect: currentTransform.boxRect,
+        boxWidth: currentTransform.boxWidth,
+        boxHeight: currentTransform.boxHeight,
+        currentLeft: currentTransform.left,
+        currentTop: currentTransform.top,
+        currentWidth: currentTransform.width,
+        currentHeight: currentTransform.height
+      };
       const { boxRect, boxWidth, boxHeight, currentLeft, currentTop, currentWidth, currentHeight } = currentPosition;
       const cursorX = Math.min(boxWidth, Math.max(0, clientX - boxRect.left));
       const cursorY = Math.min(boxHeight, Math.max(0, clientY - boxRect.top));
       const imageAnchorX = (cursorX - currentLeft) / currentWidth;
       const imageAnchorY = (cursorY - currentTop) / currentHeight;
 
-      nextSetting.zoom *= deltaY < 0 ? 1.18 : 0.86;
-      clampImageViewSetting(nextSetting);
-
-      const nextGeometry = getImageViewGeometry(image, nextSetting.zoom);
-      if (!nextGeometry) return nextSetting;
-      const nextLeft = cursorX - imageAnchorX * nextGeometry.displayWidth;
-      const nextTop = cursorY - imageAnchorY * nextGeometry.displayHeight;
-      const centeredNextLeft = (boxWidth - nextGeometry.displayWidth) / 2;
-      const centeredNextTop = (boxHeight - nextGeometry.displayHeight) / 2;
-      nextSetting.offsetX = ((nextLeft - centeredNextLeft) / boxWidth) * 100;
-      nextSetting.offsetY = ((nextTop - centeredNextTop) / boxHeight) * 100;
-      return clampImageViewSetting(nextSetting);
+      const zoomFactor = deltaY < 0 ? 1.18 : 0.86;
+      const nextWidth = currentWidth * zoomFactor;
+      const nextHeight = currentHeight * zoomFactor;
+      const nextTransform = clampImageViewTransform({
+        ...currentTransform,
+        left: cursorX - imageAnchorX * nextWidth,
+        top: cursorY - imageAnchorY * nextHeight,
+        width: nextWidth,
+        height: nextHeight
+      });
+      return writeImageTransformToSetting(setting, nextTransform);
     }
 
     function applyImageViewStyleToVisibleImages(pageId, imageSettingKey, setting) {
@@ -4289,10 +4498,15 @@
       const createElementBox = (entry) => {
         const box = document.createElement('div');
         box.className = `seite-preview-element ${entry.element.type === 'text' ? 'seite-preview-text' : 'image'}`;
+        const touchesPageBottom = Math.abs((entry.rect.y + entry.rect.height) - entry.geometry.pageHeight) < 0.01;
         box.style.left = `${(entry.rect.x / entry.geometry.pageWidth) * 100}%`;
         box.style.top = `${(entry.rect.y / entry.geometry.pageHeight) * 100}%`;
         box.style.width = `${(entry.rect.width / entry.geometry.pageWidth) * 100}%`;
-        box.style.height = `${(entry.rect.height / entry.geometry.pageHeight) * 100}%`;
+        if (touchesPageBottom) {
+          box.style.bottom = '0';
+        } else {
+          box.style.height = `${(entry.rect.height / entry.geometry.pageHeight) * 100}%`;
+        }
         return box;
       };
 
@@ -4322,18 +4536,15 @@
             const image = document.createElement('img');
             const objectUrl = URL.createObjectURL(file);
             seitePreviewObjectUrls.push(objectUrl);
-            image.src = objectUrl;
             image.dataset.objectUrl = objectUrl;
             image.alt = path.split('/').pop() || 'Bild';
             image.draggable = false;
             const imageSettingKey = getImageViewSettingKey(context.page, path, context.layoutSlot.slot, entry.element.id);
             box.dataset.imagePath = path;
             box.dataset.imageSettingKey = imageSettingKey;
-            image.addEventListener('load', () => {
-              applyImageViewStyle(image, getImageViewSetting(context.page, path, imageSettingKey));
-            }, { once: true });
-            applyImageViewStyle(image, getImageViewSetting(context.page, path, imageSettingKey));
             box.appendChild(image);
+            applyImageViewStyleWhenReady(image, getImageViewSetting(context.page, path, imageSettingKey));
+            image.src = objectUrl;
           } else {
             const empty = document.createElement('div');
             empty.className = 'seite-preview-empty-slot';
@@ -4347,8 +4558,6 @@
         }
         pagePreview.appendChild(box);
       }
-
-      queueSnapshotSave();
     }
 
     async function renderSeitePreview(pageNumber = activeSeitePageNumber) {
@@ -5305,7 +5514,7 @@
       }
     }
 
-    async function saveSnapshot(snapshot) {
+    async function writeSnapshotToDb(snapshot) {
       try {
         const db = await openSnapshotDb();
         await new Promise((resolve, reject) => {
@@ -5317,6 +5526,21 @@
         });
       } catch {
         // Snapshot speichern ist optional; UI bleibt funktional.
+      }
+    }
+
+    async function saveSnapshot(snapshot) {
+      pendingSnapshotToSave = snapshot;
+      if (snapshotSaveInProgress) return;
+      snapshotSaveInProgress = true;
+      try {
+        while (pendingSnapshotToSave) {
+          const nextSnapshot = pendingSnapshotToSave;
+          pendingSnapshotToSave = null;
+          await writeSnapshotToDb(nextSnapshot);
+        }
+      } finally {
+        snapshotSaveInProgress = false;
       }
     }
 
@@ -5393,6 +5617,14 @@
         snapshotSaveTimer = null;
         void saveSnapshot(getSnapshotData());
       }, 60);
+    }
+
+    function flushSnapshotSave() {
+      if (snapshotSaveTimer) {
+        clearTimeout(snapshotSaveTimer);
+        snapshotSaveTimer = null;
+      }
+      void saveSnapshot(getSnapshotData());
     }
 
     function applySnapshot(snapshot) {
@@ -6733,9 +6965,10 @@
         event.preventDefault();
         const setting = getImageViewSetting(page, imageBox.dataset.imagePath, imageBox.dataset.imageSettingKey);
         zoomImageViewSettingAtPoint(image, setting, event.deltaY, event.clientX, event.clientY);
-        rememberImageViewSettingForPath(page, imageBox.dataset.imagePath, setting);
         applyImageViewStyleToVisibleImages(page.id, imageBox.dataset.imageSettingKey, setting);
+        persistRenderedImageView(imageBox, image, page, setting, imageBox.dataset.imagePath, imageBox.dataset.imageSettingKey);
         queueSnapshotSave();
+        void saveSnapshot(getSnapshotData());
       }, { passive: false });
 
       seiteStage.addEventListener('pointerdown', (event) => {
@@ -6757,6 +6990,14 @@
           startOffsetY: setting.offsetY,
           startOffsetPxX: currentPosition.offsetPxX,
           startOffsetPxY: currentPosition.offsetPxY,
+          startLeftPx: currentPosition.currentLeft,
+          startTopPx: currentPosition.currentTop,
+          startWidthPx: currentPosition.currentWidth,
+          startHeightPx: currentPosition.currentHeight,
+          boxWidth: currentPosition.boxWidth,
+          boxHeight: currentPosition.boxHeight,
+          baseWidth: currentPosition.baseWidth,
+          baseHeight: currentPosition.baseHeight,
           pageId: page.id,
           imagePath: imageBox.dataset.imagePath,
           imageSettingKey: imageBox.dataset.imageSettingKey
@@ -6768,12 +7009,27 @@
 
       seiteStage.addEventListener('pointermove', (event) => {
         if (!seiteImageDragState) return;
-        const rect = seiteImageDragState.box.getBoundingClientRect();
-        seiteImageDragState.setting.offsetX = ((seiteImageDragState.startOffsetPxX + event.clientX - seiteImageDragState.startX) / Math.max(1, rect.width)) * 100;
-        seiteImageDragState.setting.offsetY = ((seiteImageDragState.startOffsetPxY + event.clientY - seiteImageDragState.startY) / Math.max(1, rect.height)) * 100;
         const page = getRedaktionPageById(seiteImageDragState.pageId);
-        rememberImageViewSettingForPath(page, seiteImageDragState.imagePath, seiteImageDragState.setting);
+        const nextTransform = clampImageViewTransform({
+          boxWidth: seiteImageDragState.boxWidth,
+          boxHeight: seiteImageDragState.boxHeight,
+          baseWidth: seiteImageDragState.baseWidth,
+          baseHeight: seiteImageDragState.baseHeight,
+          left: seiteImageDragState.startLeftPx + event.clientX - seiteImageDragState.startX,
+          top: seiteImageDragState.startTopPx + event.clientY - seiteImageDragState.startY,
+          width: seiteImageDragState.startWidthPx,
+          height: seiteImageDragState.startHeightPx
+        });
+        writeImageTransformToSetting(seiteImageDragState.setting, nextTransform);
         applyImageViewStyleToVisibleImages(seiteImageDragState.pageId, seiteImageDragState.imageSettingKey, seiteImageDragState.setting);
+        persistRenderedImageView(
+          seiteImageDragState.box,
+          seiteImageDragState.image,
+          page,
+          seiteImageDragState.setting,
+          seiteImageDragState.imagePath,
+          seiteImageDragState.imageSettingKey
+        );
         event.preventDefault();
       });
     }
@@ -7111,15 +7367,39 @@
     });
     window.addEventListener('pointerup', () => {
       if (!seiteImageDragState) return;
+      const page = getRedaktionPageById(seiteImageDragState.pageId);
+      persistRenderedImageView(
+        seiteImageDragState.box,
+        seiteImageDragState.image,
+        page,
+        seiteImageDragState.setting,
+        seiteImageDragState.imagePath,
+        seiteImageDragState.imageSettingKey
+      );
       seiteImageDragState.box.classList.remove('adjusting');
       seiteImageDragState = null;
       queueSnapshotSave();
+      void saveSnapshot(getSnapshotData());
     });
     window.addEventListener('pointercancel', () => {
       if (!seiteImageDragState) return;
+      const page = getRedaktionPageById(seiteImageDragState.pageId);
+      persistRenderedImageView(
+        seiteImageDragState.box,
+        seiteImageDragState.image,
+        page,
+        seiteImageDragState.setting,
+        seiteImageDragState.imagePath,
+        seiteImageDragState.imageSettingKey
+      );
       seiteImageDragState.box.classList.remove('adjusting');
       seiteImageDragState = null;
       queueSnapshotSave();
+      void saveSnapshot(getSnapshotData());
+    });
+    window.addEventListener('pagehide', flushSnapshotSave);
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') flushSnapshotSave();
     });
     window.addEventListener('keydown', (event) => {
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
