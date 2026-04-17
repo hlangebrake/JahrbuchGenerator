@@ -604,11 +604,93 @@
     }
 
     .seite-preview-text {
-      padding: 3.6%;
-      font-size: clamp(0.52rem, 1.25vw, 0.86rem);
+      padding: 0;
+      font-size: 0.78rem;
       line-height: 1.32;
       white-space: pre-wrap;
       color: #111827;
+    }
+
+    .seite-text-content {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      outline: 0;
+      overflow: hidden;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .seite-preview-text.editing .seite-text-content {
+      overflow: auto;
+      box-shadow: inset 0 0 0 2px rgba(96, 165, 250, 0.72);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .seite-text-edit-btn {
+      position: absolute;
+      z-index: 4;
+      top: 6px;
+      right: 6px;
+      width: 26px;
+      height: 26px;
+      border: 1px solid rgba(15, 23, 42, 0.22);
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.90);
+      color: #0f172a;
+      font: inherit;
+      font-size: 0.82rem;
+      cursor: pointer;
+      opacity: 0;
+      transform: translateY(-2px);
+      transition: opacity 120ms ease, transform 120ms ease;
+    }
+
+    .seite-preview-text:hover .seite-text-edit-btn,
+    .seite-preview-text.editing .seite-text-edit-btn {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .seite-text-border-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+    }
+
+    .seite-text-border-piece {
+      position: absolute;
+      background: currentColor;
+    }
+
+    .seite-text-format-popover {
+      position: fixed;
+      z-index: 2000;
+      display: none;
+      gap: 6px;
+      align-items: center;
+      padding: 7px;
+      border: 1px solid rgba(96, 165, 250, 0.48);
+      border-radius: 9px;
+      background: rgba(15, 23, 42, 0.96);
+      box-shadow: var(--shadow);
+    }
+
+    .seite-text-format-popover.visible {
+      display: inline-flex;
+    }
+
+    .seite-text-format-popover select {
+      max-width: 190px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #10151f;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.78rem;
+      padding: 5px;
     }
 
     .seite-preview-empty-slot {
@@ -1549,6 +1631,161 @@
       display: none;
     }
 
+    .text-style-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .text-style-empty,
+    .text-style-help {
+      color: var(--muted);
+      font-size: 0.84rem;
+      line-height: 1.35;
+    }
+
+    .text-style-card,
+    .text-template-card {
+      display: grid;
+      gap: 10px;
+      padding: 11px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: #10151f;
+    }
+
+    .text-template-card {
+      background: #111827;
+    }
+
+    .text-style-card h3,
+    .text-template-card h3 {
+      margin: 0;
+      font-size: 0.92rem;
+    }
+
+    .text-style-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 8px;
+      align-items: end;
+    }
+
+    .text-style-field {
+      display: grid;
+      gap: 4px;
+      color: var(--muted);
+      font-size: 0.76rem;
+      font-weight: 800;
+    }
+
+    .text-style-field input,
+    .text-style-field select {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #141a25;
+      color: var(--text);
+      padding: 6px 7px;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+    }
+
+    .text-style-field input[type="color"] {
+      padding: 2px;
+      min-height: 34px;
+    }
+
+    .text-border-picker {
+      display: grid;
+      grid-template-columns: repeat(3, 28px);
+      grid-template-rows: repeat(3, 28px);
+      gap: 3px;
+      justify-content: start;
+      padding: 7px;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: #141a25;
+    }
+
+    .text-border-toggle {
+      border: 1px solid rgba(154, 163, 178, 0.32);
+      border-radius: 5px;
+      background: #0f172a;
+      color: var(--muted);
+      cursor: pointer;
+      font-size: 0.68rem;
+      font-weight: 900;
+    }
+
+    .text-border-toggle.active {
+      color: var(--text);
+      border-color: rgba(96, 165, 250, 0.76);
+      background: rgba(96, 165, 250, 0.28);
+      box-shadow: inset 0 0 0 1px rgba(96, 165, 250, 0.24);
+    }
+
+    .text-template-table {
+      display: grid;
+      gap: 6px;
+    }
+
+    .text-template-row {
+      display: grid;
+      grid-template-columns: minmax(96px, 1.3fr) minmax(88px, 1fr) 58px 46px 34px 34px 58px;
+      gap: 5px;
+      align-items: center;
+    }
+
+    .text-template-row input,
+    .text-template-row select,
+    .text-template-add {
+      min-width: 0;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #141a25;
+      color: var(--text);
+      padding: 5px;
+      font: inherit;
+      font-size: 0.72rem;
+    }
+
+    .text-template-row input[type="color"] {
+      padding: 2px;
+      min-height: 29px;
+    }
+
+    .text-template-row label {
+      display: grid;
+      place-items: center;
+      min-height: 29px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #141a25;
+      color: var(--muted);
+      font-size: 0.72rem;
+      font-weight: 900;
+    }
+
+    .text-template-row label:has(input:checked) {
+      color: var(--text);
+      border-color: rgba(96, 165, 250, 0.62);
+      background: rgba(96, 165, 250, 0.20);
+    }
+
+    .text-template-row label input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .text-template-add {
+      width: 100%;
+      cursor: pointer;
+      color: #bfdbfe;
+      border-style: dashed;
+    }
+
     #setupPanel .controls {
       gap: 10px;
     }
@@ -1894,9 +2131,7 @@
       </section>
 
       <section class="tab-panel" id="stylingPanel" role="tabpanel" aria-labelledby="stylingTab" data-panel="styling" hidden>
-        <div class="control">
-          TODO: Für jede Elementart können hier Styling Einstellungen vorgenommen werden: Rand Farbe, Dicke, Eckenrundung, Rand nur bei Ecken, für Texte: Schriftart, Schriftgröße, verschiedene Schriftkategorien (Überschrift, Body, Subtext, Autor, hervorgehoben, dezent,...) Kategorien können selbst erstellt werden und bearbeitet werden. Sie sind später in "Projekt" zuordnenbar und in den Texteditoren auswählbar.
-        </div>
+        <div id="textStylePanel" class="text-style-panel"></div>
       </section>
       </div>
       <div id="projectSidebarContent" class="project-sidebar" hidden>
@@ -2110,6 +2345,7 @@
     const redaktionCategorySelect = document.getElementById('redaktionCategorySelect');
     const redaktionLayoutList = document.getElementById('redaktionLayoutList');
     const redaktionAssignedAssets = document.getElementById('redaktionAssignedAssets');
+    const textStylePanel = document.getElementById('textStylePanel');
 
     const pageFormats = {
       portrait: {
@@ -2220,6 +2456,8 @@
     let seiteAssetTypeFilter = 'all';
     let seiteImageOrientationFilter = 'both';
     let seiteAssetDisplaySize = 74;
+    let activeTextEditState = null;
+    let textFormatPopover = null;
     const assetImageOrientationCache = new Map();
 
     const SNAPSHOT_DB_NAME = 'jahrbuch-generator-db';
@@ -2268,6 +2506,215 @@
       };
     }
 
+    function clampNumber(value, min, max, fallback) {
+      const number = Number(value);
+      if (!Number.isFinite(number)) return fallback;
+      return Math.min(max, Math.max(min, number));
+    }
+
+    function makeTextStyleTemplateId() {
+      return `textstyle_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    }
+
+    function createDefaultTextStyleTemplates() {
+      return [
+        {
+          id: 'heading',
+          name: 'Ueberschrift',
+          fontFamily: 'Georgia, serif',
+          fontSize: 22,
+          color: '#111827',
+          bold: true,
+          italic: false,
+          lineHeight: 1.12
+        },
+        {
+          id: 'body',
+          name: 'Textkoerper',
+          fontFamily: 'Georgia, serif',
+          fontSize: 13,
+          color: '#1f2937',
+          bold: false,
+          italic: false,
+          lineHeight: 1.35
+        }
+      ];
+    }
+
+    function createDefaultTextFieldStyle() {
+      return {
+        padding: 12,
+        backgroundColor: '#ffffff',
+        backgroundAlpha: 0,
+        borderColor: '#111827',
+        borderWidth: 0,
+        cornerSize: 24,
+        borderAreas: {
+          top: false,
+          right: false,
+          bottom: false,
+          left: false,
+          topLeft: false,
+          topRight: false,
+          bottomLeft: false,
+          bottomRight: false
+        }
+      };
+    }
+
+    function normalizeTextStyleTemplates(templates) {
+      const source = Array.isArray(templates) ? templates : [];
+      const normalized = [];
+      const usedIds = new Set();
+      source.forEach((template, index) => {
+        if (!template || typeof template !== 'object') return;
+        const fallback = createDefaultTextStyleTemplates()[index] || {};
+        const id = typeof template.id === 'string' && template.id.trim()
+          ? template.id.trim()
+          : (fallback.id || makeTextStyleTemplateId());
+        if (usedIds.has(id)) return;
+        usedIds.add(id);
+        normalized.push({
+          id,
+          name: typeof template.name === 'string' && template.name.trim()
+            ? template.name.trim()
+            : (fallback.name || `Format ${normalized.length + 1}`),
+          fontFamily: typeof template.fontFamily === 'string' && template.fontFamily.trim()
+            ? template.fontFamily.trim()
+            : (fallback.fontFamily || 'Georgia, serif'),
+          fontSize: clampNumber(template.fontSize, 6, 96, fallback.fontSize || 13),
+          color: normalizeCategoryColor(template.color, fallback.color || '#111827'),
+          bold: !!template.bold,
+          italic: !!template.italic,
+          lineHeight: clampNumber(template.lineHeight, 0.8, 3, fallback.lineHeight || 1.35)
+        });
+      });
+      const defaults = createDefaultTextStyleTemplates();
+      defaults.forEach((template) => {
+        if (!normalized.some((entry) => entry.id === template.id || entry.name === template.name)) {
+          normalized.push({ ...template });
+        }
+      });
+      return normalized;
+    }
+
+    function normalizeTextFieldStyle(style) {
+      const fallback = createDefaultTextFieldStyle();
+      const source = style && typeof style === 'object' ? style : {};
+      const sourceAreas = source.borderAreas && typeof source.borderAreas === 'object' ? source.borderAreas : {};
+      return {
+        padding: clampNumber(source.padding, 0, 80, fallback.padding),
+        backgroundColor: normalizeCategoryColor(source.backgroundColor, fallback.backgroundColor),
+        backgroundAlpha: clampNumber(source.backgroundAlpha, 0, 1, fallback.backgroundAlpha),
+        borderColor: normalizeCategoryColor(source.borderColor, fallback.borderColor),
+        borderWidth: clampNumber(source.borderWidth, 0, 16, fallback.borderWidth),
+        cornerSize: clampNumber(source.cornerSize, 0, 50, fallback.cornerSize),
+        borderAreas: {
+          top: !!sourceAreas.top,
+          right: !!sourceAreas.right,
+          bottom: !!sourceAreas.bottom,
+          left: !!sourceAreas.left,
+          topLeft: !!sourceAreas.topLeft,
+          topRight: !!sourceAreas.topRight,
+          bottomLeft: !!sourceAreas.bottomLeft,
+          bottomRight: !!sourceAreas.bottomRight
+        }
+      };
+    }
+
+    function normalizeTextFieldStyles(styles) {
+      const normalized = {};
+      if (!styles || typeof styles !== 'object') return normalized;
+      Object.entries(styles).forEach(([key, value]) => {
+        if (typeof key !== 'string' || !key.trim()) return;
+        normalized[key.trim()] = normalizeTextFieldStyle(value);
+      });
+      return normalized;
+    }
+
+    function ensureCategoryTextStyleModel(category) {
+      if (!category) return null;
+      category.textStyleTemplates = normalizeTextStyleTemplates(category.textStyleTemplates);
+      category.textFieldStyles = normalizeTextFieldStyles(category.textFieldStyles);
+      return category;
+    }
+
+    function getTextStyleTemplateById(category, templateId) {
+      ensureCategoryTextStyleModel(category);
+      return category?.textStyleTemplates.find((template) => template.id === templateId) || null;
+    }
+
+    function getTextTemplatePair(category) {
+      ensureCategoryTextStyleModel(category);
+      const templates = category?.textStyleTemplates || createDefaultTextStyleTemplates();
+      const heading = templates.find((template) => template.id === 'heading')
+        || templates.find((template) => /ueber|überschrift|heading/i.test(template.name))
+        || templates[0];
+      const body = templates.find((template) => template.id === 'body')
+        || templates.find((template) => /body|textkoerper|textkörper|text/i.test(template.name) && template.id !== heading?.id)
+        || templates.find((template) => template.id !== heading?.id)
+        || heading;
+      return { heading, body };
+    }
+
+    function getTextFieldStyleKey(layoutId, elementId) {
+      return `${layoutId}:${elementId}`;
+    }
+
+    function getTextFieldStyle(category, layoutId, elementId) {
+      ensureCategoryTextStyleModel(category);
+      const key = getTextFieldStyleKey(layoutId, elementId);
+      if (!category.textFieldStyles[key]) {
+        category.textFieldStyles[key] = createDefaultTextFieldStyle();
+      }
+      category.textFieldStyles[key] = normalizeTextFieldStyle(category.textFieldStyles[key]);
+      return category.textFieldStyles[key];
+    }
+
+    function getTextFieldsForCategory(category) {
+      ensureCategoryTextStyleModel(category);
+      const fields = [];
+      (category?.layouts || []).forEach((layout) => {
+        (Array.isArray(layout.elements) ? layout.elements : [])
+          .filter((element) => element?.type === 'text')
+          .forEach((element) => {
+            fields.push({
+              key: getTextFieldStyleKey(layout.id, element.id),
+              layoutId: layout.id,
+              layoutName: layout.name || 'Layout',
+              elementId: element.id
+            });
+          });
+      });
+      return fields;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function hexToRgba(color, alpha) {
+      const rgb = hexToRgb(color);
+      return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${clampNumber(alpha, 0, 1, 0)})`;
+    }
+
+    function getTemplateInlineStyle(template) {
+      const normalized = normalizeTextStyleTemplates([template])[0] || createDefaultTextStyleTemplates()[1];
+      return [
+        `font-family: ${normalized.fontFamily}`,
+        `font-size: ${normalized.fontSize}px`,
+        `color: ${normalized.color}`,
+        `font-weight: ${normalized.bold ? 700 : 400}`,
+        `font-style: ${normalized.italic ? 'italic' : 'normal'}`,
+        `line-height: ${normalized.lineHeight}`
+      ].join('; ');
+    }
+
     function captureControls() {
       return {
         pageOrientationRange: controls.pageOrientationRange.value,
@@ -2299,6 +2746,8 @@
         name,
         color: getDefaultCategoryColor(),
         controls: createDefaultControls(),
+        textStyleTemplates: createDefaultTextStyleTemplates(),
+        textFieldStyles: {},
         activeLayoutId: firstLayout.id,
         layouts: [firstLayout]
       };
@@ -2679,6 +3128,21 @@
       return normalizedAssignments;
     }
 
+    function normalizeTextContentOverrides(overrides) {
+      const normalized = {};
+      if (!overrides || typeof overrides !== 'object') return normalized;
+      Object.entries(overrides).forEach(([key, value]) => {
+        if (typeof key !== 'string' || !key.trim() || !value || typeof value !== 'object') return;
+        normalized[key.replace(/\\/g, '/').trim()] = {
+          html: typeof value.html === 'string' ? value.html : '',
+          plainText: typeof value.plainText === 'string' ? value.plainText : '',
+          sourcePath: typeof value.sourcePath === 'string' ? value.sourcePath.replace(/\\/g, '/').trim() : '',
+          updatedAt: Number.isFinite(Number(value.updatedAt)) ? Number(value.updatedAt) : Date.now()
+        };
+      });
+      return normalized;
+    }
+
     function getRedaktionPageHeight(count) {
       const normalizedCount = normalizeRedaktionCount(count);
       return normalizedCount === 0 ? 27 : normalizedCount * 54;
@@ -2728,6 +3192,7 @@
       page.selectedTextPaths = normalizeMediaSelectionList(page.selectedTextPaths);
       page.mediaSlotAssignments = normalizeMediaSlotAssignments(page.mediaSlotAssignments);
       page.imageViewSettings = normalizeImageViewSettings(page.imageViewSettings);
+      page.textContentOverrides = normalizeTextContentOverrides(page.textContentOverrides);
       page.status = normalizeRedaktionStatus(page.status);
       if (page.childLayoutCategoryId && !getLayoutCategoryById(page.childLayoutCategoryId)) {
         page.childLayoutCategoryId = '';
@@ -2817,6 +3282,7 @@
           selectedTextPaths: normalizeMediaSelectionList(page.selectedTextPaths),
           mediaSlotAssignments: normalizeMediaSlotAssignments(page.mediaSlotAssignments),
           imageViewSettings: normalizeImageViewSettings(page.imageViewSettings),
+          textContentOverrides: normalizeTextContentOverrides(page.textContentOverrides),
           status: normalizeRedaktionStatus(page.status)
         });
       });
@@ -2855,6 +3321,7 @@
         selectedTextPaths: [],
         mediaSlotAssignments: { image: {}, text: {} },
         imageViewSettings: {},
+        textContentOverrides: {},
         status: 'pruefen'
       };
       nextRedaktionPageNumber++;
@@ -3325,6 +3792,7 @@
       page.selectedTextPaths = [];
       page.mediaSlotAssignments = { image: {}, text: {} };
       page.imageViewSettings = {};
+      page.textContentOverrides = {};
       return page;
     }
 
@@ -3816,6 +4284,129 @@
       return placeholder;
     }
 
+    function renderTextStylePanel() {
+      if (!textStylePanel) return;
+      const category = getActiveCategory();
+      textStylePanel.replaceChildren();
+      if (!category) {
+        const empty = document.createElement('div');
+        empty.className = 'text-style-empty';
+        empty.textContent = 'Keine Kategorie ausgewaehlt.';
+        textStylePanel.appendChild(empty);
+        return;
+      }
+      saveCurrentLayoutIntoCollection();
+      ensureCategoryTextStyleModel(category);
+
+      const templateCard = document.createElement('section');
+      templateCard.className = 'text-template-card';
+      templateCard.innerHTML = `
+        <h3>Formatvorlagen</h3>
+        <div class="text-style-help">Leere Zeile mit + legt eine neue Vorlage an. Diese Vorlagen stehen spaeter direkt am Textfeld zur Auswahl.</div>
+        <div class="text-template-table"></div>
+      `;
+      const templateTable = templateCard.querySelector('.text-template-table');
+      category.textStyleTemplates.forEach((template) => {
+        const row = document.createElement('div');
+        row.className = 'text-template-row';
+        row.dataset.templateId = template.id;
+        row.innerHTML = `
+          <input class="text-template-control" data-template-prop="name" type="text" value="${escapeHtml(template.name)}" aria-label="Name">
+          <input class="text-template-control" data-template-prop="fontFamily" type="text" value="${escapeHtml(template.fontFamily)}" aria-label="Schriftart">
+          <input class="text-template-control" data-template-prop="fontSize" type="number" min="6" max="96" step="1" value="${template.fontSize}" aria-label="Textgroesse">
+          <input class="text-template-control" data-template-prop="color" type="color" value="${template.color}" aria-label="Textfarbe">
+          <label title="Fett"><input class="text-template-control" data-template-prop="bold" type="checkbox"${template.bold ? ' checked' : ''}>B</label>
+          <label title="Kursiv"><input class="text-template-control" data-template-prop="italic" type="checkbox"${template.italic ? ' checked' : ''}>I</label>
+          <input class="text-template-control" data-template-prop="lineHeight" type="number" min="0.8" max="3" step="0.05" value="${template.lineHeight}" aria-label="Zeilenabstand">
+        `;
+        templateTable.appendChild(row);
+      });
+      const addButton = document.createElement('button');
+      addButton.className = 'text-template-add';
+      addButton.type = 'button';
+      addButton.dataset.textTemplateAdd = 'true';
+      addButton.textContent = '+ Formatvorlage';
+      templateCard.appendChild(addButton);
+      textStylePanel.appendChild(templateCard);
+
+      const fields = getTextFieldsForCategory(category);
+      if (fields.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'text-style-empty';
+        empty.textContent = 'In den Layouts dieser Kategorie gibt es noch keine Textfelder.';
+        textStylePanel.appendChild(empty);
+        return;
+      }
+
+      fields.forEach((field, index) => {
+        const style = getTextFieldStyle(category, field.layoutId, field.elementId);
+        const card = document.createElement('section');
+        card.className = 'text-style-card';
+        card.dataset.textFieldKey = field.key;
+        card.innerHTML = `
+          <h3>${escapeHtml(field.layoutName)} - Textfeld ${index + 1}</h3>
+          <div class="text-style-grid">
+            <label class="text-style-field">Padding
+              <input class="text-field-control" data-style-prop="padding" type="range" min="0" max="80" step="1" value="${style.padding}">
+            </label>
+            <label class="text-style-field">Hintergrundfarbe
+              <input class="text-field-control" data-style-prop="backgroundColor" type="color" value="${style.backgroundColor}">
+            </label>
+            <label class="text-style-field">Transparenz
+              <input class="text-field-control" data-style-prop="backgroundAlpha" type="range" min="0" max="100" step="1" value="${Math.round(style.backgroundAlpha * 100)}">
+            </label>
+            <label class="text-style-field">Randfarbe
+              <input class="text-field-control" data-style-prop="borderColor" type="color" value="${style.borderColor}">
+            </label>
+            <label class="text-style-field">Randstaerke
+              <input class="text-field-control" data-style-prop="borderWidth" type="range" min="0" max="16" step="1" value="${style.borderWidth}">
+            </label>
+            <label class="text-style-field">Eckenlaenge
+              <input class="text-field-control" data-style-prop="cornerSize" type="range" min="0" max="50" step="1" value="${style.cornerSize}">
+            </label>
+          </div>
+        `;
+        const pickerWrap = document.createElement('div');
+        pickerWrap.className = 'text-style-field';
+        pickerWrap.innerHTML = '<span>Randbereiche</span>';
+        const picker = document.createElement('div');
+        picker.className = 'text-border-picker';
+        [
+          ['topLeft', 'TL'],
+          ['top', 'T'],
+          ['topRight', 'TR'],
+          ['left', 'L'],
+          ['', ''],
+          ['right', 'R'],
+          ['bottomLeft', 'BL'],
+          ['bottom', 'B'],
+          ['bottomRight', 'BR']
+        ].forEach(([area, label]) => {
+          if (!area) {
+            const spacer = document.createElement('span');
+            picker.appendChild(spacer);
+            return;
+          }
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `text-border-toggle${style.borderAreas[area] ? ' active' : ''}`;
+          button.dataset.borderArea = area;
+          button.textContent = label;
+          picker.appendChild(button);
+        });
+        pickerWrap.appendChild(picker);
+        card.appendChild(pickerWrap);
+        textStylePanel.appendChild(card);
+      });
+    }
+
+    function updateTextStylePreview() {
+      if (activeAppView === 'seite') {
+        void renderSeitePreview(activeSeitePageNumber);
+      }
+      draw();
+    }
+
     function assignSelectionPathsToRects(page, kind, rects) {
       const selectedPaths = ensureSeiteSelectionList(page, kind, rects.length);
       const assignments = new Map();
@@ -4082,6 +4673,248 @@
       return true;
     }
 
+    function getTextContentKey(page, path, layoutSlot, elementId) {
+      const normalizedPath = String(path || '').replace(/\\/g, '/').trim();
+      return `text:${page?.id || ''}:${layoutSlot}:${elementId}:${normalizedPath}`;
+    }
+
+    function createAutoStyledTextHtml(text, category) {
+      const { heading, body } = getTextTemplatePair(category);
+      const normalizedText = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+      const firstBreak = normalizedText.indexOf('\n');
+      const firstLine = firstBreak >= 0 ? normalizedText.slice(0, firstBreak) : normalizedText;
+      const rest = firstBreak >= 0 ? normalizedText.slice(firstBreak + 1) : '';
+      const headingId = heading?.id || 'heading';
+      const bodyId = body?.id || headingId;
+      if (!rest) {
+        return `<span data-text-style-id="${escapeHtml(headingId)}">${escapeHtml(firstLine)}</span>`;
+      }
+      return `<span data-text-style-id="${escapeHtml(headingId)}">${escapeHtml(firstLine)}</span>\n<span data-text-style-id="${escapeHtml(bodyId)}">${escapeHtml(rest)}</span>`;
+    }
+
+    function applyTextTemplateStylesToElement(element, category) {
+      if (!element) return;
+      ensureCategoryTextStyleModel(category);
+      element.querySelectorAll('[data-text-style-id]').forEach((node) => {
+        const template = getTextStyleTemplateById(category, node.dataset.textStyleId);
+        if (!template) return;
+        node.setAttribute('style', getTemplateInlineStyle(template));
+      });
+    }
+
+    function applyTextFieldStyle(slotElement, category, layoutId, elementId) {
+      if (!slotElement) return;
+      const style = getTextFieldStyle(category, layoutId, elementId);
+      slotElement.style.background = hexToRgba(style.backgroundColor, style.backgroundAlpha);
+      slotElement.style.border = '0';
+      slotElement.style.color = '#111827';
+      slotElement.style.padding = '0';
+      slotElement.style.position = 'absolute';
+      const content = slotElement.querySelector('.seite-text-content');
+      if (content) {
+        content.style.padding = `${style.padding}px`;
+      }
+      renderTextBorderOverlay(slotElement, style);
+    }
+
+    function renderTextBorderOverlay(slotElement, style) {
+      slotElement.querySelector('.seite-text-border-overlay')?.remove();
+      if (!slotElement || style.borderWidth <= 0) return;
+      const overlay = document.createElement('div');
+      overlay.className = 'seite-text-border-overlay';
+      overlay.style.color = style.borderColor;
+      const width = `${style.borderWidth}px`;
+      const corner = `${style.cornerSize}%`;
+      const addPiece = (className, extraStyle) => {
+        const piece = document.createElement('span');
+        piece.className = `seite-text-border-piece ${className}`;
+        Object.entries(extraStyle).forEach(([key, value]) => {
+          piece.style[key] = value;
+        });
+        overlay.appendChild(piece);
+      };
+      const areas = style.borderAreas || {};
+      if (areas.top) addPiece('top', { top: '0', left: '0', right: '0', height: width });
+      if (areas.bottom) addPiece('bottom', { bottom: '0', left: '0', right: '0', height: width });
+      if (areas.left) addPiece('left', { top: '0', bottom: '0', left: '0', width });
+      if (areas.right) addPiece('right', { top: '0', bottom: '0', right: '0', width });
+      if (areas.topLeft) {
+        addPiece('top-left-x', { top: '0', left: '0', width: corner, height: width });
+        addPiece('top-left-y', { top: '0', left: '0', width, height: corner });
+      }
+      if (areas.topRight) {
+        addPiece('top-right-x', { top: '0', right: '0', width: corner, height: width });
+        addPiece('top-right-y', { top: '0', right: '0', width, height: corner });
+      }
+      if (areas.bottomLeft) {
+        addPiece('bottom-left-x', { bottom: '0', left: '0', width: corner, height: width });
+        addPiece('bottom-left-y', { bottom: '0', left: '0', width, height: corner });
+      }
+      if (areas.bottomRight) {
+        addPiece('bottom-right-x', { bottom: '0', right: '0', width: corner, height: width });
+        addPiece('bottom-right-y', { bottom: '0', right: '0', width, height: corner });
+      }
+      slotElement.appendChild(overlay);
+    }
+
+    function getTextOverride(page, textKey) {
+      if (!page || !textKey) return null;
+      page.textContentOverrides = normalizeTextContentOverrides(page.textContentOverrides);
+      return page.textContentOverrides[textKey] || null;
+    }
+
+    function saveTextOverride(page, textKey, sourcePath, contentElement) {
+      if (!page || !textKey || !contentElement) return;
+      page.textContentOverrides = normalizeTextContentOverrides(page.textContentOverrides);
+      page.textContentOverrides[textKey] = {
+        html: contentElement.innerHTML,
+        plainText: contentElement.innerText || contentElement.textContent || '',
+        sourcePath: String(sourcePath || '').replace(/\\/g, '/').trim(),
+        updatedAt: Date.now()
+      };
+      queueSnapshotSave();
+    }
+
+    function renderTextSlotContent(slotElement, page, category, layoutId, elementId, layoutSlot, path, text) {
+      const textKey = getTextContentKey(page, path, layoutSlot, elementId);
+      slotElement.dataset.textContentKey = textKey;
+      slotElement.dataset.textPath = path;
+      slotElement.dataset.layoutId = layoutId;
+      slotElement.dataset.textElementId = String(elementId);
+      slotElement.replaceChildren();
+      const content = document.createElement('div');
+      content.className = 'seite-text-content';
+      content.dataset.textContent = 'true';
+      const override = getTextOverride(page, textKey);
+      content.innerHTML = override?.html || createAutoStyledTextHtml(text, category);
+      slotElement.appendChild(content);
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.className = 'seite-text-edit-btn';
+      editButton.dataset.textEditButton = 'true';
+      editButton.setAttribute('aria-label', 'Text bearbeiten');
+      editButton.textContent = '✎';
+      slotElement.appendChild(editButton);
+      applyTextFieldStyle(slotElement, category, layoutId, elementId);
+      applyTextTemplateStylesToElement(content, category);
+    }
+
+    function ensureTextFormatPopover() {
+      if (textFormatPopover) return textFormatPopover;
+      textFormatPopover = document.createElement('div');
+      textFormatPopover.className = 'seite-text-format-popover';
+      textFormatPopover.innerHTML = '<select aria-label="Formatvorlage"></select>';
+      document.body.appendChild(textFormatPopover);
+      const select = textFormatPopover.querySelector('select');
+      select.addEventListener('change', () => {
+        if (!activeTextEditState || !select.value) return;
+        applyTemplateToCurrentTextSelection(select.value);
+      });
+      return textFormatPopover;
+    }
+
+    function hideTextFormatPopover() {
+      if (textFormatPopover) textFormatPopover.classList.remove('visible');
+    }
+
+    function startTextEditing(slotElement) {
+      const page = getRedaktionPageById(slotElement?.dataset.pageId);
+      const content = slotElement?.querySelector('.seite-text-content');
+      if (!page || !content) return;
+      if (activeTextEditState?.slotElement && activeTextEditState.slotElement !== slotElement) {
+        stopTextEditing();
+      }
+      const category = getLayoutCategoryById(page.layoutCategoryId || '');
+      activeTextEditState = {
+        slotElement,
+        content,
+        page,
+        category,
+        textKey: slotElement.dataset.textContentKey,
+        sourcePath: slotElement.dataset.textPath
+      };
+      slotElement.classList.add('editing');
+      content.contentEditable = 'true';
+      content.focus();
+      document.execCommand?.('styleWithCSS', false, false);
+    }
+
+    function stopTextEditing() {
+      if (!activeTextEditState) return;
+      const { slotElement, content, page, textKey, sourcePath, category } = activeTextEditState;
+      content.contentEditable = 'false';
+      applyTextTemplateStylesToElement(content, category);
+      saveTextOverride(page, textKey, sourcePath, content);
+      slotElement.classList.remove('editing');
+      activeTextEditState = null;
+      hideTextFormatPopover();
+    }
+
+    function updateTextFormatPopover() {
+      if (!activeTextEditState) {
+        hideTextFormatPopover();
+        return;
+      }
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) {
+        hideTextFormatPopover();
+        return;
+      }
+      const range = selection.getRangeAt(0);
+      if (!activeTextEditState.content.contains(range.commonAncestorContainer)) {
+        hideTextFormatPopover();
+        return;
+      }
+      const popover = ensureTextFormatPopover();
+      const select = popover.querySelector('select');
+      const category = activeTextEditState.category;
+      ensureCategoryTextStyleModel(category);
+      select.replaceChildren();
+      const placeholder = document.createElement('option');
+      placeholder.value = '';
+      placeholder.textContent = 'Format waehlen';
+      select.appendChild(placeholder);
+      category.textStyleTemplates.forEach((template) => {
+        const option = document.createElement('option');
+        option.value = template.id;
+        option.textContent = template.name;
+        select.appendChild(option);
+      });
+      select.value = '';
+      const rect = activeTextEditState.slotElement.getBoundingClientRect();
+      popover.style.left = `${Math.max(8, rect.left)}px`;
+      popover.style.top = `${Math.min(window.innerHeight - 48, rect.bottom + 6)}px`;
+      popover.classList.add('visible');
+    }
+
+    function applyTemplateToCurrentTextSelection(templateId) {
+      if (!activeTextEditState || !templateId) return;
+      const selection = window.getSelection();
+      if (!selection || selection.rangeCount === 0 || selection.isCollapsed) return;
+      const range = selection.getRangeAt(0);
+      if (!activeTextEditState.content.contains(range.commonAncestorContainer)) return;
+      const wrapper = document.createElement('span');
+      wrapper.dataset.textStyleId = templateId;
+      try {
+        wrapper.appendChild(range.extractContents());
+        range.insertNode(wrapper);
+      } catch {
+        return;
+      }
+      applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
+      saveTextOverride(
+        activeTextEditState.page,
+        activeTextEditState.textKey,
+        activeTextEditState.sourcePath,
+        activeTextEditState.content
+      );
+      selection.removeAllRanges();
+      const nextRange = document.createRange();
+      nextRange.selectNodeContents(wrapper);
+      selection.addRange(nextRange);
+      updateTextFormatPopover();
+    }
+
     function refreshSeiteSidebarVisibleHighlights() {
       if (!seiteAllAssets) return;
       const visiblePaths = getDisplayedSeiteAssetPaths();
@@ -4133,8 +4966,25 @@
         return true;
       }
 
+      const category = getLayoutCategoryById(page.layoutCategoryId || '');
+      const [layoutSlot, elementId] = String(slotElement.dataset.mediaKey || '').split(':');
+      const textKey = getTextContentKey(page, path, layoutSlot, elementId);
+      const override = getTextOverride(page, textKey);
+      if (override) {
+        renderTextSlotContent(slotElement, page, category, slotElement.dataset.layoutId || '', elementId, layoutSlot, path, '');
+        return true;
+      }
       const file = await getImportedFile(path);
-      slotElement.textContent = file ? await file.text() : 'Text fehlt';
+      renderTextSlotContent(
+        slotElement,
+        page,
+        category,
+        slotElement.dataset.layoutId || '',
+        elementId,
+        layoutSlot,
+        path,
+        file ? await file.text() : 'Text fehlt'
+      );
       return !!file;
     }
 
@@ -4517,6 +5367,11 @@
         box.dataset.pageId = context.page.id;
         box.dataset.mediaType = entry.element.type;
         box.dataset.mediaKey = mediaKey;
+        box.dataset.layoutId = context.layout.id;
+        box.dataset.textElementId = String(entry.element.id);
+        if (entry.element.type === 'text') {
+          applyTextFieldStyle(box, category, context.layout.id, entry.element.id);
+        }
         const path = entry.element.type === 'image'
           ? imageAssignments.get(mediaKey)
           : textAssignments.get(mediaKey);
@@ -4552,9 +5407,33 @@
             box.appendChild(empty);
           }
         } else {
-          const file = await getImportedFile(path);
-          if (token !== seitePreviewRenderToken) return;
-          box.textContent = file ? await file.text() : 'Text fehlt';
+          const textKey = getTextContentKey(context.page, path, context.layoutSlot.slot, entry.element.id);
+          const override = getTextOverride(context.page, textKey);
+          if (override) {
+            renderTextSlotContent(
+              box,
+              context.page,
+              category,
+              context.layout.id,
+              entry.element.id,
+              context.layoutSlot.slot,
+              path,
+              ''
+            );
+          } else {
+            const file = await getImportedFile(path);
+            if (token !== seitePreviewRenderToken) return;
+            renderTextSlotContent(
+              box,
+              context.page,
+              category,
+              context.layout.id,
+              entry.element.id,
+              context.layoutSlot.slot,
+              path,
+              file ? await file.text() : 'Text fehlt'
+            );
+          }
         }
         pagePreview.appendChild(box);
       }
@@ -5112,6 +5991,12 @@
               delete page.imageViewSettings[settingKey];
             }
           });
+          page.textContentOverrides = normalizeTextContentOverrides(page.textContentOverrides);
+          Object.keys(page.textContentOverrides).forEach((textKey) => {
+            if (shouldRemovePath(page.textContentOverrides[textKey].sourcePath) || textKey.includes(`:${assetPath}`)) {
+              delete page.textContentOverrides[textKey];
+            }
+          });
         }
         page.assets = afterAssets;
       });
@@ -5330,6 +6215,7 @@
       saveCurrentLayoutIntoCollection();
       currentCategory.activeLayoutId = activeLayoutId;
       currentCategory.controls = captureControls();
+      ensureCategoryTextStyleModel(currentCategory);
     }
 
     function loadLayoutIntoEditor(layout) {
@@ -5377,6 +6263,7 @@
 
     function refreshCategorySelector() {
       categoryUi.select.innerHTML = '';
+      categories.forEach((category) => ensureCategoryTextStyleModel(category));
       const sortedCategories = [...categories].sort((a, b) => a.name.localeCompare(b.name, 'de'));
 
       sortedCategories.forEach((category) => {
@@ -5395,6 +6282,7 @@
       categoryUi.deleteBtn.disabled = categories.length <= 1;
       refreshRedaktionInspector();
       renderRedaktionPages();
+      if (activeTab === 'styling') renderTextStylePanel();
     }
 
     function refreshLayoutSelector() {
@@ -5423,6 +6311,7 @@
       layoutUi.deleteBtn.disabled = layouts.length <= 1;
       refreshLayoutModeButton();
       refreshRedaktionInspector();
+      if (activeTab === 'styling') renderTextStylePanel();
     }
 
     function switchToLayout(layoutId) {
@@ -5589,6 +6478,7 @@
           selectedTextPaths: normalizeMediaSelectionList(page.selectedTextPaths),
           mediaSlotAssignments: normalizeMediaSlotAssignments(page.mediaSlotAssignments),
           imageViewSettings: normalizeImageViewSettings(page.imageViewSettings),
+          textContentOverrides: normalizeTextContentOverrides(page.textContentOverrides),
           status: normalizeRedaktionStatus(page.status),
           parentId: page.parentId
         })),
@@ -5600,6 +6490,8 @@
           color: normalizeCategoryColor(category.color, getDefaultCategoryColor()),
           activeLayoutId: category.activeLayoutId,
           controls: category.controls || createDefaultControls(),
+          textStyleTemplates: normalizeTextStyleTemplates(category.textStyleTemplates),
+          textFieldStyles: normalizeTextFieldStyles(category.textFieldStyles),
           layouts: (Array.isArray(category.layouts) ? category.layouts : []).map((layout) => ({
             id: layout.id,
             name: layout.name,
@@ -5663,6 +6555,8 @@
                   ...category.controls
                 }
               : createDefaultControls(),
+            textStyleTemplates: normalizeTextStyleTemplates(category.textStyleTemplates),
+            textFieldStyles: normalizeTextFieldStyles(category.textFieldStyles),
             activeLayoutId: selectedLayout.id,
             layouts: restoredLayouts
           });
@@ -5707,6 +6601,7 @@
       if (categories.length === 0) {
         categories.push(createDefaultCategory('Kategorie 1'));
       }
+      categories.forEach((category) => ensureCategoryTextStyleModel(category));
 
       const requestedCategoryId = typeof snapshot.activeCategoryId === 'string' ? snapshot.activeCategoryId : null;
       const initialCategory = categories.find((category) => category.id === requestedCategoryId) || categories[0];
@@ -5726,7 +6621,7 @@
       refreshCategorySelector();
       refreshLayoutSelector();
 
-      const tabName = snapshot.activeTab === 'elements' ? 'elements' : 'setup';
+      const tabName = ['elements', 'styling', 'setup'].includes(snapshot.activeTab) ? snapshot.activeTab : 'setup';
       activeTab = tabName;
       tabButtons.forEach((button) => {
         const isActive = button.dataset.tab === tabName;
@@ -5736,6 +6631,7 @@
       tabPanels.forEach((panel) => {
         panel.hidden = panel.dataset.panel !== tabName;
       });
+      if (tabName === 'styling') renderTextStylePanel();
 
       activeAppView = typeof snapshot.activeAppView === 'string' ? snapshot.activeAppView : 'layout';
       activeSeitePageNumber = Number.isInteger(snapshot.activeSeitePageNumber) ? snapshot.activeSeitePageNumber : null;
@@ -5790,6 +6686,7 @@
       tabPanels.forEach((panel) => {
         panel.hidden = panel.dataset.panel !== tabName;
       });
+      if (tabName === 'styling') renderTextStylePanel();
       draw();
       queueSnapshotSave();
     }
@@ -6802,6 +7699,84 @@
     tabButtons.forEach((button) => {
       button.addEventListener('click', () => setActiveTab(button.dataset.tab));
     });
+    if (textStylePanel) {
+      const handleTextStyleControlChange = (event) => {
+        const category = getActiveCategory();
+        if (!category) return;
+        ensureCategoryTextStyleModel(category);
+        const fieldInput = event.target.closest?.('.text-field-control');
+        if (fieldInput) {
+          const card = fieldInput.closest('.text-style-card[data-text-field-key]');
+          const key = card?.dataset.textFieldKey;
+          if (!key) return;
+          const style = category.textFieldStyles[key] || createDefaultTextFieldStyle();
+          const prop = fieldInput.dataset.styleProp;
+          if (prop === 'padding') style.padding = clampNumber(fieldInput.value, 0, 80, style.padding);
+          if (prop === 'backgroundColor') style.backgroundColor = normalizeCategoryColor(fieldInput.value, style.backgroundColor);
+          if (prop === 'backgroundAlpha') style.backgroundAlpha = clampNumber(Number(fieldInput.value) / 100, 0, 1, style.backgroundAlpha);
+          if (prop === 'borderColor') style.borderColor = normalizeCategoryColor(fieldInput.value, style.borderColor);
+          if (prop === 'borderWidth') style.borderWidth = clampNumber(fieldInput.value, 0, 16, style.borderWidth);
+          if (prop === 'cornerSize') style.cornerSize = clampNumber(fieldInput.value, 0, 50, style.cornerSize);
+          category.textFieldStyles[key] = normalizeTextFieldStyle(style);
+          updateTextStylePreview();
+          queueSnapshotSave();
+          return;
+        }
+        const templateInput = event.target.closest?.('.text-template-control');
+        if (templateInput) {
+          const row = templateInput.closest('.text-template-row[data-template-id]');
+          const template = category.textStyleTemplates.find((entry) => entry.id === row?.dataset.templateId);
+          if (!template) return;
+          const prop = templateInput.dataset.templateProp;
+          if (prop === 'name') template.name = templateInput.value.trim() || template.name;
+          if (prop === 'fontFamily') template.fontFamily = templateInput.value.trim() || template.fontFamily;
+          if (prop === 'fontSize') template.fontSize = clampNumber(templateInput.value, 6, 96, template.fontSize);
+          if (prop === 'color') template.color = normalizeCategoryColor(templateInput.value, template.color);
+          if (prop === 'bold') template.bold = templateInput.checked;
+          if (prop === 'italic') template.italic = templateInput.checked;
+          if (prop === 'lineHeight') template.lineHeight = clampNumber(templateInput.value, 0.8, 3, template.lineHeight);
+          category.textStyleTemplates = normalizeTextStyleTemplates(category.textStyleTemplates);
+          updateTextStylePreview();
+          queueSnapshotSave();
+        }
+      };
+      textStylePanel.addEventListener('input', handleTextStyleControlChange);
+      textStylePanel.addEventListener('change', handleTextStyleControlChange);
+      textStylePanel.addEventListener('click', (event) => {
+        const category = getActiveCategory();
+        if (!category) return;
+        ensureCategoryTextStyleModel(category);
+        const addButton = event.target.closest?.('[data-text-template-add]');
+        if (addButton) {
+          category.textStyleTemplates.push({
+            id: makeTextStyleTemplateId(),
+            name: `Format ${category.textStyleTemplates.length + 1}`,
+            fontFamily: 'Georgia, serif',
+            fontSize: 13,
+            color: '#111827',
+            bold: false,
+            italic: false,
+            lineHeight: 1.35
+          });
+          renderTextStylePanel();
+          queueSnapshotSave();
+          return;
+        }
+        const borderButton = event.target.closest?.('.text-border-toggle[data-border-area]');
+        if (!borderButton) return;
+        const card = borderButton.closest('.text-style-card[data-text-field-key]');
+        const key = card?.dataset.textFieldKey;
+        if (!key) return;
+        const style = category.textFieldStyles[key] || createDefaultTextFieldStyle();
+        style.borderAreas = { ...createDefaultTextFieldStyle().borderAreas, ...(style.borderAreas || {}) };
+        const area = borderButton.dataset.borderArea;
+        style.borderAreas[area] = !style.borderAreas[area];
+        category.textFieldStyles[key] = normalizeTextFieldStyle(style);
+        borderButton.classList.toggle('active', category.textFieldStyles[key].borderAreas[area]);
+        updateTextStylePreview();
+        queueSnapshotSave();
+      });
+    }
     if (projectFolderSelectBtn && projectFolderInput) {
       projectFolderSelectBtn.addEventListener('click', async () => {
         if ('showDirectoryPicker' in window) {
@@ -6922,6 +7897,29 @@
       });
     }
     if (seiteStage) {
+      seiteStage.addEventListener('click', (event) => {
+        const editButton = event.target.closest?.('[data-text-edit-button]');
+        if (editButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          startTextEditing(editButton.closest('.seite-preview-text'));
+          return;
+        }
+        if (activeTextEditState && !event.target.closest?.('.seite-preview-text.editing')) {
+          stopTextEditing();
+        }
+      });
+      seiteStage.addEventListener('input', (event) => {
+        if (!activeTextEditState) return;
+        if (event.target !== activeTextEditState.content) return;
+        applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
+        saveTextOverride(
+          activeTextEditState.page,
+          activeTextEditState.textKey,
+          activeTextEditState.sourcePath,
+          activeTextEditState.content
+        );
+      });
       seiteStage.addEventListener('dragover', (event) => {
         const payload = seiteDraggedAssetPayload || getSeiteAssetDragPayload(event.dataTransfer);
         if (!payload) return;
@@ -7118,6 +8116,12 @@
         Object.keys(page.imageViewSettings).forEach((settingKey) => {
           if (isRemovedPath(settingKey) || imageViewSettingMatchesAssetRemoval(settingKey, removedPath, true)) {
             delete page.imageViewSettings[settingKey];
+          }
+        });
+        page.textContentOverrides = normalizeTextContentOverrides(page.textContentOverrides);
+        Object.keys(page.textContentOverrides).forEach((textKey) => {
+          if (isRemovedPath(page.textContentOverrides[textKey].sourcePath) || textKey.includes(`:${removedPath}`)) {
+            delete page.textContentOverrides[textKey];
           }
         });
         renderAssignedAssets(page);
@@ -7400,6 +8404,15 @@
     window.addEventListener('pagehide', flushSnapshotSave);
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') flushSnapshotSave();
+    });
+    document.addEventListener('selectionchange', () => {
+      updateTextFormatPopover();
+    });
+    document.addEventListener('mousedown', (event) => {
+      if (!activeTextEditState) return;
+      if (event.target.closest?.('.seite-preview-text.editing')) return;
+      if (event.target.closest?.('.seite-text-format-popover')) return;
+      stopTextEditing();
     });
     window.addEventListener('keydown', (event) => {
       if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
