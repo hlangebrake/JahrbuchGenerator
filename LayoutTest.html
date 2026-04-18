@@ -620,6 +620,17 @@
       overflow: hidden;
       white-space: pre-wrap;
       word-break: break-word;
+      line-height: 1;
+    }
+
+    .seite-text-content [data-text-line="true"] {
+      display: block;
+      margin: 0;
+      padding: 0;
+    }
+
+    .seite-text-content [data-text-style-id] {
+      column-fill: auto;
     }
 
     .seite-preview-text.editing .seite-text-content {
@@ -1657,6 +1668,30 @@
       background: #111827;
     }
 
+    .text-style-collapse-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      cursor: pointer;
+      list-style: none;
+      font-weight: 900;
+    }
+
+    .text-style-collapse-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .text-style-collapse-summary::after {
+      content: "▾";
+      color: var(--muted);
+      transition: transform 120ms ease;
+    }
+
+    .text-template-card:not([open]) .text-style-collapse-summary::after {
+      transform: rotate(-90deg);
+    }
+
     .text-style-card h3,
     .text-template-card h3 {
       margin: 0;
@@ -1696,6 +1731,25 @@
       min-height: 34px;
     }
 
+    .text-style-checkbox {
+      min-height: 34px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border: 1px solid var(--border);
+      border-radius: 7px;
+      background: #141a25;
+      color: var(--text);
+      padding: 6px 7px;
+      font-size: 0.78rem;
+      font-weight: 700;
+    }
+
+    .text-style-checkbox input {
+      width: auto;
+      min-width: 0;
+    }
+
     .text-border-picker {
       display: grid;
       grid-template-columns: repeat(3, 28px);
@@ -1727,14 +1781,18 @@
 
     .text-template-table {
       display: grid;
-      gap: 6px;
+      gap: 10px;
     }
 
     .text-template-row {
       display: grid;
-      grid-template-columns: minmax(96px, 1.3fr) minmax(88px, 1fr) 58px 46px 34px 34px 58px;
-      gap: 5px;
-      align-items: center;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      align-items: end;
+      padding: 9px;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: 10px;
+      background: rgba(15, 23, 42, 0.26);
     }
 
     .text-template-row input,
@@ -1750,12 +1808,42 @@
       font-size: 0.72rem;
     }
 
+    .text-template-row .template-wide {
+      grid-column: 1 / -1;
+    }
+
+    .text-template-row .template-tight {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      align-items: stretch;
+    }
+
+    .text-template-row .template-field {
+      display: grid;
+      gap: 3px;
+      min-height: 0;
+      place-items: stretch;
+      border: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 0.68rem;
+      font-weight: 800;
+    }
+
+    .text-template-row .template-field span {
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
     .text-template-row input[type="color"] {
       padding: 2px;
       min-height: 29px;
     }
 
-    .text-template-row label {
+    .text-template-row .text-template-checkbox {
       display: grid;
       place-items: center;
       min-height: 29px;
@@ -1767,16 +1855,25 @@
       font-weight: 900;
     }
 
-    .text-template-row label:has(input:checked) {
+    .text-template-row .text-template-checkbox:has(input:checked) {
       color: var(--text);
       border-color: rgba(96, 165, 250, 0.62);
       background: rgba(96, 165, 250, 0.20);
     }
 
-    .text-template-row label input {
+    .text-template-row .text-template-checkbox input {
       position: absolute;
       opacity: 0;
       pointer-events: none;
+    }
+
+    .text-template-row .text-template-checkbox {
+      position: relative;
+    }
+
+    .text-template-font-select,
+    .text-template-font-select option {
+      font-size: 0.78rem;
     }
 
     .text-template-add {
@@ -1854,6 +1951,15 @@
       background: rgba(5, 150, 105, 0.12);
     }
 
+    .element-option[data-element-type="group"] .element-preview {
+      border-color: #f59e0b;
+      background:
+        linear-gradient(90deg, rgba(245, 158, 11, 0.22) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(245, 158, 11, 0.22) 1px, transparent 1px),
+        rgba(245, 158, 11, 0.10);
+      background-size: 9px 9px;
+    }
+
     .field-row {
       display: grid;
       grid-template-columns: 1fr auto;
@@ -1864,6 +1970,12 @@
     input[type="range"] {
       width: 100%;
       accent-color: var(--accent);
+    }
+
+    .text-field-control[type="range"] {
+      cursor: ew-resize;
+      touch-action: none;
+      user-select: none;
     }
 
     .value-badge {
@@ -1952,6 +2064,7 @@
       border-radius: 0;
       background: transparent;
       box-shadow: none;
+      position: relative;
     }
 
     canvas {
@@ -1964,6 +2077,47 @@
       background: white;
       box-shadow: none;
       border: 0;
+    }
+
+    .layout-style-text-overlay-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+
+    .layout-style-text-overlay-layer .seite-preview-text {
+      pointer-events: auto;
+    }
+
+    .group-gap-divider-control {
+      position: absolute;
+      z-index: 6;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 7px;
+      border: 1px solid rgba(245, 158, 11, 0.7);
+      border-radius: 8px;
+      background: rgba(17, 24, 39, 0.92);
+      color: #fef3c7;
+      font-size: 0.76rem;
+      font-weight: 800;
+      box-shadow: 0 8px 20px rgba(15, 23, 42, 0.28);
+      transform: translate(-50%, 0);
+    }
+
+    .group-gap-divider-control[hidden] {
+      display: none;
+    }
+
+    .group-gap-divider-control select {
+      min-width: 48px;
+      padding: 2px 5px;
+      border: 1px solid rgba(245, 158, 11, 0.65);
+      border-radius: 6px;
+      background: #111827;
+      color: #fef3c7;
+      font: inherit;
     }
 
     @media (max-width: 920px) {
@@ -2126,7 +2280,18 @@
               <span class="element-preview" aria-hidden="true"></span>
               <span>Text</span>
             </div>
+            <div class="element-option" draggable="true" data-element-type="group" role="button" tabindex="0">
+              <span class="element-preview" aria-hidden="true"></span>
+              <span>Gruppe</span>
+            </div>
           </div>
+        </section>
+        <section class="control">
+          <label class="text-style-checkbox">
+            <input id="allowMidGapSnap" type="checkbox" />
+            Kanten duerfen in die Mitte zwischen zwei Zellen
+          </label>
+          <div class="hint">Aktiviert zusaetzliche Snappunkte exakt mittig im Abstand zwischen zwei Rasterzellen.</div>
         </section>
       </section>
 
@@ -2191,6 +2356,11 @@
         <div class="canvas-wrap">
           <div class="canvas-frame">
             <canvas id="pageCanvas" width="1480" height="2100"></canvas>
+            <div id="layoutStyleTextOverlayLayer" class="layout-style-text-overlay-layer"></div>
+            <label id="groupGapDividerControl" class="group-gap-divider-control" hidden>
+              <span>Teiler</span>
+              <select id="groupGapDividerSelect" aria-label="Teiler fuer lokalen Gruppen-Zellenabstand"></select>
+            </label>
           </div>
         </div>
       </div>
@@ -2298,6 +2468,9 @@
   <script>
     const canvas = document.getElementById('pageCanvas');
     const ctx = canvas.getContext('2d');
+    const layoutStyleTextOverlayLayer = document.getElementById('layoutStyleTextOverlayLayer');
+    const groupGapDividerControl = document.getElementById('groupGapDividerControl');
+    const groupGapDividerSelect = document.getElementById('groupGapDividerSelect');
     const mainArea = document.querySelector('.main');
     const appRoot = document.querySelector('.app');
     const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
@@ -2367,7 +2540,8 @@
       outerMarginRange: document.getElementById('outerMarginRange'),
       colsRange: document.getElementById('colsRange'),
       rowsRange: document.getElementById('rowsRange'),
-      cellGapRange: document.getElementById('cellGapRange')
+      cellGapRange: document.getElementById('cellGapRange'),
+      allowMidGapSnap: document.getElementById('allowMidGapSnap')
     };
 
     const layoutUi = {
@@ -2408,6 +2582,8 @@
     const tabButtons = Array.from(document.querySelectorAll('.tab-button'));
     const tabPanels = Array.from(document.querySelectorAll('.tab-panel'));
     const elementOptions = Array.from(document.querySelectorAll('.element-option'));
+    const layoutElementTypes = ['image', 'text', 'group'];
+    const mediaElementTypes = ['image', 'text'];
     const placedElements = [];
     const categories = [];
     let currentCells = [];
@@ -2416,6 +2592,7 @@
     let resizeState = null;
     let moveState = null;
     let hoveredElementId = null;
+    let hoveredGroupControlId = null;
     let isSidebarCollapsed = false;
     let activeAppView = 'layout';
     let activeProjectSidebarTab = 'laden';
@@ -2458,6 +2635,10 @@
     let seiteAssetDisplaySize = 74;
     let activeTextEditState = null;
     let textFormatPopover = null;
+    let textStyleRangeDragState = null;
+    let suppressTextStylePanelRender = false;
+    let textTemplatesPanelOpen = true;
+    const layoutStyleDummyTexts = new Map();
     const assetImageOrientationCache = new Map();
 
     const SNAPSHOT_DB_NAME = 'jahrbuch-generator-db';
@@ -2469,8 +2650,22 @@
       outerMarginRange: '60',
       colsRange: '6',
       rowsRange: '6',
-      cellGapRange: '16'
+      cellGapRange: '16',
+      allowMidGapSnap: false
     };
+
+    const TEXT_STYLE_FONT_OPTIONS = [
+      { label: 'Georgia', value: 'Georgia, serif' },
+      { label: 'Garamond', value: 'Garamond, "Times New Roman", serif' },
+      { label: 'Times New Roman', value: '"Times New Roman", Times, serif' },
+      { label: 'Palatino', value: 'Palatino, "Palatino Linotype", serif' },
+      { label: 'Trebuchet MS', value: '"Trebuchet MS", sans-serif' },
+      { label: 'Verdana', value: 'Verdana, Geneva, sans-serif' },
+      { label: 'Tahoma', value: 'Tahoma, Geneva, sans-serif' },
+      { label: 'Arial', value: 'Arial, Helvetica, sans-serif' },
+      { label: 'Helvetica', value: 'Helvetica, Arial, sans-serif' },
+      { label: 'Courier New', value: '"Courier New", Courier, monospace' }
+    ];
 
     function makeLayoutId() {
       return `layout_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
@@ -2506,6 +2701,36 @@
       };
     }
 
+    function getTextStyleFontOptions(currentFontFamily = '') {
+      const currentValue = typeof currentFontFamily === 'string' ? currentFontFamily.trim() : '';
+      const options = [...TEXT_STYLE_FONT_OPTIONS];
+      if (currentValue && !options.some((font) => font.value === currentValue)) {
+        options.unshift({
+          label: currentValue.replace(/"/g, ''),
+          value: currentValue
+        });
+      }
+      return options;
+    }
+
+    function createFontFamilySelect(value) {
+      const select = document.createElement('select');
+      select.className = 'text-template-control text-template-font-select';
+      select.dataset.templateProp = 'fontFamily';
+      select.setAttribute('aria-label', 'Schriftart');
+      getTextStyleFontOptions(value).forEach((font) => {
+        const option = document.createElement('option');
+        option.value = font.value;
+        option.textContent = font.label;
+        option.style.fontFamily = font.value;
+        option.selected = font.value === value;
+        select.appendChild(option);
+      });
+      select.value = value;
+      select.style.fontFamily = value;
+      return select;
+    }
+
     function clampNumber(value, min, max, fallback) {
       const number = Number(value);
       if (!Number.isFinite(number)) return fallback;
@@ -2526,7 +2751,13 @@
           color: '#111827',
           bold: true,
           italic: false,
-          lineHeight: 1.12
+          lineHeight: 1.12,
+          textAlign: 'left',
+          letterSpacing: 0,
+          wordSpacing: 0,
+          hyphenation: false,
+          columns: 1,
+          columnGap: 16
         },
         {
           id: 'body',
@@ -2536,7 +2767,13 @@
           color: '#1f2937',
           bold: false,
           italic: false,
-          lineHeight: 1.35
+          lineHeight: 1.35,
+          textAlign: 'left',
+          letterSpacing: 0,
+          wordSpacing: 0,
+          hyphenation: false,
+          columns: 1,
+          columnGap: 16
         }
       ];
     }
@@ -2549,6 +2786,10 @@
         borderColor: '#111827',
         borderWidth: 0,
         cornerSize: 24,
+        cornerSizeAbsolute: false,
+        cornerLimitSides: false,
+        autoFitHeight: false,
+        centerFittedHeight: false,
         borderAreas: {
           top: false,
           right: false,
@@ -2586,7 +2827,15 @@
           color: normalizeCategoryColor(template.color, fallback.color || '#111827'),
           bold: !!template.bold,
           italic: !!template.italic,
-          lineHeight: clampNumber(template.lineHeight, 0.8, 3, fallback.lineHeight || 1.35)
+          lineHeight: clampNumber(template.lineHeight, 0.8, 3, fallback.lineHeight || 1.35),
+          textAlign: ['left', 'center', 'right', 'justify'].includes(template.textAlign)
+            ? template.textAlign
+            : (fallback.textAlign || 'left'),
+          letterSpacing: clampNumber(template.letterSpacing, -3, 12, fallback.letterSpacing || 0),
+          wordSpacing: clampNumber(template.wordSpacing, -5, 24, fallback.wordSpacing || 0),
+          hyphenation: !!template.hyphenation,
+          columns: Math.floor(clampNumber(template.columns, 1, 10, fallback.columns || 1)),
+          columnGap: clampNumber(template.columnGap, 0, 120, fallback.columnGap || 16)
         });
       });
       const defaults = createDefaultTextStyleTemplates();
@@ -2609,6 +2858,10 @@
         borderColor: normalizeCategoryColor(source.borderColor, fallback.borderColor),
         borderWidth: clampNumber(source.borderWidth, 0, 16, fallback.borderWidth),
         cornerSize: clampNumber(source.cornerSize, 0, 50, fallback.cornerSize),
+        cornerSizeAbsolute: !!source.cornerSizeAbsolute,
+        cornerLimitSides: !!source.cornerLimitSides,
+        autoFitHeight: !!source.autoFitHeight,
+        centerFittedHeight: !!source.centerFittedHeight,
         borderAreas: {
           top: !!sourceAreas.top,
           right: !!sourceAreas.right,
@@ -2632,10 +2885,17 @@
       return normalized;
     }
 
+    function getLegacyTextFieldStyleFallback(styles) {
+      const normalizedStyles = normalizeTextFieldStyles(styles);
+      const firstStyle = Object.values(normalizedStyles)[0];
+      return firstStyle ? normalizeTextFieldStyle(firstStyle) : createDefaultTextFieldStyle();
+    }
+
     function ensureCategoryTextStyleModel(category) {
       if (!category) return null;
       category.textStyleTemplates = normalizeTextStyleTemplates(category.textStyleTemplates);
       category.textFieldStyles = normalizeTextFieldStyles(category.textFieldStyles);
+      category.textFieldStyle = normalizeTextFieldStyle(category.textFieldStyle || getLegacyTextFieldStyleFallback(category.textFieldStyles));
       return category;
     }
 
@@ -2657,18 +2917,14 @@
       return { heading, body };
     }
 
-    function getTextFieldStyleKey(layoutId, elementId) {
-      return `${layoutId}:${elementId}`;
+    function getTextFieldStyleKey() {
+      return 'global';
     }
 
-    function getTextFieldStyle(category, layoutId, elementId) {
+    function getTextFieldStyle(category) {
       ensureCategoryTextStyleModel(category);
-      const key = getTextFieldStyleKey(layoutId, elementId);
-      if (!category.textFieldStyles[key]) {
-        category.textFieldStyles[key] = createDefaultTextFieldStyle();
-      }
-      category.textFieldStyles[key] = normalizeTextFieldStyle(category.textFieldStyles[key]);
-      return category.textFieldStyles[key];
+      category.textFieldStyle = normalizeTextFieldStyle(category.textFieldStyle);
+      return category.textFieldStyle;
     }
 
     function getTextFieldsForCategory(category) {
@@ -2679,7 +2935,7 @@
           .filter((element) => element?.type === 'text')
           .forEach((element) => {
             fields.push({
-              key: getTextFieldStyleKey(layout.id, element.id),
+              key: getTextFieldStyleKey(),
               layoutId: layout.id,
               layoutName: layout.name || 'Layout',
               elementId: element.id
@@ -2705,13 +2961,29 @@
 
     function getTemplateInlineStyle(template) {
       const normalized = normalizeTextStyleTemplates([template])[0] || createDefaultTextStyleTemplates()[1];
+      const columnStyles = normalized.columns > 1
+        ? [
+            `column-count: ${normalized.columns}`,
+            `column-gap: ${normalized.columnGap}px`,
+            'column-fill: auto'
+          ]
+        : [
+            'column-count: auto',
+            'column-gap: normal'
+          ];
       return [
         `font-family: ${normalized.fontFamily}`,
         `font-size: ${normalized.fontSize}px`,
         `color: ${normalized.color}`,
         `font-weight: ${normalized.bold ? 700 : 400}`,
         `font-style: ${normalized.italic ? 'italic' : 'normal'}`,
-        `line-height: ${normalized.lineHeight}`
+        `text-align: ${normalized.textAlign}`,
+        `letter-spacing: ${normalized.letterSpacing}px`,
+        `word-spacing: ${normalized.wordSpacing}px`,
+        `hyphens: ${normalized.hyphenation ? 'auto' : 'manual'}`,
+        `line-height: ${normalized.lineHeight}`,
+        'margin-bottom: 0',
+        ...columnStyles
       ].join('; ');
     }
 
@@ -2721,7 +2993,8 @@
         outerMarginRange: controls.outerMarginRange.value,
         colsRange: controls.colsRange.value,
         rowsRange: controls.rowsRange.value,
-        cellGapRange: controls.cellGapRange.value
+        cellGapRange: controls.cellGapRange.value,
+        allowMidGapSnap: !!controls.allowMidGapSnap?.checked
       };
     }
 
@@ -2747,6 +3020,7 @@
         color: getDefaultCategoryColor(),
         controls: createDefaultControls(),
         textStyleTemplates: createDefaultTextStyleTemplates(),
+        textFieldStyle: createDefaultTextFieldStyle(),
         textFieldStyles: {},
         activeLayoutId: firstLayout.id,
         layouts: [firstLayout]
@@ -4170,38 +4444,117 @@
     function getLayoutElementRectForPreview(element, layout, category) {
       const geometry = getLayoutPageGeometry(layout, category);
       const normalizedElement = normalizeElementBounds({ ...element });
-      const startCell = geometry.cells.find((cell) => cell.row === normalizedElement.startRow && cell.col === normalizedElement.startCol);
-      const endCell = geometry.cells.find((cell) => cell.row === normalizedElement.endRow && cell.col === normalizedElement.endCol);
+      const startCell = geometry.cells.find((cell) => cell.row === Math.floor(normalizedElement.startRow) && cell.col === Math.floor(normalizedElement.startCol));
+      const endCell = geometry.cells.find((cell) => cell.row === Math.floor(normalizedElement.endRow) && cell.col === Math.floor(normalizedElement.endCol));
       if (!startCell || !endCell) return null;
       const seamX = isDoubleSpreadLayout(layout) ? geometry.pageWidth : null;
+      const edgeLeft = getAxisEdgeCoordinate(geometry.cells, 'col', normalizedElement.startCol, false);
+      const edgeTop = getAxisEdgeCoordinate(geometry.cells, 'row', normalizedElement.startRow, false);
+      const edgeRight = getAxisEdgeCoordinate(geometry.cells, 'col', Number.isInteger(normalizedElement.endCol) ? normalizedElement.endCol + 1 : normalizedElement.endCol, true);
+      const edgeBottom = getAxisEdgeCoordinate(geometry.cells, 'row', Number.isInteger(normalizedElement.endRow) ? normalizedElement.endRow + 1 : normalizedElement.endRow, true);
+      if (edgeLeft === null || edgeTop === null || edgeRight === null || edgeBottom === null) return null;
       const left = normalizedElement.leftBoundary === 'page-left'
         ? 0
-        : (normalizedElement.leftBoundary === 'page-seam' && seamX !== null ? seamX : startCell.x);
+        : (normalizedElement.leftBoundary === 'page-seam' && seamX !== null ? seamX : edgeLeft);
       const right = normalizedElement.rightBoundary === 'page-right'
         ? geometry.pageWidth * geometry.spreadCount
-        : (normalizedElement.rightBoundary === 'page-seam' && seamX !== null ? seamX : endCell.x + endCell.width);
+        : (normalizedElement.rightBoundary === 'page-seam' && seamX !== null ? seamX : edgeRight);
       return {
         geometry,
         rect: {
           x: left,
-          y: normalizedElement.topToPage ? 0 : startCell.y,
+          y: normalizedElement.topToPage ? 0 : edgeTop,
           width: right - left,
-          height: (normalizedElement.bottomToPage ? geometry.pageHeight : endCell.y + endCell.height) - (normalizedElement.topToPage ? 0 : startCell.y)
+          height: (normalizedElement.bottomToPage ? geometry.pageHeight : edgeBottom) - (normalizedElement.topToPage ? 0 : edgeTop)
+        }
+      };
+    }
+
+    function getPreviewLocalGridForGroup(group, groupRect, category) {
+      const controlsForCategory = {
+        ...createDefaultControls(),
+        ...(category?.controls || {})
+      };
+      const localRows = Math.max(1, (group.endRow - group.startRow + 1) * 2);
+      const localCols = Math.max(1, (group.endCol - group.startCol + 1) * 2);
+      const localGap = Math.max(0, Number(controlsForCategory.cellGapRange) || 0) / normalizeGroupGapDivider(group.gapDivider);
+      const cellWidth = (groupRect.width - (localCols - 1) * localGap) / localCols;
+      const cellHeight = (groupRect.height - (localRows - 1) * localGap) / localRows;
+      const cells = [];
+      if (cellWidth <= 0 || cellHeight <= 0) return cells;
+      for (let row = 0; row < localRows; row++) {
+        for (let col = 0; col < localCols; col++) {
+          cells.push({
+            row,
+            col,
+            x: groupRect.x + col * (cellWidth + localGap),
+            y: groupRect.y + row * (cellHeight + localGap),
+            width: cellWidth,
+            height: cellHeight
+          });
+        }
+      }
+      return cells;
+    }
+
+    function getLayoutGroupChildRectForPreview(child, group, groupRect, geometry, category) {
+      const normalizedChild = normalizeElementBounds({ ...child });
+      const cells = getPreviewLocalGridForGroup(group, groupRect, category);
+      const startCell = cells.find((cell) => cell.row === Math.floor(normalizedChild.startRow) && cell.col === Math.floor(normalizedChild.startCol));
+      const endCell = cells.find((cell) => cell.row === Math.floor(normalizedChild.endRow) && cell.col === Math.floor(normalizedChild.endCol));
+      if (!startCell || !endCell) return null;
+      const edgeLeft = getAxisEdgeCoordinate(cells, 'col', normalizedChild.startCol, false);
+      const edgeTop = getAxisEdgeCoordinate(cells, 'row', normalizedChild.startRow, false);
+      const edgeRight = getAxisEdgeCoordinate(cells, 'col', Number.isInteger(normalizedChild.endCol) ? normalizedChild.endCol + 1 : normalizedChild.endCol, true);
+      const edgeBottom = getAxisEdgeCoordinate(cells, 'row', Number.isInteger(normalizedChild.endRow) ? normalizedChild.endRow + 1 : normalizedChild.endRow, true);
+      if (edgeLeft === null || edgeTop === null || edgeRight === null || edgeBottom === null) return null;
+      return {
+        geometry,
+        rect: {
+          x: edgeLeft,
+          y: edgeTop,
+          width: edgeRight - edgeLeft,
+          height: edgeBottom - edgeTop
         }
       };
     }
 
     function getPreviewRectsForLayout(layout, category) {
       const elements = Array.isArray(layout?.elements) ? layout.elements : [];
-      return elements
-        .map((element) => ({ element, ...getLayoutElementRectForPreview(element, layout, category) }))
-        .filter((entry) => entry.rect && entry.geometry)
-        .map((entry) => ({
-          element: entry.element,
-          geometry: entry.geometry,
-          rect: entry.rect,
-          area: entry.rect.width * entry.rect.height
-        }));
+      const entries = [];
+      elements.forEach((element) => {
+        const previewEntry = getLayoutElementRectForPreview(element, layout, category);
+        if (!previewEntry?.rect || !previewEntry.geometry) return;
+        if (element.type === 'group') {
+          const normalizedGroup = normalizeElementBounds({ ...element });
+          (Array.isArray(element.children) ? element.children : []).forEach((child) => {
+            if (!isMediaElementType(child?.type)) return;
+            const childPreviewEntry = getLayoutGroupChildRectForPreview(
+              child,
+              normalizedGroup,
+              previewEntry.rect,
+              previewEntry.geometry,
+              category
+            );
+            if (!childPreviewEntry?.rect || !childPreviewEntry.geometry) return;
+            entries.push({
+              element: child,
+              geometry: childPreviewEntry.geometry,
+              rect: childPreviewEntry.rect,
+              area: childPreviewEntry.rect.width * childPreviewEntry.rect.height
+            });
+          });
+          return;
+        }
+        if (!isMediaElementType(element.type)) return;
+        entries.push({
+          element,
+          geometry: previewEntry.geometry,
+          rect: previewEntry.rect,
+          area: previewEntry.rect.width * previewEntry.rect.height
+        });
+      });
+      return entries;
     }
 
     function getPreviewRectsForActivePage(layout, category, spreadPageIndex) {
@@ -4298,27 +4651,48 @@
       saveCurrentLayoutIntoCollection();
       ensureCategoryTextStyleModel(category);
 
-      const templateCard = document.createElement('section');
+      const templateCard = document.createElement('details');
       templateCard.className = 'text-template-card';
+      templateCard.open = textTemplatesPanelOpen;
       templateCard.innerHTML = `
-        <h3>Formatvorlagen</h3>
+        <summary class="text-style-collapse-summary"><h3>Formatvorlagen</h3></summary>
         <div class="text-style-help">Leere Zeile mit + legt eine neue Vorlage an. Diese Vorlagen stehen spaeter direkt am Textfeld zur Auswahl.</div>
         <div class="text-template-table"></div>
       `;
+      templateCard.addEventListener('toggle', () => {
+        textTemplatesPanelOpen = templateCard.open;
+      });
       const templateTable = templateCard.querySelector('.text-template-table');
       category.textStyleTemplates.forEach((template) => {
         const row = document.createElement('div');
         row.className = 'text-template-row';
         row.dataset.templateId = template.id;
         row.innerHTML = `
-          <input class="text-template-control" data-template-prop="name" type="text" value="${escapeHtml(template.name)}" aria-label="Name">
-          <input class="text-template-control" data-template-prop="fontFamily" type="text" value="${escapeHtml(template.fontFamily)}" aria-label="Schriftart">
-          <input class="text-template-control" data-template-prop="fontSize" type="number" min="6" max="96" step="1" value="${template.fontSize}" aria-label="Textgroesse">
-          <input class="text-template-control" data-template-prop="color" type="color" value="${template.color}" aria-label="Textfarbe">
-          <label title="Fett"><input class="text-template-control" data-template-prop="bold" type="checkbox"${template.bold ? ' checked' : ''}>B</label>
-          <label title="Kursiv"><input class="text-template-control" data-template-prop="italic" type="checkbox"${template.italic ? ' checked' : ''}>I</label>
-          <input class="text-template-control" data-template-prop="lineHeight" type="number" min="0.8" max="3" step="0.05" value="${template.lineHeight}" aria-label="Zeilenabstand">
+          <label class="template-field template-wide"><span>Name</span><input class="text-template-control" data-template-prop="name" type="text" value="${escapeHtml(template.name)}" aria-label="Name"></label>
+          <label class="template-field template-wide template-font-field"><span>Schriftart</span></label>
+          <label class="template-field"><span>Groesse</span><input class="text-template-control" data-template-prop="fontSize" type="number" min="6" max="96" step="1" value="${template.fontSize}" aria-label="Textgroesse"></label>
+          <label class="template-field"><span>Farbe</span><input class="text-template-control" data-template-prop="color" type="color" value="${template.color}" aria-label="Textfarbe"></label>
+          <div class="template-tight">
+            <label class="text-template-checkbox" title="Fett"><input class="text-template-control" data-template-prop="bold" type="checkbox"${template.bold ? ' checked' : ''}>B</label>
+            <label class="text-template-checkbox" title="Kursiv"><input class="text-template-control" data-template-prop="italic" type="checkbox"${template.italic ? ' checked' : ''}>I</label>
+          </div>
+          <label class="template-field"><span>Zeilenabstand</span><input class="text-template-control" data-template-prop="lineHeight" type="number" min="0.8" max="3" step="0.05" value="${template.lineHeight}" aria-label="Zeilenabstand"></label>
+          <label class="template-field"><span>Ausrichtung</span><select class="text-template-control" data-template-prop="textAlign" aria-label="Textausrichtung">
+            <option value="left"${template.textAlign === 'left' ? ' selected' : ''}>Links</option>
+            <option value="center"${template.textAlign === 'center' ? ' selected' : ''}>Zentriert</option>
+            <option value="right"${template.textAlign === 'right' ? ' selected' : ''}>Rechts</option>
+            <option value="justify"${template.textAlign === 'justify' ? ' selected' : ''}>Block</option>
+          </select></label>
+          <label class="template-field"><span>Zeichenabstand</span><input class="text-template-control" data-template-prop="letterSpacing" type="range" min="-3" max="12" step="0.5" value="${template.letterSpacing}" aria-label="Zeichenabstand"></label>
+          <label class="template-field"><span>Wortabstand</span><input class="text-template-control" data-template-prop="wordSpacing" type="range" min="-5" max="24" step="1" value="${template.wordSpacing}" aria-label="Wortabstand"></label>
+          <label class="text-template-checkbox" title="Silbentrennung"><input class="text-template-control" data-template-prop="hyphenation" type="checkbox"${template.hyphenation ? ' checked' : ''}>Silben</label>
+          <label class="template-field"><span>Spalten</span><select class="text-template-control" data-template-prop="columns" aria-label="Spalten">
+            ${[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((count) => `<option value="${count}"${template.columns === count ? ' selected' : ''}>${count} Sp.</option>`).join('')}
+          </select></label>
+          ${template.columns > 1 ? `<label class="template-field"><span>Spaltenabstand</span><input class="text-template-control" data-template-prop="columnGap" type="number" min="0" max="120" step="1" value="${template.columnGap}" aria-label="Spaltenabstand"></label>` : '<span></span>'}
         `;
+        const fontField = row.querySelector('.template-font-field');
+        fontField.appendChild(createFontFamilySelect(template.fontFamily));
         templateTable.appendChild(row);
       });
       const addButton = document.createElement('button');
@@ -4330,81 +4704,114 @@
       textStylePanel.appendChild(templateCard);
 
       const fields = getTextFieldsForCategory(category);
-      if (fields.length === 0) {
-        const empty = document.createElement('div');
-        empty.className = 'text-style-empty';
-        empty.textContent = 'In den Layouts dieser Kategorie gibt es noch keine Textfelder.';
-        textStylePanel.appendChild(empty);
-        return;
-      }
-
-      fields.forEach((field, index) => {
-        const style = getTextFieldStyle(category, field.layoutId, field.elementId);
-        const card = document.createElement('section');
-        card.className = 'text-style-card';
-        card.dataset.textFieldKey = field.key;
-        card.innerHTML = `
-          <h3>${escapeHtml(field.layoutName)} - Textfeld ${index + 1}</h3>
-          <div class="text-style-grid">
-            <label class="text-style-field">Padding
-              <input class="text-field-control" data-style-prop="padding" type="range" min="0" max="80" step="1" value="${style.padding}">
-            </label>
-            <label class="text-style-field">Hintergrundfarbe
-              <input class="text-field-control" data-style-prop="backgroundColor" type="color" value="${style.backgroundColor}">
-            </label>
-            <label class="text-style-field">Transparenz
-              <input class="text-field-control" data-style-prop="backgroundAlpha" type="range" min="0" max="100" step="1" value="${Math.round(style.backgroundAlpha * 100)}">
-            </label>
-            <label class="text-style-field">Randfarbe
-              <input class="text-field-control" data-style-prop="borderColor" type="color" value="${style.borderColor}">
-            </label>
-            <label class="text-style-field">Randstaerke
-              <input class="text-field-control" data-style-prop="borderWidth" type="range" min="0" max="16" step="1" value="${style.borderWidth}">
-            </label>
-            <label class="text-style-field">Eckenlaenge
-              <input class="text-field-control" data-style-prop="cornerSize" type="range" min="0" max="50" step="1" value="${style.cornerSize}">
-            </label>
-          </div>
-        `;
-        const pickerWrap = document.createElement('div');
-        pickerWrap.className = 'text-style-field';
-        pickerWrap.innerHTML = '<span>Randbereiche</span>';
-        const picker = document.createElement('div');
-        picker.className = 'text-border-picker';
-        [
-          ['topLeft', 'TL'],
-          ['top', 'T'],
-          ['topRight', 'TR'],
-          ['left', 'L'],
-          ['', ''],
-          ['right', 'R'],
-          ['bottomLeft', 'BL'],
-          ['bottom', 'B'],
-          ['bottomRight', 'BR']
-        ].forEach(([area, label]) => {
-          if (!area) {
-            const spacer = document.createElement('span');
-            picker.appendChild(spacer);
-            return;
-          }
-          const button = document.createElement('button');
-          button.type = 'button';
-          button.className = `text-border-toggle${style.borderAreas[area] ? ' active' : ''}`;
-          button.dataset.borderArea = area;
-          button.textContent = label;
-          picker.appendChild(button);
-        });
-        pickerWrap.appendChild(picker);
-        card.appendChild(pickerWrap);
-        textStylePanel.appendChild(card);
+      const style = getTextFieldStyle(category);
+      const card = document.createElement('section');
+      card.className = 'text-style-card';
+      card.dataset.textFieldKey = getTextFieldStyleKey();
+      card.innerHTML = `
+        <h3>Textfelder der Kategorie</h3>
+        <div class="text-style-help">${fields.length > 0
+          ? `Diese Vorgaben gelten fuer alle ${fields.length} Textfeld(er) in allen Layouts dieser Kategorie.`
+          : 'Diese Vorgaben gelten fuer alle Textfelder, die spaeter in Layouts dieser Kategorie angelegt werden.'}</div>
+        <div class="text-style-grid">
+          <label class="text-style-field">Padding
+            <input class="text-field-control" data-style-prop="padding" type="range" min="0" max="80" step="1" value="${style.padding}">
+          </label>
+          <label class="text-style-field">Hintergrundfarbe
+            <input class="text-field-control" data-style-prop="backgroundColor" type="color" value="${style.backgroundColor}">
+          </label>
+          <label class="text-style-field">Transparenz
+            <input class="text-field-control" data-style-prop="backgroundAlpha" type="range" min="0" max="100" step="1" value="${Math.round(style.backgroundAlpha * 100)}">
+          </label>
+          <label class="text-style-field">Randfarbe
+            <input class="text-field-control" data-style-prop="borderColor" type="color" value="${style.borderColor}">
+          </label>
+          <label class="text-style-field">Randstaerke
+            <input class="text-field-control" data-style-prop="borderWidth" type="range" min="0" max="16" step="1" value="${style.borderWidth}">
+          </label>
+          <label class="text-style-field">Eckenlaenge
+            <input class="text-field-control" data-style-prop="cornerSize" type="range" min="0" max="50" step="1" value="${style.cornerSize}">
+          </label>
+          <label class="text-style-field">Eckenlaenge absolut
+            <label class="text-style-checkbox"><input class="text-field-control" data-style-prop="cornerSizeAbsolute" type="checkbox"${style.cornerSizeAbsolute ? ' checked' : ''}> absolut</label>
+          </label>
+          <label class="text-style-field">Strecken begrenzen
+            <label class="text-style-checkbox"><input class="text-field-control" data-style-prop="cornerLimitSides" type="checkbox"${style.cornerLimitSides ? ' checked' : ''}> an Padding</label>
+          </label>
+          <label class="text-style-field">Textfeldhoehe
+            <label class="text-style-checkbox"><input class="text-field-control" data-style-prop="autoFitHeight" type="checkbox"${style.autoFitHeight ? ' checked' : ''}> auf Text anpassen</label>
+          </label>
+          ${style.autoFitHeight ? `
+          <label class="text-style-field">Textfeld zentrieren
+            <label class="text-style-checkbox"><input class="text-field-control" data-style-prop="centerFittedHeight" type="checkbox"${style.centerFittedHeight ? ' checked' : ''}> vertikal zentrieren</label>
+          </label>
+          ` : ''}
+        </div>
+      `;
+      const pickerWrap = document.createElement('div');
+      pickerWrap.className = 'text-style-field';
+      pickerWrap.innerHTML = '<span>Randbereiche</span>';
+      const picker = document.createElement('div');
+      picker.className = 'text-border-picker';
+      [
+        ['topLeft', 'TL'],
+        ['top', 'T'],
+        ['topRight', 'TR'],
+        ['left', 'L'],
+        ['', ''],
+        ['right', 'R'],
+        ['bottomLeft', 'BL'],
+        ['bottom', 'B'],
+        ['bottomRight', 'BR']
+      ].forEach(([area, label]) => {
+        if (!area) {
+          const spacer = document.createElement('span');
+          picker.appendChild(spacer);
+          return;
+        }
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = `text-border-toggle${style.borderAreas[area] ? ' active' : ''}`;
+        button.dataset.borderArea = area;
+        button.textContent = label;
+        picker.appendChild(button);
       });
+      pickerWrap.appendChild(picker);
+      card.appendChild(pickerWrap);
+      textStylePanel.appendChild(card);
     }
 
     function updateTextStylePreview() {
       if (activeAppView === 'seite') {
         void renderSeitePreview(activeSeitePageNumber);
       }
-      draw();
+      suppressTextStylePanelRender = true;
+      try {
+        draw();
+      } finally {
+        suppressTextStylePanelRender = false;
+      }
+    }
+
+    function setTextStyleRangeValueFromPointer(input, clientX) {
+      if (!input || input.type !== 'range') return;
+      const rect = input.getBoundingClientRect();
+      if (!rect.width) return;
+      const thumbInset = Math.min(9, rect.width / 2);
+      const trackLeft = rect.left + thumbInset;
+      const trackWidth = Math.max(1, rect.width - thumbInset * 2);
+      const min = Number(input.min || 0);
+      const max = Number(input.max || 100);
+      const step = Number(input.step || 1) || 1;
+      const ratio = Math.min(1, Math.max(0, (clientX - trackLeft) / trackWidth));
+      const rawValue = min + ratio * (max - min);
+      const steppedValue = Math.round((rawValue - min) / step) * step + min;
+      const decimals = String(input.step || '').split('.')[1]?.length || 0;
+      const nextValue = Math.min(max, Math.max(min, steppedValue));
+      const formattedValue = decimals > 0 ? nextValue.toFixed(decimals) : String(Math.round(nextValue));
+      if (input.value === formattedValue) return;
+      input.value = formattedValue;
+      input.dispatchEvent(new Event('input', { bubbles: true }));
     }
 
     function assignSelectionPathsToRects(page, kind, rects) {
@@ -4681,20 +5088,70 @@
     function createAutoStyledTextHtml(text, category) {
       const { heading, body } = getTextTemplatePair(category);
       const normalizedText = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
-      const firstBreak = normalizedText.indexOf('\n');
-      const firstLine = firstBreak >= 0 ? normalizedText.slice(0, firstBreak) : normalizedText;
-      const rest = firstBreak >= 0 ? normalizedText.slice(firstBreak + 1) : '';
+      const lines = normalizedText.split('\n');
+      const firstLine = lines.shift() ?? '';
       const headingId = heading?.id || 'heading';
       const bodyId = body?.id || headingId;
-      if (!rest) {
-        return `<span data-text-style-id="${escapeHtml(headingId)}">${escapeHtml(firstLine)}</span>`;
-      }
-      return `<span data-text-style-id="${escapeHtml(headingId)}">${escapeHtml(firstLine)}</span>\n<span data-text-style-id="${escapeHtml(bodyId)}">${escapeHtml(rest)}</span>`;
+      const renderLine = (line, templateId) => {
+        const content = line ? escapeHtml(line) : '<br>';
+        return `<span data-text-line="true" data-text-style-id="${escapeHtml(templateId)}">${content}</span>`;
+      };
+      return [
+        renderLine(firstLine, headingId),
+        ...lines.map((line) => renderLine(line, bodyId))
+      ].join('');
+    }
+
+    function normalizeTextLineStructure(element, category) {
+      if (!element) return;
+      const { body } = getTextTemplatePair(category);
+      const fallbackStyleId = body?.id || 'body';
+
+      Array.from(element.querySelectorAll('[data-text-style-id]:not([data-text-line="true"])')).forEach((node) => {
+        if (node.closest('[data-text-line="true"]')) return;
+        if (node.parentElement !== element) return;
+        if (node.querySelector('[data-text-line="true"]')) return;
+        const styleId = node.dataset.textStyleId || fallbackStyleId;
+        const text = (node.textContent || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+        const fragment = document.createDocumentFragment();
+        text.split('\n').forEach((line) => {
+          const lineNode = document.createElement('span');
+          lineNode.dataset.textLine = 'true';
+          lineNode.dataset.textStyleId = styleId;
+          if (line) {
+            lineNode.textContent = line;
+          } else {
+            lineNode.appendChild(document.createElement('br'));
+          }
+          fragment.appendChild(lineNode);
+        });
+        node.replaceWith(fragment);
+      });
+
+      Array.from(element.childNodes).forEach((node) => {
+        if (node.nodeType !== Node.TEXT_NODE || !node.textContent) return;
+        if (!node.textContent.trim() && !node.textContent.includes('\n')) return;
+        const fragment = document.createDocumentFragment();
+        node.textContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').forEach((line) => {
+          if (!line && fragment.childNodes.length === 0) return;
+          const lineNode = document.createElement('span');
+          lineNode.dataset.textLine = 'true';
+          lineNode.dataset.textStyleId = fallbackStyleId;
+          if (line) {
+            lineNode.textContent = line;
+          } else {
+            lineNode.appendChild(document.createElement('br'));
+          }
+          fragment.appendChild(lineNode);
+        });
+        node.replaceWith(fragment);
+      });
     }
 
     function applyTextTemplateStylesToElement(element, category) {
       if (!element) return;
       ensureCategoryTextStyleModel(category);
+      normalizeTextLineStructure(element, category);
       element.querySelectorAll('[data-text-style-id]').forEach((node) => {
         const template = getTextStyleTemplateById(category, node.dataset.textStyleId);
         if (!template) return;
@@ -4710,11 +5167,56 @@
       slotElement.style.color = '#111827';
       slotElement.style.padding = '0';
       slotElement.style.position = 'absolute';
-      const content = slotElement.querySelector('.seite-text-content');
+        const content = slotElement.querySelector('.seite-text-content');
       if (content) {
         content.style.padding = `${style.padding}px`;
+        content.style.textAlign = '';
+        content.style.letterSpacing = '';
+        content.style.wordSpacing = '';
+        content.style.hyphens = '';
       }
       renderTextBorderOverlay(slotElement, style);
+      scheduleTextFieldAutoFit(slotElement, style);
+    }
+
+    function scheduleTextFieldAutoFit(slotElement, style = null) {
+      if (!slotElement) return;
+      const textStyle = style || getTextFieldStyle(getActiveCategory());
+      if (!textStyle.autoFitHeight) return;
+      requestAnimationFrame(() => applyTextFieldAutoFit(slotElement, textStyle));
+    }
+
+    function applyTextFieldAutoFit(slotElement, style) {
+      if (!slotElement?.isConnected || !style?.autoFitHeight) return;
+      const content = slotElement.querySelector('.seite-text-content');
+      if (!content) return;
+
+      if (!slotElement.dataset.textFieldOriginalTop || !slotElement.dataset.textFieldOriginalHeight) {
+        slotElement.dataset.textFieldOriginalTop = String(slotElement.offsetTop);
+        slotElement.dataset.textFieldOriginalHeight = String(slotElement.offsetHeight);
+      }
+
+      const originalTop = Number(slotElement.dataset.textFieldOriginalTop);
+      const originalHeight = Number(slotElement.dataset.textFieldOriginalHeight);
+      if (!Number.isFinite(originalTop) || !Number.isFinite(originalHeight) || originalHeight <= 0) return;
+
+      slotElement.style.bottom = '';
+      slotElement.style.top = `${originalTop}px`;
+      slotElement.style.height = `${originalHeight}px`;
+
+      const previousHeight = content.style.height;
+      const previousOverflow = content.style.overflow;
+      content.style.height = 'auto';
+      content.style.overflow = 'visible';
+      const fittedHeight = Math.min(originalHeight, Math.max(1, Math.ceil(content.scrollHeight)));
+      content.style.height = previousHeight || '100%';
+      content.style.overflow = previousOverflow;
+
+      const nextTop = style.centerFittedHeight
+        ? originalTop + Math.max(0, (originalHeight - fittedHeight) / 2)
+        : originalTop;
+      slotElement.style.top = `${nextTop}px`;
+      slotElement.style.height = `${fittedHeight}px`;
     }
 
     function renderTextBorderOverlay(slotElement, style) {
@@ -4724,7 +5226,9 @@
       overlay.className = 'seite-text-border-overlay';
       overlay.style.color = style.borderColor;
       const width = `${style.borderWidth}px`;
-      const corner = `${style.cornerSize}%`;
+      const horizontalCorner = style.cornerSizeAbsolute ? `${style.cornerSize}px` : `${style.cornerSize}%`;
+      const verticalCorner = style.cornerSizeAbsolute ? `${style.cornerSize}px` : `${style.cornerSize}%`;
+      const sideInset = style.cornerLimitSides ? `${style.padding}px` : '0';
       const addPiece = (className, extraStyle) => {
         const piece = document.createElement('span');
         piece.className = `seite-text-border-piece ${className}`;
@@ -4734,25 +5238,53 @@
         overlay.appendChild(piece);
       };
       const areas = style.borderAreas || {};
-      if (areas.top) addPiece('top', { top: '0', left: '0', right: '0', height: width });
-      if (areas.bottom) addPiece('bottom', { bottom: '0', left: '0', right: '0', height: width });
-      if (areas.left) addPiece('left', { top: '0', bottom: '0', left: '0', width });
-      if (areas.right) addPiece('right', { top: '0', bottom: '0', right: '0', width });
+      if (areas.top) {
+        addPiece('top', {
+          top: '0',
+          left: sideInset,
+          right: sideInset,
+          height: width
+        });
+      }
+      if (areas.bottom) {
+        addPiece('bottom', {
+          bottom: '0',
+          left: sideInset,
+          right: sideInset,
+          height: width
+        });
+      }
+      if (areas.left) {
+        addPiece('left', {
+          top: sideInset,
+          bottom: sideInset,
+          left: '0',
+          width
+        });
+      }
+      if (areas.right) {
+        addPiece('right', {
+          top: sideInset,
+          bottom: sideInset,
+          right: '0',
+          width
+        });
+      }
       if (areas.topLeft) {
-        addPiece('top-left-x', { top: '0', left: '0', width: corner, height: width });
-        addPiece('top-left-y', { top: '0', left: '0', width, height: corner });
+        addPiece('top-left-x', { top: '0', left: '0', width: horizontalCorner, height: width });
+        addPiece('top-left-y', { top: '0', left: '0', width, height: verticalCorner });
       }
       if (areas.topRight) {
-        addPiece('top-right-x', { top: '0', right: '0', width: corner, height: width });
-        addPiece('top-right-y', { top: '0', right: '0', width, height: corner });
+        addPiece('top-right-x', { top: '0', right: '0', width: horizontalCorner, height: width });
+        addPiece('top-right-y', { top: '0', right: '0', width, height: verticalCorner });
       }
       if (areas.bottomLeft) {
-        addPiece('bottom-left-x', { bottom: '0', left: '0', width: corner, height: width });
-        addPiece('bottom-left-y', { bottom: '0', left: '0', width, height: corner });
+        addPiece('bottom-left-x', { bottom: '0', left: '0', width: horizontalCorner, height: width });
+        addPiece('bottom-left-y', { bottom: '0', left: '0', width, height: verticalCorner });
       }
       if (areas.bottomRight) {
-        addPiece('bottom-right-x', { bottom: '0', right: '0', width: corner, height: width });
-        addPiece('bottom-right-y', { bottom: '0', right: '0', width, height: corner });
+        addPiece('bottom-right-x', { bottom: '0', right: '0', width: horizontalCorner, height: width });
+        addPiece('bottom-right-y', { bottom: '0', right: '0', width, height: verticalCorner });
       }
       slotElement.appendChild(overlay);
     }
@@ -4799,6 +5331,56 @@
       applyTextTemplateStylesToElement(content, category);
     }
 
+    function getLayoutDummyTextKey(elementId) {
+      return `layout-dummy:${activeCategoryId || ''}:${activeLayoutId || ''}:${elementId}`;
+    }
+
+    function createLayoutDummyTextHtml(category) {
+      return createAutoStyledTextHtml('Ueberschrift\nDies ist ein Beispieltext fuer dieses Textfeld. Markiere Text, um Formatvorlagen zu testen.', category);
+    }
+
+    function renderLayoutStyleTextOverlays() {
+      if (!layoutStyleTextOverlayLayer) return;
+      layoutStyleTextOverlayLayer.replaceChildren();
+      if (activeAppView !== 'layout' || activeTab !== 'styling') return;
+
+      const category = getActiveCategory();
+      if (!category || currentElementRects.length === 0) return;
+      const canvasRect = canvas.getBoundingClientRect();
+      if (!canvasRect.width || !canvasRect.height || !canvas.width || !canvas.height) return;
+
+      currentElementRects
+        .filter((elementRect) => elementRect.type === 'text')
+        .forEach((elementRect) => {
+          const box = document.createElement('div');
+          box.className = 'seite-preview-element seite-preview-text layout-style-text-overlay';
+          box.dataset.layoutDummyText = 'true';
+          box.dataset.layoutDummyKey = getLayoutDummyTextKey(elementRect.id);
+          box.style.left = `${(elementRect.x / canvas.width) * canvasRect.width}px`;
+          box.style.top = `${(elementRect.y / canvas.height) * canvasRect.height}px`;
+          box.style.width = `${(elementRect.width / canvas.width) * canvasRect.width}px`;
+          box.style.height = `${(elementRect.height / canvas.height) * canvasRect.height}px`;
+
+          const content = document.createElement('div');
+          content.className = 'seite-text-content';
+          content.dataset.textContent = 'true';
+          content.innerHTML = layoutStyleDummyTexts.get(box.dataset.layoutDummyKey) || createLayoutDummyTextHtml(category);
+          box.appendChild(content);
+
+          const editButton = document.createElement('button');
+          editButton.type = 'button';
+          editButton.className = 'seite-text-edit-btn';
+          editButton.dataset.textEditButton = 'true';
+          editButton.setAttribute('aria-label', 'Dummy-Text bearbeiten');
+          editButton.textContent = '✎';
+          box.appendChild(editButton);
+
+          applyTextFieldStyle(box, category);
+          applyTextTemplateStylesToElement(content, category);
+          layoutStyleTextOverlayLayer.appendChild(box);
+        });
+    }
+
     function ensureTextFormatPopover() {
       if (textFormatPopover) return textFormatPopover;
       textFormatPopover = document.createElement('div');
@@ -4818,20 +5400,22 @@
     }
 
     function startTextEditing(slotElement) {
-      const page = getRedaktionPageById(slotElement?.dataset.pageId);
+      const isLayoutDummy = slotElement?.dataset.layoutDummyText === 'true';
+      const page = isLayoutDummy ? null : getRedaktionPageById(slotElement?.dataset.pageId);
       const content = slotElement?.querySelector('.seite-text-content');
-      if (!page || !content) return;
+      if ((!page && !isLayoutDummy) || !content) return;
       if (activeTextEditState?.slotElement && activeTextEditState.slotElement !== slotElement) {
         stopTextEditing();
       }
-      const category = getLayoutCategoryById(page.layoutCategoryId || '');
+      const category = isLayoutDummy ? getActiveCategory() : getLayoutCategoryById(page.layoutCategoryId || '');
       activeTextEditState = {
         slotElement,
         content,
         page,
         category,
         textKey: slotElement.dataset.textContentKey,
-        sourcePath: slotElement.dataset.textPath
+        sourcePath: slotElement.dataset.textPath,
+        layoutDummyKey: isLayoutDummy ? slotElement.dataset.layoutDummyKey : ''
       };
       slotElement.classList.add('editing');
       content.contentEditable = 'true';
@@ -4841,10 +5425,14 @@
 
     function stopTextEditing() {
       if (!activeTextEditState) return;
-      const { slotElement, content, page, textKey, sourcePath, category } = activeTextEditState;
+      const { slotElement, content, page, textKey, sourcePath, category, layoutDummyKey } = activeTextEditState;
       content.contentEditable = 'false';
       applyTextTemplateStylesToElement(content, category);
-      saveTextOverride(page, textKey, sourcePath, content);
+      if (layoutDummyKey) {
+        layoutStyleDummyTexts.set(layoutDummyKey, content.innerHTML);
+      } else {
+        saveTextOverride(page, textKey, sourcePath, content);
+      }
       slotElement.classList.remove('editing');
       activeTextEditState = null;
       hideTextFormatPopover();
@@ -4902,12 +5490,17 @@
         return;
       }
       applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
-      saveTextOverride(
-        activeTextEditState.page,
-        activeTextEditState.textKey,
-        activeTextEditState.sourcePath,
-        activeTextEditState.content
-      );
+      if (activeTextEditState.layoutDummyKey) {
+        layoutStyleDummyTexts.set(activeTextEditState.layoutDummyKey, activeTextEditState.content.innerHTML);
+      } else {
+        saveTextOverride(
+          activeTextEditState.page,
+          activeTextEditState.textKey,
+          activeTextEditState.sourcePath,
+          activeTextEditState.content
+        );
+      }
+      scheduleTextFieldAutoFit(activeTextEditState.slotElement, getTextFieldStyle(activeTextEditState.category));
       selection.removeAllRanges();
       const nextRange = document.createRange();
       nextRange.selectNodeContents(wrapper);
@@ -6172,22 +6765,7 @@
     }
 
     function serializeElements() {
-      return placedElements.map((element) => ({
-        id: element.id,
-        type: element.type,
-        row: element.row,
-        col: element.col,
-        startRow: element.startRow,
-        endRow: element.endRow,
-        startCol: element.startCol,
-        endCol: element.endCol,
-        leftBoundary: element.leftBoundary || 'none',
-        rightBoundary: element.rightBoundary || 'none',
-        leftToPage: !!element.leftToPage,
-        rightToPage: !!element.rightToPage,
-        topToPage: !!element.topToPage,
-        bottomToPage: !!element.bottomToPage
-      }));
+      return placedElements.map((element) => serializeLayoutElement(element));
     }
 
     function applyControls(controlValues) {
@@ -6199,6 +6777,7 @@
       if (controlValues.colsRange != null) controls.colsRange.value = String(controlValues.colsRange);
       if (controlValues.rowsRange != null) controls.rowsRange.value = String(controlValues.rowsRange);
       if (controlValues.cellGapRange != null) controls.cellGapRange.value = String(controlValues.cellGapRange);
+      if (controls.allowMidGapSnap) controls.allowMidGapSnap.checked = !!controlValues.allowMidGapSnap;
     }
 
     function saveCurrentLayoutIntoCollection() {
@@ -6225,31 +6804,13 @@
       placedElements.length = 0;
       if (Array.isArray(layout.elements)) {
         layout.elements.forEach((element) => {
-          if (!element || (element.type !== 'image' && element.type !== 'text')) return;
-          placedElements.push({
-            id: Number.isInteger(element.id) ? element.id : nextElementId++,
-            type: element.type,
-            row: Number.isInteger(element.row) ? element.row : 0,
-            col: Number.isInteger(element.col) ? element.col : 0,
-            startRow: Number.isInteger(element.startRow) ? element.startRow : (Number.isInteger(element.row) ? element.row : 0),
-            endRow: Number.isInteger(element.endRow) ? element.endRow : (Number.isInteger(element.row) ? element.row : 0),
-            startCol: Number.isInteger(element.startCol) ? element.startCol : (Number.isInteger(element.col) ? element.col : 0),
-            endCol: Number.isInteger(element.endCol) ? element.endCol : (Number.isInteger(element.col) ? element.col : 0),
-            leftBoundary: (element.leftBoundary === 'page-left' || element.leftBoundary === 'page-seam')
-              ? element.leftBoundary
-              : (element.leftToPage ? 'page-left' : 'none'),
-            rightBoundary: (element.rightBoundary === 'page-right' || element.rightBoundary === 'page-seam')
-              ? element.rightBoundary
-              : (element.rightToPage ? 'page-right' : 'none'),
-            leftToPage: !!element.leftToPage,
-            rightToPage: !!element.rightToPage,
-            topToPage: !!element.topToPage,
-            bottomToPage: !!element.bottomToPage
-          });
+          const normalizedElement = normalizeStoredLayoutElement(element);
+          if (!normalizedElement) return;
+          placedElements.push(normalizedElement);
         });
       }
 
-      const maxId = placedElements.reduce((max, element) => Math.max(max, element.id || 0), 0);
+      const maxId = getMaxElementIdDeep(placedElements);
       nextElementId = Math.max(
         Number.isInteger(layout.nextElementId) ? layout.nextElementId : 1,
         maxId + 1
@@ -6258,7 +6819,7 @@
 
     function getImageCount(layout) {
       if (!layout || !Array.isArray(layout.elements)) return 0;
-      return layout.elements.filter((element) => element.type === 'image').length;
+      return getPreviewRectsForLayout(layout, getActiveCategory()).filter((entry) => entry.element.type === 'image').length;
     }
 
     function refreshCategorySelector() {
@@ -6282,14 +6843,14 @@
       categoryUi.deleteBtn.disabled = categories.length <= 1;
       refreshRedaktionInspector();
       renderRedaktionPages();
-      if (activeTab === 'styling') renderTextStylePanel();
+      if (activeTab === 'styling' && !suppressTextStylePanelRender) renderTextStylePanel();
     }
 
     function refreshLayoutSelector() {
       const currentCategory = getActiveCategory();
       const layouts = currentCategory?.layouts || [];
       const activeLayout = getActiveLayout();
-      const currentImageCount = placedElements.filter((element) => element.type === 'image').length;
+      const currentImageCount = countElementTypeDeep(placedElements, 'image');
       layoutUi.select.innerHTML = '';
 
       const sortedLayouts = [...layouts].sort((a, b) => {
@@ -6311,7 +6872,7 @@
       layoutUi.deleteBtn.disabled = layouts.length <= 1;
       refreshLayoutModeButton();
       refreshRedaktionInspector();
-      if (activeTab === 'styling') renderTextStylePanel();
+      if (activeTab === 'styling' && !suppressTextStylePanelRender) renderTextStylePanel();
     }
 
     function switchToLayout(layoutId) {
@@ -6491,6 +7052,7 @@
           activeLayoutId: category.activeLayoutId,
           controls: category.controls || createDefaultControls(),
           textStyleTemplates: normalizeTextStyleTemplates(category.textStyleTemplates),
+          textFieldStyle: normalizeTextFieldStyle(category.textFieldStyle || getLegacyTextFieldStyleFallback(category.textFieldStyles)),
           textFieldStyles: normalizeTextFieldStyles(category.textFieldStyles),
           layouts: (Array.isArray(category.layouts) ? category.layouts : []).map((layout) => ({
             id: layout.id,
@@ -6556,6 +7118,7 @@
                 }
               : createDefaultControls(),
             textStyleTemplates: normalizeTextStyleTemplates(category.textStyleTemplates),
+            textFieldStyle: normalizeTextFieldStyle(category.textFieldStyle || getLegacyTextFieldStyleFallback(category.textFieldStyles)),
             textFieldStyles: normalizeTextFieldStyles(category.textFieldStyles),
             activeLayoutId: selectedLayout.id,
             layouts: restoredLayouts
@@ -6666,7 +7229,8 @@
         outerMargin: Math.max(0, Number(controls.outerMarginRange.value) || 0),
         cols: Math.max(1, Math.floor(Number(controls.colsRange.value) || 1)),
         rows: Math.max(1, Math.floor(Number(controls.rowsRange.value) || 1)),
-        cellGap: Math.max(0, Number(controls.cellGapRange.value) || 0)
+        cellGap: Math.max(0, Number(controls.cellGapRange.value) || 0),
+        allowMidGapSnap: !!controls.allowMidGapSnap?.checked
       };
     }
 
@@ -6708,7 +7272,7 @@
       }
 
       const type = dataTransfer.getData('text/plain');
-      if (type === 'image' || type === 'text') {
+      if (isLayoutElementType(type)) {
         return { source: 'palette', type };
       }
 
@@ -6767,7 +7331,7 @@
     }
 
     function normalizeElementBounds(element) {
-      if (!Number.isInteger(element.startRow)) {
+      if (!Number.isFinite(Number(element.startRow))) {
         element.startRow = element.row;
         element.endRow = element.row;
         element.startCol = element.col;
@@ -6788,11 +7352,137 @@
       if (typeof element.topToPage !== 'boolean') element.topToPage = false;
       if (typeof element.bottomToPage !== 'boolean') element.bottomToPage = false;
 
+      element.startRow = Number.isFinite(Number(element.startRow)) ? Number(element.startRow) : 0;
+      element.endRow = Number.isFinite(Number(element.endRow)) ? Number(element.endRow) : element.startRow;
+      element.startCol = Number.isFinite(Number(element.startCol)) ? Number(element.startCol) : 0;
+      element.endCol = Number.isFinite(Number(element.endCol)) ? Number(element.endCol) : element.startCol;
       element.startRow = Math.max(0, element.startRow);
-      element.endRow = Math.max(element.startRow, element.endRow);
       element.startCol = Math.max(0, element.startCol);
-      element.endCol = Math.max(element.startCol, element.endCol);
+      if (getBoundsIntervals(element).bottom <= getBoundsIntervals(element).top) {
+        element.endRow = element.startRow;
+      }
+      if (getBoundsIntervals(element).right <= getBoundsIntervals(element).left) {
+        element.endCol = element.startCol;
+      }
       return element;
+    }
+
+    function isLayoutElementType(type) {
+      return layoutElementTypes.includes(type);
+    }
+
+    function isMediaElementType(type) {
+      return mediaElementTypes.includes(type);
+    }
+
+    function getElementTypeLabel(type) {
+      if (type === 'text') return 'Text';
+      if (type === 'group') return 'Gruppe';
+      return 'Bild';
+    }
+
+    function getElementCollection(parentElement = null) {
+      if (!parentElement) return placedElements;
+      if (!Array.isArray(parentElement.children)) parentElement.children = [];
+      return parentElement.children;
+    }
+
+    function findElementRecordById(id) {
+      for (const element of placedElements) {
+        if (element.id === id) {
+          return { element, parent: null, collection: placedElements };
+        }
+        if (element.type !== 'group' || !Array.isArray(element.children)) continue;
+        const child = element.children.find((candidate) => candidate.id === id);
+        if (child) {
+          return { element: child, parent: element, collection: element.children };
+        }
+      }
+      return null;
+    }
+
+    function findGroupRecordById(id) {
+      const record = findElementRecordById(id);
+      return record?.element?.type === 'group' ? record : null;
+    }
+
+    function getMaxElementIdDeep(elements) {
+      return (elements || []).reduce((max, element) => {
+        const ownId = Number.isInteger(element?.id) ? element.id : 0;
+        const childMax = element?.type === 'group' ? getMaxElementIdDeep(element.children) : 0;
+        return Math.max(max, ownId, childMax);
+      }, 0);
+    }
+
+    function countElementTypeDeep(elements, type) {
+      return (elements || []).reduce((count, element) => {
+        const ownCount = element?.type === type ? 1 : 0;
+        const childCount = element?.type === 'group' ? countElementTypeDeep(element.children, type) : 0;
+        return count + ownCount + childCount;
+      }, 0);
+    }
+
+    function serializeLayoutElement(element) {
+      const normalizedElement = normalizeElementBounds({ ...element });
+      const serialized = {
+        id: normalizedElement.id,
+        type: normalizedElement.type,
+        row: normalizedElement.row,
+        col: normalizedElement.col,
+        startRow: normalizedElement.startRow,
+        endRow: normalizedElement.endRow,
+        startCol: normalizedElement.startCol,
+        endCol: normalizedElement.endCol,
+        leftBoundary: normalizedElement.leftBoundary || 'none',
+        rightBoundary: normalizedElement.rightBoundary || 'none',
+        leftToPage: !!normalizedElement.leftToPage,
+        rightToPage: !!normalizedElement.rightToPage,
+        topToPage: !!normalizedElement.topToPage,
+        bottomToPage: !!normalizedElement.bottomToPage
+      };
+      if (normalizedElement.type === 'group') {
+        serialized.gapDivider = normalizeGroupGapDivider(element.gapDivider);
+        serialized.children = (Array.isArray(element.children) ? element.children : [])
+          .filter((child) => child && isMediaElementType(child.type))
+          .map((child) => serializeLayoutElement(child));
+      }
+      return serialized;
+    }
+
+    function normalizeStoredLayoutElement(element) {
+      if (!element || !isLayoutElementType(element.type)) return null;
+      const normalized = normalizeElementBounds({
+        id: Number.isInteger(element.id) ? element.id : nextElementId++,
+        type: element.type,
+        row: Number.isInteger(element.row) ? element.row : 0,
+        col: Number.isInteger(element.col) ? element.col : 0,
+        startRow: Number.isFinite(Number(element.startRow)) ? Number(element.startRow) : (Number.isInteger(element.row) ? element.row : 0),
+        endRow: Number.isFinite(Number(element.endRow)) ? Number(element.endRow) : (Number.isInteger(element.row) ? element.row : 0),
+        startCol: Number.isFinite(Number(element.startCol)) ? Number(element.startCol) : (Number.isInteger(element.col) ? element.col : 0),
+        endCol: Number.isFinite(Number(element.endCol)) ? Number(element.endCol) : (Number.isInteger(element.col) ? element.col : 0),
+        leftBoundary: (element.leftBoundary === 'page-left' || element.leftBoundary === 'page-seam')
+          ? element.leftBoundary
+          : (element.leftToPage ? 'page-left' : 'none'),
+        rightBoundary: (element.rightBoundary === 'page-right' || element.rightBoundary === 'page-seam')
+          ? element.rightBoundary
+          : (element.rightToPage ? 'page-right' : 'none'),
+        leftToPage: !!element.leftToPage,
+        rightToPage: !!element.rightToPage,
+        topToPage: !!element.topToPage,
+        bottomToPage: !!element.bottomToPage
+      });
+      if (normalized.type === 'group') {
+        normalized.gapDivider = normalizeGroupGapDivider(element.gapDivider);
+        normalized.children = (Array.isArray(element.children) ? element.children : [])
+          .map((child) => normalizeStoredLayoutElement(child))
+          .filter((child) => child && isMediaElementType(child.type));
+      }
+      return normalized;
+    }
+
+    function normalizeGroupGapDivider(value) {
+      const numericValue = Math.floor(Number(value));
+      return Math.min(10, Math.max(2, Number.isFinite(numericValue) ? numericValue : 2));
     }
 
     function getGridMaxima() {
@@ -6802,18 +7492,124 @@
       };
     }
 
+    function getCellByRowCol(cells, row, col) {
+      return cells.find((cell) => cell.row === row && cell.col === col) || null;
+    }
+
+    function getAxisEdgeCoordinate(cells, axis, value, isEndEdge = false) {
+      const numericValue = Number(value);
+      if (!Number.isFinite(numericValue)) return null;
+      const integerValue = Math.round(numericValue);
+      const isIntegerValue = Math.abs(numericValue - integerValue) < 0.001;
+      if (isIntegerValue) {
+        if (isEndEdge) {
+          const previousCell = axis === 'col'
+            ? cells.find((candidate) => candidate.col === integerValue - 1)
+            : cells.find((candidate) => candidate.row === integerValue - 1);
+          if (previousCell) return axis === 'col'
+            ? previousCell.x + previousCell.width
+            : previousCell.y + previousCell.height;
+        }
+        const cell = axis === 'col'
+          ? cells.find((candidate) => candidate.col === integerValue)
+          : cells.find((candidate) => candidate.row === integerValue);
+        if (cell) return axis === 'col' ? cell.x : cell.y;
+        return null;
+      }
+
+      const leftOrTopIndex = Math.floor(numericValue);
+      const previousCell = axis === 'col'
+        ? cells.find((candidate) => candidate.col === leftOrTopIndex)
+        : cells.find((candidate) => candidate.row === leftOrTopIndex);
+      const nextCell = axis === 'col'
+        ? cells.find((candidate) => candidate.col === leftOrTopIndex + 1)
+        : cells.find((candidate) => candidate.row === leftOrTopIndex + 1);
+      if (!previousCell || !nextCell) return null;
+      const previousEnd = axis === 'col'
+        ? previousCell.x + previousCell.width
+        : previousCell.y + previousCell.height;
+      const nextStart = axis === 'col' ? nextCell.x : nextCell.y;
+      return previousEnd + (nextStart - previousEnd) / 2;
+    }
+
+    function getBoundsIntervals(bounds) {
+      const startCol = Number(bounds.startCol);
+      const endCol = Number(bounds.endCol);
+      const startRow = Number(bounds.startRow);
+      const endRow = Number(bounds.endRow);
+      const right = Number.isInteger(endCol) ? endCol + 1 : endCol;
+      const bottom = Number.isInteger(endRow) ? endRow + 1 : endRow;
+      return {
+        left: startCol,
+        right,
+        top: startRow,
+        bottom
+      };
+    }
+
+    function boundsOverlap(a, b) {
+      const first = getBoundsIntervals(a);
+      const second = getBoundsIntervals(b);
+      return (
+        first.left < second.right &&
+        first.right > second.left &&
+        first.top < second.bottom &&
+        first.bottom > second.top
+      );
+    }
+
+    function getMidGapEdgeCandidates(cells, axis, edge, startBounds, point) {
+      if (!getSettings().allowMidGapSnap) return [];
+      if (resizeState?.type === 'group') return [];
+      const uniqueIndexes = [...new Set(cells.map((cell) => axis === 'col' ? cell.col : cell.row))].sort((a, b) => a - b);
+      const candidates = [];
+      const intervals = getBoundsIntervals(startBounds);
+      const maxEdge = axis === 'col' ? intervals.right : intervals.bottom;
+      const minEdge = axis === 'col' ? intervals.left : intervals.top;
+      for (let index = 0; index < uniqueIndexes.length - 1; index++) {
+        const currentIndex = uniqueIndexes[index];
+        const nextIndex = uniqueIndexes[index + 1];
+        if (nextIndex !== currentIndex + 1) continue;
+        const currentCell = axis === 'col'
+          ? cells.find((cell) => cell.col === currentIndex)
+          : cells.find((cell) => cell.row === currentIndex);
+        const nextCell = axis === 'col'
+          ? cells.find((cell) => cell.col === nextIndex)
+          : cells.find((cell) => cell.row === nextIndex);
+        if (!currentCell || !nextCell) continue;
+        const currentEnd = axis === 'col' ? currentCell.x + currentCell.width : currentCell.y + currentCell.height;
+        const nextStart = axis === 'col' ? nextCell.x : nextCell.y;
+        if (nextStart <= currentEnd) continue;
+        const value = currentIndex + 0.5;
+        if ((edge === 'left' || edge === 'top') && value >= maxEdge) continue;
+        if ((edge === 'right' || edge === 'bottom') && value <= minEdge) continue;
+        const coordinate = currentEnd + (nextStart - currentEnd) / 2;
+        candidates.push({
+          kind: 'cell',
+          cell: axis === 'col'
+            ? { ...currentCell, col: value, x: coordinate, width: 0 }
+            : { ...currentCell, row: value, y: coordinate, height: 0 },
+          distance: axis === 'col'
+            ? Math.abs(point.x - coordinate)
+            : Math.abs(point.y - coordinate)
+        });
+      }
+      return candidates;
+    }
+
     function getElementRect(element) {
       normalizeElementBounds(element);
-      const startCell = getCell(element.startRow, element.startCol);
-      const endCell = getCell(element.endRow, element.endCol);
+      const startCell = getCell(Math.floor(element.startRow), Math.floor(element.startCol));
+      const endCell = getCell(Math.floor(element.endRow), Math.floor(element.endCol));
       if (!startCell || !endCell) return null;
       const activeLayout = getActiveLayout();
       const seamX = isDoubleSpreadLayout(activeLayout) ? canvas.width / 2 : null;
 
-      const x = startCell.x;
-      const y = startCell.y;
-      const right = endCell.x + endCell.width;
-      const bottom = endCell.y + endCell.height;
+      const x = getAxisEdgeCoordinate(currentCells, 'col', element.startCol, false);
+      const y = getAxisEdgeCoordinate(currentCells, 'row', element.startRow, false);
+      const right = getAxisEdgeCoordinate(currentCells, 'col', Number.isInteger(element.endCol) ? element.endCol + 1 : element.endCol, true);
+      const bottom = getAxisEdgeCoordinate(currentCells, 'row', Number.isInteger(element.endRow) ? element.endRow + 1 : element.endRow, true);
+      if (x === null || y === null || right === null || bottom === null) return null;
       const left = element.leftBoundary === 'page-left'
         ? 0
         : (element.leftBoundary === 'page-seam' && seamX !== null ? seamX : x);
@@ -6835,6 +7631,116 @@
         width: adjustedRight - left,
         height: adjustedBottom - top
       };
+    }
+
+    function getCellsMaxima(cells) {
+      return {
+        maxRow: Math.max(0, ...cells.map((cell) => cell.row)),
+        maxCol: Math.max(0, ...cells.map((cell) => cell.col))
+      };
+    }
+
+    function getGroupLocalGrid(group, groupRect) {
+      if (!group || !groupRect) return { cells: [], maxRow: 0, maxCol: 0 };
+      normalizeElementBounds(group);
+      const localRows = Math.max(1, (group.endRow - group.startRow + 1) * 2);
+      const localCols = Math.max(1, (group.endCol - group.startCol + 1) * 2);
+      const outerGap = Math.max(0, Number(getSettings().cellGap) || 0);
+      const localGap = outerGap / normalizeGroupGapDivider(group.gapDivider);
+      const cellWidth = (groupRect.width - (localCols - 1) * localGap) / localCols;
+      const cellHeight = (groupRect.height - (localRows - 1) * localGap) / localRows;
+      const cells = [];
+      if (cellWidth <= 0 || cellHeight <= 0) {
+        return { cells, maxRow: localRows - 1, maxCol: localCols - 1 };
+      }
+      for (let row = 0; row < localRows; row++) {
+        for (let col = 0; col < localCols; col++) {
+          cells.push({
+            row,
+            col,
+            x: groupRect.x + col * (cellWidth + localGap),
+            y: groupRect.y + row * (cellHeight + localGap),
+            width: cellWidth,
+            height: cellHeight
+          });
+        }
+      }
+      return { cells, maxRow: localRows - 1, maxCol: localCols - 1 };
+    }
+
+    function findCellInCellsAtPoint(point, cells) {
+      return cells.find((cell) => (
+        point.x >= cell.x &&
+        point.x <= cell.x + cell.width &&
+        point.y >= cell.y &&
+        point.y <= cell.y + cell.height
+      )) || null;
+    }
+
+    function findNearestCellInCells(point, cells) {
+      const scoredCells = cells.map((cell) => {
+        const centerX = cell.x + cell.width / 2;
+        const centerY = cell.y + cell.height / 2;
+        return {
+          cell,
+          distance: Math.hypot(point.x - centerX, point.y - centerY)
+        };
+      });
+      scoredCells.sort((a, b) => a.distance - b.distance);
+      return scoredCells[0]?.cell || null;
+    }
+
+    function getRectFromCells(element, cells) {
+      normalizeElementBounds(element);
+      const startCell = cells.find((cell) => cell.row === Math.floor(element.startRow) && cell.col === Math.floor(element.startCol));
+      const endCell = cells.find((cell) => cell.row === Math.floor(element.endRow) && cell.col === Math.floor(element.endCol));
+      if (!startCell || !endCell) return null;
+      const left = getAxisEdgeCoordinate(cells, 'col', element.startCol, false);
+      const top = getAxisEdgeCoordinate(cells, 'row', element.startRow, false);
+      const right = getAxisEdgeCoordinate(cells, 'col', Number.isInteger(element.endCol) ? element.endCol + 1 : element.endCol, true);
+      const bottom = getAxisEdgeCoordinate(cells, 'row', Number.isInteger(element.endRow) ? element.endRow + 1 : element.endRow, true);
+      if (left === null || top === null || right === null || bottom === null) return null;
+      return {
+        id: element.id,
+        type: element.type,
+        startRow: element.startRow,
+        endRow: element.endRow,
+        startCol: element.startCol,
+        endCol: element.endCol,
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top
+      };
+    }
+
+    function getGroupChildRect(child, group, groupRect) {
+      const localGrid = getGroupLocalGrid(group, groupRect);
+      const rect = getRectFromCells(child, localGrid.cells);
+      if (!rect) return null;
+      return {
+        ...rect,
+        parentId: group.id,
+        localCells: localGrid.cells,
+        maxRow: localGrid.maxRow,
+        maxCol: localGrid.maxCol
+      };
+    }
+
+    function findTopmostGroupRectAtPoint(point) {
+      for (let index = currentElementRects.length - 1; index >= 0; index--) {
+        const rect = currentElementRects[index];
+        if (rect.type !== 'group') continue;
+        if (
+          point.x >= rect.x &&
+          point.x <= rect.x + rect.width &&
+          point.y >= rect.y &&
+          point.y <= rect.y + rect.height
+        ) {
+          return rect;
+        }
+      }
+      return null;
     }
 
     function findElementEdgeAtPoint(point) {
@@ -6894,11 +7800,15 @@
     }
 
     function deletePlacedElement(id) {
-      const index = placedElements.findIndex((element) => element.id === id);
+      const record = findElementRecordById(id);
+      if (!record) return false;
+
+      const index = record.collection.findIndex((element) => element.id === id);
       if (index < 0) return false;
 
-      placedElements.splice(index, 1);
+      record.collection.splice(index, 1);
       if (hoveredElementId === id) hoveredElementId = null;
+      if (hoveredGroupControlId === id) hideGroupGapDividerControl();
       return true;
     }
 
@@ -6920,43 +7830,84 @@
       ctx.restore();
     }
 
+    function hideGroupGapDividerControl() {
+      hoveredGroupControlId = null;
+      if (groupGapDividerControl) groupGapDividerControl.hidden = true;
+    }
+
+    function ensureGroupGapDividerOptions() {
+      if (!groupGapDividerSelect || groupGapDividerSelect.options.length > 0) return;
+      for (let value = 2; value <= 10; value++) {
+        const option = document.createElement('option');
+        option.value = String(value);
+        option.textContent = String(value);
+        groupGapDividerSelect.appendChild(option);
+      }
+    }
+
+    function renderGroupGapDividerControl() {
+      if (!groupGapDividerControl || !groupGapDividerSelect) return;
+      if (activeAppView !== 'layout' || activeTab !== 'elements' || hoveredGroupControlId === null) {
+        groupGapDividerControl.hidden = true;
+        return;
+      }
+      const groupRect = currentElementRects.find((rect) => rect.id === hoveredGroupControlId && rect.type === 'group');
+      const group = findGroupRecordById(hoveredGroupControlId)?.element;
+      if (!groupRect || !group) {
+        groupGapDividerControl.hidden = true;
+        return;
+      }
+
+      ensureGroupGapDividerOptions();
+      const canvasRect = canvas.getBoundingClientRect();
+      const frameRect = canvas.parentElement.getBoundingClientRect();
+      if (!canvasRect.width || !canvasRect.height || !canvas.width || !canvas.height) {
+        groupGapDividerControl.hidden = true;
+        return;
+      }
+
+      const left = canvasRect.left - frameRect.left + ((groupRect.x + groupRect.width / 2) / canvas.width) * canvasRect.width;
+      const top = canvasRect.top - frameRect.top + ((groupRect.y + groupRect.height) / canvas.height) * canvasRect.height;
+      groupGapDividerControl.style.left = `${left}px`;
+      groupGapDividerControl.style.top = `${top}px`;
+      groupGapDividerControl.dataset.groupId = String(group.id);
+      groupGapDividerSelect.value = String(normalizeGroupGapDivider(group.gapDivider));
+      groupGapDividerControl.hidden = false;
+    }
+
     function getResizeCursor(edge) {
       return edge === 'left' || edge === 'right' ? 'ew-resize' : 'ns-resize';
     }
 
-    function removeElementsOverlappingBounds(bounds, overlapType = null, exceptId = null) {
-      for (let index = placedElements.length - 1; index >= 0; index--) {
-        const element = normalizeElementBounds(placedElements[index]);
+    function removeElementsOverlappingBounds(bounds, overlapType = null, exceptId = null, parentElement = null) {
+      const collection = getElementCollection(parentElement);
+      for (let index = collection.length - 1; index >= 0; index--) {
+        const element = normalizeElementBounds(collection[index]);
         const overlaps = (
           element.id !== exceptId &&
           (overlapType === null || element.type === overlapType) &&
-          element.startRow <= bounds.endRow &&
-          element.endRow >= bounds.startRow &&
-          element.startCol <= bounds.endCol &&
-          element.endCol >= bounds.startCol
+          boundsOverlap(element, bounds)
         );
 
         if (overlaps) {
-          placedElements.splice(index, 1);
+          collection.splice(index, 1);
         }
       }
     }
 
-    function hasSameTypeOverlap(bounds, type, exceptId = null) {
-      return placedElements.some((placedElement) => {
+    function hasSameTypeOverlap(bounds, type, exceptId = null, parentElement = null) {
+      const collection = getElementCollection(parentElement);
+      return collection.some((placedElement) => {
         const element = normalizeElementBounds(placedElement);
         if (element.id === exceptId || element.type !== type) return false;
 
-        return (
-          element.startRow <= bounds.endRow &&
-          element.endRow >= bounds.startRow &&
-          element.startCol <= bounds.endCol &&
-          element.endCol >= bounds.startCol
-        );
+        return boundsOverlap(element, bounds);
       });
     }
 
-    function addPlacedElement(type, cell) {
+    function addPlacedElement(type, cell, parentElement = null) {
+      if (!isLayoutElementType(type)) return false;
+      if (parentElement && !isMediaElementType(type)) return false;
       const nextElement = {
         id: nextElementId++,
         type,
@@ -6971,24 +7922,35 @@
         leftToPage: false,
         rightToPage: false,
         topToPage: false,
-        bottomToPage: false
+        bottomToPage: false,
+        ...(type === 'group' ? { children: [], gapDivider: 2 } : {})
+      };
+      const bounds = {
+        startRow: cell.row,
+        endRow: cell.row,
+        startCol: cell.col,
+        endCol: cell.col
       };
 
+      if (type === 'group' && hasSameTypeOverlap(bounds, 'group')) {
+        setStatus('Gruppen kÃ¶nnen nicht Ã¼bereinander gelegt werden.', true);
+        return false;
+      }
+
       removeElementsOverlappingBounds(
-        {
-          startRow: cell.row,
-          endRow: cell.row,
-          startCol: cell.col,
-          endCol: cell.col
-        },
-        type
+        bounds,
+        type,
+        null,
+        parentElement
       );
-      placedElements.push(nextElement);
+      getElementCollection(parentElement).push(nextElement);
+      return true;
     }
 
     function movePlacedElement(id, cell) {
-      const element = placedElements.find((placedElement) => placedElement.id === id);
-      if (!element) return false;
+      const record = findElementRecordById(id);
+      if (!record) return false;
+      const { element, parent } = record;
 
       normalizeElementBounds(element);
       const sourceBounds = {
@@ -7012,7 +7974,8 @@
         endCol: cell.col + colSpan
       };
 
-      removeElementsOverlappingBounds(bounds, element.type, id);
+      if (hasSameTypeOverlap(bounds, element.type, id, parent)) return false;
+      removeElementsOverlappingBounds(bounds, element.type, id, parent);
       element.row = cell.row;
       element.col = cell.col;
       element.startRow = bounds.startRow;
@@ -7020,6 +7983,51 @@
       element.startCol = bounds.startCol;
       element.endCol = bounds.endCol;
       applyMoveBoundaryRetention(element, bounds, sourceBounds, sourcePageFlags);
+      return true;
+    }
+
+    function movePlacedElementToCell(id, cell, targetParent = null) {
+      const record = findElementRecordById(id);
+      if (!record) return false;
+      const { element, parent, collection } = record;
+      if (targetParent && !isMediaElementType(element.type)) return false;
+      if (targetParent?.id === element.id) return false;
+      normalizeElementBounds(element);
+      const rowSpan = element.endRow - element.startRow;
+      const colSpan = element.endCol - element.startCol;
+      const bounds = {
+        startRow: cell.row,
+        endRow: cell.row + rowSpan,
+        startCol: cell.col,
+        endCol: cell.col + colSpan
+      };
+      const targetCollection = getElementCollection(targetParent);
+      const targetMax = targetParent
+        ? getCellsMaxima(getGroupLocalGrid(targetParent, getElementRect(targetParent)).cells)
+        : getGridMaxima();
+      if (bounds.endRow > targetMax.maxRow || bounds.endCol > targetMax.maxCol) return false;
+      if (targetCollection.some((candidate) => {
+        const normalizedCandidate = normalizeElementBounds(candidate);
+        if (normalizedCandidate.id === id || normalizedCandidate.type !== element.type) return false;
+        return boundsOverlap(normalizedCandidate, bounds);
+      })) return false;
+
+      const sourceIndex = collection.findIndex((candidate) => candidate.id === id);
+      if (sourceIndex < 0) return false;
+      collection.splice(sourceIndex, 1);
+      targetCollection.push(element);
+      element.row = bounds.startRow;
+      element.col = bounds.startCol;
+      element.startRow = bounds.startRow;
+      element.endRow = bounds.endRow;
+      element.startCol = bounds.startCol;
+      element.endCol = bounds.endCol;
+      element.leftBoundary = 'none';
+      element.rightBoundary = 'none';
+      element.leftToPage = false;
+      element.rightToPage = false;
+      element.topToPage = false;
+      element.bottomToPage = false;
       return true;
     }
 
@@ -7051,11 +8059,12 @@
     }
 
     function moveElementToBounds(id, bounds, removeOverlaps = false, preserveState = null) {
-      const element = placedElements.find((placedElement) => placedElement.id === id);
-      if (!element) return false;
+      const record = findElementRecordById(id);
+      if (!record) return false;
+      const { element, parent } = record;
 
       if (removeOverlaps) {
-        removeElementsOverlappingBounds(bounds, element.type, id);
+        removeElementsOverlappingBounds(bounds, element.type, id, parent);
       }
 
       element.row = bounds.startRow;
@@ -7067,7 +8076,8 @@
       if (
         preserveState &&
         preserveState.startBounds &&
-        preserveState.startPageFlags
+        preserveState.startPageFlags &&
+        !parent
       ) {
         applyMoveBoundaryRetention(element, bounds, preserveState.startBounds, preserveState.startPageFlags);
       } else {
@@ -7084,7 +8094,8 @@
     function getSnappedMoveBounds(point) {
       if (!moveState) return null;
 
-      const targetCell = findCellAtPoint(point) || findNearestCell(point);
+      const cells = Array.isArray(moveState.cells) ? moveState.cells : currentCells;
+      const targetCell = findCellInCellsAtPoint(point, cells) || findNearestCellInCells(point, cells);
       if (!targetCell) return null;
 
       const maxStartRow = Math.max(0, moveState.maxRow - moveState.rowSpan);
@@ -7104,7 +8115,8 @@
       const bounds = getSnappedMoveBounds(point);
       if (!bounds) return;
 
-      if (hasSameTypeOverlap(bounds, moveState.type, moveState.id)) {
+      const parent = moveState.parentId ? findGroupRecordById(moveState.parentId)?.element : null;
+      if (hasSameTypeOverlap(bounds, moveState.type, moveState.id, parent)) {
         return;
       }
 
@@ -7114,6 +8126,37 @@
     }
 
     function findNearestAllowedCellForEdge(edge, startBounds, point) {
+      if (resizeState?.parentId) {
+        const cells = Array.isArray(resizeState.cells) ? resizeState.cells : [];
+        let candidates = [];
+        if (edge === 'left') {
+          candidates = cells
+            .filter((cell) => cell.col <= startBounds.endCol)
+            .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.x - cell.x) }));
+          candidates.push(...getMidGapEdgeCandidates(cells, 'col', edge, startBounds, point));
+        }
+        if (edge === 'right') {
+          candidates = cells
+            .filter((cell) => cell.col >= startBounds.startCol)
+            .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.x - (cell.x + cell.width)) }));
+          candidates.push(...getMidGapEdgeCandidates(cells, 'col', edge, startBounds, point));
+        }
+        if (edge === 'top') {
+          candidates = cells
+            .filter((cell) => cell.row <= startBounds.endRow)
+            .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.y - cell.y) }));
+          candidates.push(...getMidGapEdgeCandidates(cells, 'row', edge, startBounds, point));
+        }
+        if (edge === 'bottom') {
+          candidates = cells
+            .filter((cell) => cell.row >= startBounds.startRow)
+            .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.y - (cell.y + cell.height)) }));
+          candidates.push(...getMidGapEdgeCandidates(cells, 'row', edge, startBounds, point));
+        }
+        candidates.sort((a, b) => a.distance - b.distance);
+        return candidates[0] || null;
+      }
+
       let candidates = [];
       const { maxRow, maxCol } = getGridMaxima();
       const pageFormat = pageFormats[getSettings().pageOrientation] || pageFormats.portrait;
@@ -7136,6 +8179,7 @@
         candidates = currentCells
           .filter((cell) => cell.col <= startBounds.endCol)
           .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.x - cell.x) }));
+        candidates.push(...getMidGapEdgeCandidates(currentCells, 'col', edge, startBounds, point));
         candidates.push({ kind: 'page', boundary: 'page-left', distance: Math.abs(point.x), col: 0 });
         if (isDoubleSpread && startRect && seamX <= startRect.x + startRect.width) {
           candidates.push({ kind: 'page', boundary: 'page-seam', distance: Math.abs(point.x - seamX), col: colsPerPage });
@@ -7146,6 +8190,7 @@
         candidates = currentCells
           .filter((cell) => cell.col >= startBounds.startCol)
           .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.x - (cell.x + cell.width)) }));
+        candidates.push(...getMidGapEdgeCandidates(currentCells, 'col', edge, startBounds, point));
         candidates.push({ kind: 'page', boundary: 'page-right', distance: Math.abs(point.x - canvas.width), col: maxCol });
         if (isDoubleSpread && startRect && seamX >= startRect.x) {
           candidates.push({ kind: 'page', boundary: 'page-seam', distance: Math.abs(point.x - seamX), col: Math.max(0, colsPerPage - 1) });
@@ -7156,6 +8201,7 @@
         candidates = currentCells
           .filter((cell) => cell.row <= startBounds.endRow)
           .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.y - cell.y) }));
+        candidates.push(...getMidGapEdgeCandidates(currentCells, 'row', edge, startBounds, point));
         candidates.push({ kind: 'page', edge: 'top', distance: Math.abs(point.y) });
       }
 
@@ -7163,6 +8209,7 @@
         candidates = currentCells
           .filter((cell) => cell.row >= startBounds.startRow)
           .map((cell) => ({ kind: 'cell', cell, distance: Math.abs(point.y - (cell.y + cell.height)) }));
+        candidates.push(...getMidGapEdgeCandidates(currentCells, 'row', edge, startBounds, point));
         candidates.push({ kind: 'page', edge: 'bottom', distance: Math.abs(point.y - canvas.height) });
       }
 
@@ -7182,8 +8229,9 @@
     function resizeElementToPoint(point) {
       if (!resizeState) return;
 
-      const element = placedElements.find((placedElement) => placedElement.id === resizeState.id);
-      if (!element) return;
+      const record = findElementRecordById(resizeState.id);
+      if (!record) return;
+      const { element, parent } = record;
 
       const targetCell = findNearestAllowedCellForEdge(resizeState.edge, resizeState.startBounds, point);
       if (!targetCell) return;
@@ -7250,7 +8298,7 @@
         startCol: element.startCol,
         endCol: element.endCol
       };
-      if (hasSameTypeOverlap(candidateBounds, element.type, element.id)) {
+      if (hasSameTypeOverlap(candidateBounds, element.type, element.id, parent)) {
         element.startRow = resizeState.lastValidState.startRow;
         element.endRow = resizeState.lastValidState.endRow;
         element.startCol = resizeState.lastValidState.startCol;
@@ -7283,33 +8331,75 @@
       currentElementRects = [];
       const drawOrder = [...placedElements].sort((a, b) => {
         if (a.type === b.type) return a.id - b.id;
+        if (a.type === 'group') return -1;
+        if (b.type === 'group') return 1;
         return a.type === 'image' ? -1 : 1;
       });
 
-      drawOrder.forEach((element) => {
-        const elementRect = getElementRect(element);
+      function drawElementBox(element, elementRect, parentElement = null) {
         if (!elementRect) return;
 
         const { x, y, width, height } = elementRect;
         const isText = element.type === 'text';
-        currentElementRects.push(elementRect);
+        const isGroup = element.type === 'group';
+        const localGrid = isGroup ? getGroupLocalGrid(element, elementRect) : null;
+        const rectEntry = {
+          ...elementRect,
+          parentId: parentElement?.id || null,
+          ...(localGrid ? { localCells: localGrid.cells, maxRow: localGrid.maxRow, maxCol: localGrid.maxCol } : {})
+        };
+        currentElementRects.push(rectEntry);
 
         ctx.save();
-        ctx.fillStyle = isText ? 'rgba(5, 150, 105, 0.16)' : 'rgba(37, 99, 235, 0.16)';
-        ctx.strokeStyle = isText ? '#059669' : '#2563eb';
-        ctx.lineWidth = 4;
+        ctx.fillStyle = isGroup
+          ? 'rgba(245, 158, 11, 0.08)'
+          : (isText ? 'rgba(5, 150, 105, 0.16)' : 'rgba(37, 99, 235, 0.16)');
+        ctx.strokeStyle = isGroup
+          ? '#f59e0b'
+          : (isText ? '#059669' : '#2563eb');
+        ctx.lineWidth = isGroup ? 3 : 4;
+        if (isGroup) ctx.setLineDash([14, 10]);
         ctx.fillRect(x, y, width, height);
         ctx.strokeRect(x, y, width, height);
-        ctx.fillStyle = isText ? '#065f46' : '#1d4ed8';
+        ctx.setLineDash([]);
+        ctx.fillStyle = isGroup
+          ? '#92400e'
+          : (isText ? '#065f46' : '#1d4ed8');
         ctx.font = '700 44px system-ui, sans-serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(isText ? 'Text' : 'Bild', x + width / 2, y + height / 2);
+        ctx.fillText(getElementTypeLabel(element.type), x + width / 2, y + height / 2);
         ctx.restore();
 
-        if (hoveredElementId === element.id) {
-          drawDeleteButton(currentElementRects[currentElementRects.length - 1]);
+        if (isGroup) {
+          ctx.save();
+          ctx.strokeStyle = 'rgba(245, 158, 11, 0.38)';
+          ctx.lineWidth = 1.5;
+          localGrid.cells.forEach((cell) => ctx.strokeRect(cell.x, cell.y, cell.width, cell.height));
+          ctx.restore();
         }
+
+        if (hoveredElementId === element.id) {
+          drawDeleteButton(rectEntry);
+        }
+      }
+
+      drawOrder.forEach((element) => {
+        const elementRect = getElementRect(element);
+        if (!elementRect) return;
+        drawElementBox(element, elementRect);
+
+        if (element.type !== 'group') return;
+        const children = (Array.isArray(element.children) ? element.children : [])
+          .filter((child) => isMediaElementType(child.type))
+          .sort((a, b) => {
+            if (a.type === b.type) return a.id - b.id;
+            return a.type === 'image' ? -1 : 1;
+          });
+        children.forEach((child) => {
+          const childRect = getGroupChildRect(child, element, elementRect);
+          drawElementBox(child, childRect, element);
+        });
       });
     }
 
@@ -7323,6 +8413,7 @@
       const pageHeight = pageFormat.height;
       const targetCanvasWidth = pageWidth * spreadCount;
       const targetCanvasHeight = pageHeight;
+      layoutStyleTextOverlayLayer?.replaceChildren();
 
       if (canvas.width !== targetCanvasWidth || canvas.height !== targetCanvasHeight) {
         canvas.width = targetCanvasWidth;
@@ -7481,6 +8572,8 @@
       drawPageBorder();
       refreshLayoutSelector();
       syncMainViewport(activeLayout, width, height);
+      renderLayoutStyleTextOverlays();
+      renderGroupGapDividerControl();
     }
 
     function drawPageBorder() {
@@ -7510,6 +8603,25 @@
     controls.colsRange.addEventListener('input', handleSettingsInput);
     controls.rowsRange.addEventListener('input', handleSettingsInput);
     controls.cellGapRange.addEventListener('input', handleSettingsInput);
+    controls.allowMidGapSnap?.addEventListener('change', handleSettingsInput);
+    groupGapDividerSelect?.addEventListener('change', () => {
+      const groupId = Number(groupGapDividerControl?.dataset.groupId);
+      const group = Number.isFinite(groupId) ? findGroupRecordById(groupId)?.element : null;
+      if (!group) return;
+      group.gapDivider = normalizeGroupGapDivider(groupGapDividerSelect.value);
+      hoveredGroupControlId = group.id;
+      draw();
+      queueSnapshotSave();
+    });
+    groupGapDividerControl?.addEventListener('mouseleave', () => {
+      if (resizeState || moveState) return;
+      hoveredGroupControlId = null;
+      if (hoveredElementId !== null && findElementRecordById(hoveredElementId)?.element?.type === 'group') {
+        hoveredElementId = null;
+      }
+      hideGroupGapDividerControl();
+      draw();
+    });
     projectTabButtons.forEach((button) => {
       button.addEventListener('click', () => {
         setProjectSidebarTab(button.dataset.projectTab || 'laden');
@@ -7709,7 +8821,7 @@
           const card = fieldInput.closest('.text-style-card[data-text-field-key]');
           const key = card?.dataset.textFieldKey;
           if (!key) return;
-          const style = category.textFieldStyles[key] || createDefaultTextFieldStyle();
+          const style = category.textFieldStyle || createDefaultTextFieldStyle();
           const prop = fieldInput.dataset.styleProp;
           if (prop === 'padding') style.padding = clampNumber(fieldInput.value, 0, 80, style.padding);
           if (prop === 'backgroundColor') style.backgroundColor = normalizeCategoryColor(fieldInput.value, style.backgroundColor);
@@ -7717,7 +8829,15 @@
           if (prop === 'borderColor') style.borderColor = normalizeCategoryColor(fieldInput.value, style.borderColor);
           if (prop === 'borderWidth') style.borderWidth = clampNumber(fieldInput.value, 0, 16, style.borderWidth);
           if (prop === 'cornerSize') style.cornerSize = clampNumber(fieldInput.value, 0, 50, style.cornerSize);
-          category.textFieldStyles[key] = normalizeTextFieldStyle(style);
+          if (prop === 'cornerSizeAbsolute') style.cornerSizeAbsolute = fieldInput.checked;
+          if (prop === 'cornerLimitSides') style.cornerLimitSides = fieldInput.checked;
+          if (prop === 'autoFitHeight') {
+            style.autoFitHeight = fieldInput.checked;
+            if (!style.autoFitHeight) style.centerFittedHeight = false;
+          }
+          if (prop === 'centerFittedHeight') style.centerFittedHeight = fieldInput.checked;
+          category.textFieldStyle = normalizeTextFieldStyle(style);
+          if (prop === 'autoFitHeight') renderTextStylePanel();
           updateTextStylePreview();
           queueSnapshotSave();
           return;
@@ -7729,19 +8849,40 @@
           if (!template) return;
           const prop = templateInput.dataset.templateProp;
           if (prop === 'name') template.name = templateInput.value.trim() || template.name;
-          if (prop === 'fontFamily') template.fontFamily = templateInput.value.trim() || template.fontFamily;
+          if (prop === 'fontFamily') {
+            template.fontFamily = templateInput.value.trim() || template.fontFamily;
+            templateInput.style.fontFamily = template.fontFamily;
+          }
           if (prop === 'fontSize') template.fontSize = clampNumber(templateInput.value, 6, 96, template.fontSize);
           if (prop === 'color') template.color = normalizeCategoryColor(templateInput.value, template.color);
           if (prop === 'bold') template.bold = templateInput.checked;
           if (prop === 'italic') template.italic = templateInput.checked;
           if (prop === 'lineHeight') template.lineHeight = clampNumber(templateInput.value, 0.8, 3, template.lineHeight);
+          if (prop === 'textAlign') template.textAlign = ['left', 'center', 'right', 'justify'].includes(templateInput.value) ? templateInput.value : 'left';
+          if (prop === 'letterSpacing') template.letterSpacing = clampNumber(templateInput.value, -3, 12, template.letterSpacing);
+          if (prop === 'wordSpacing') template.wordSpacing = clampNumber(templateInput.value, -5, 24, template.wordSpacing);
+          if (prop === 'hyphenation') template.hyphenation = templateInput.checked;
+          if (prop === 'columns') template.columns = Math.floor(clampNumber(templateInput.value, 1, 10, template.columns || 1));
+          if (prop === 'columnGap') template.columnGap = clampNumber(templateInput.value, 0, 120, template.columnGap || 16);
           category.textStyleTemplates = normalizeTextStyleTemplates(category.textStyleTemplates);
+          if (prop === 'columns') renderTextStylePanel();
           updateTextStylePreview();
           queueSnapshotSave();
         }
       };
       textStylePanel.addEventListener('input', handleTextStyleControlChange);
       textStylePanel.addEventListener('change', handleTextStyleControlChange);
+      textStylePanel.addEventListener('pointerdown', (event) => {
+        const rangeInput = event.target.closest?.('.text-field-control[type="range"], .text-template-control[type="range"]');
+        if (!rangeInput || event.button !== 0) return;
+        textStyleRangeDragState = {
+          input: rangeInput,
+          pointerId: event.pointerId
+        };
+        rangeInput.setPointerCapture?.(event.pointerId);
+        setTextStyleRangeValueFromPointer(rangeInput, event.clientX);
+        event.preventDefault();
+      });
       textStylePanel.addEventListener('click', (event) => {
         const category = getActiveCategory();
         if (!category) return;
@@ -7756,7 +8897,13 @@
             color: '#111827',
             bold: false,
             italic: false,
-            lineHeight: 1.35
+            lineHeight: 1.35,
+            textAlign: 'left',
+            letterSpacing: 0,
+            wordSpacing: 0,
+            hyphenation: false,
+            columns: 1,
+            columnGap: 16
           });
           renderTextStylePanel();
           queueSnapshotSave();
@@ -7767,14 +8914,35 @@
         const card = borderButton.closest('.text-style-card[data-text-field-key]');
         const key = card?.dataset.textFieldKey;
         if (!key) return;
-        const style = category.textFieldStyles[key] || createDefaultTextFieldStyle();
+        const style = category.textFieldStyle || createDefaultTextFieldStyle();
         style.borderAreas = { ...createDefaultTextFieldStyle().borderAreas, ...(style.borderAreas || {}) };
         const area = borderButton.dataset.borderArea;
         style.borderAreas[area] = !style.borderAreas[area];
-        category.textFieldStyles[key] = normalizeTextFieldStyle(style);
-        borderButton.classList.toggle('active', category.textFieldStyles[key].borderAreas[area]);
+        category.textFieldStyle = normalizeTextFieldStyle(style);
+        borderButton.classList.toggle('active', category.textFieldStyle.borderAreas[area]);
         updateTextStylePreview();
         queueSnapshotSave();
+      });
+    }
+    if (layoutStyleTextOverlayLayer) {
+      layoutStyleTextOverlayLayer.addEventListener('click', (event) => {
+        const editButton = event.target.closest?.('[data-text-edit-button]');
+        if (editButton) {
+          event.preventDefault();
+          event.stopPropagation();
+          startTextEditing(editButton.closest('.seite-preview-text'));
+          return;
+        }
+        if (activeTextEditState && !event.target.closest?.('.seite-preview-text.editing')) {
+          stopTextEditing();
+        }
+      });
+      layoutStyleTextOverlayLayer.addEventListener('input', (event) => {
+        if (!activeTextEditState?.layoutDummyKey) return;
+        if (event.target !== activeTextEditState.content) return;
+        applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
+        scheduleTextFieldAutoFit(activeTextEditState.slotElement, getTextFieldStyle(activeTextEditState.category));
+        layoutStyleDummyTexts.set(activeTextEditState.layoutDummyKey, activeTextEditState.content.innerHTML);
       });
     }
     if (projectFolderSelectBtn && projectFolderInput) {
@@ -7913,6 +9081,7 @@
         if (!activeTextEditState) return;
         if (event.target !== activeTextEditState.content) return;
         applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
+        scheduleTextFieldAutoFit(activeTextEditState.slotElement, getTextFieldStyle(activeTextEditState.category));
         saveTextOverride(
           activeTextEditState.page,
           activeTextEditState.textKey,
@@ -8405,6 +9574,21 @@
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') flushSnapshotSave();
     });
+    window.addEventListener('pointermove', (event) => {
+      if (!textStyleRangeDragState || textStyleRangeDragState.pointerId !== event.pointerId) return;
+      setTextStyleRangeValueFromPointer(textStyleRangeDragState.input, event.clientX);
+      event.preventDefault();
+    });
+    window.addEventListener('pointerup', (event) => {
+      if (!textStyleRangeDragState || textStyleRangeDragState.pointerId !== event.pointerId) return;
+      textStyleRangeDragState.input.releasePointerCapture?.(event.pointerId);
+      textStyleRangeDragState = null;
+    });
+    window.addEventListener('pointercancel', (event) => {
+      if (!textStyleRangeDragState || textStyleRangeDragState.pointerId !== event.pointerId) return;
+      textStyleRangeDragState.input.releasePointerCapture?.(event.pointerId);
+      textStyleRangeDragState = null;
+    });
     document.addEventListener('selectionchange', () => {
       updateTextFormatPopover();
     });
@@ -8506,7 +9690,12 @@
       currentDragPayload = null;
     });
     canvas.addEventListener('dragover', (event) => {
-      const cell = findCellAtPoint(getCanvasPoint(event));
+      const point = getCanvasPoint(event);
+      const payload = currentDragPayload || getDragPayload(event.dataTransfer);
+      const groupRect = payload && isMediaElementType(payload.type) ? findTopmostGroupRectAtPoint(point) : null;
+      const cell = groupRect
+        ? findCellInCellsAtPoint(point, groupRect.localCells || [])
+        : findCellAtPoint(point);
       if (!cell) return;
 
       event.preventDefault();
@@ -8516,9 +9705,14 @@
       event.preventDefault();
       const payload = getDragPayload(event.dataTransfer);
       currentDragPayload = null;
-      if (!payload || (payload.type !== 'image' && payload.type !== 'text')) return;
+      if (!payload || !isLayoutElementType(payload.type)) return;
 
-      const cell = findCellAtPoint(getCanvasPoint(event));
+      const point = getCanvasPoint(event);
+      const groupRect = isMediaElementType(payload.type) ? findTopmostGroupRectAtPoint(point) : null;
+      const parentGroup = groupRect ? findGroupRecordById(groupRect.id)?.element : null;
+      const cell = parentGroup
+        ? findCellInCellsAtPoint(point, groupRect.localCells || [])
+        : findCellAtPoint(point);
       if (!cell) {
         setStatus('Elemente können nur innerhalb einer Rasterzelle platziert werden.', true);
         return;
@@ -8526,13 +9720,13 @@
 
       const isMove = payload.source === 'canvas';
       if (isMove) {
-        if (!movePlacedElement(payload.id, cell)) return;
+        if (!movePlacedElementToCell(payload.id, cell, parentGroup)) return;
       } else {
-        addPlacedElement(payload.type, cell);
+        if (!addPlacedElement(payload.type, cell, parentGroup)) return;
       }
 
       draw();
-      setStatus(`${payload.type === 'text' ? 'Text' : 'Bild'} in Zelle ${cell.col + 1}/${cell.row + 1} ${isMove ? 'verschoben' : 'platziert'}.`, false);
+      setStatus(`${getElementTypeLabel(payload.type)} in Zelle ${cell.col + 1}/${cell.row + 1} ${isMove ? 'verschoben' : 'platziert'}.`, false);
       queueSnapshotSave();
     });
     canvas.addEventListener('pointerdown', (event) => {
@@ -8555,14 +9749,20 @@
         const elementRect = findPlacedElementAtPoint(point);
         if (!elementRect) return;
 
-        const element = placedElements.find((placedElement) => placedElement.id === elementRect.id);
-        const pointerCell = findCellAtPoint(point) || findNearestCell(point);
+        const record = findElementRecordById(elementRect.id);
+        const element = record?.element;
+        const parent = record?.parent || null;
+        const cells = parent ? (elementRect.localCells || []) : currentCells;
+        const pointerCell = findCellInCellsAtPoint(point, cells) || findNearestCellInCells(point, cells);
         if (!element || !pointerCell) return;
 
         normalizeElementBounds(element);
+        const maxima = getCellsMaxima(cells);
         moveState = {
           id: element.id,
           type: element.type,
+          parentId: parent?.id || null,
+          cells,
           rowSpan: element.endRow - element.startRow,
           colSpan: element.endCol - element.startCol,
           startBounds: {
@@ -8585,8 +9785,8 @@
           },
           pointerRowOffset: Math.min(Math.max(0, pointerCell.row - element.startRow), element.endRow - element.startRow),
           pointerColOffset: Math.min(Math.max(0, pointerCell.col - element.startCol), element.endCol - element.startCol),
-          maxRow: Math.max(...currentCells.map((cell) => cell.row)),
-          maxCol: Math.max(...currentCells.map((cell) => cell.col))
+          maxRow: maxima.maxRow,
+          maxCol: maxima.maxCol
         };
         hoveredElementId = element.id;
         canvas.style.cursor = 'grabbing';
@@ -8595,13 +9795,18 @@
         return;
       }
 
-      const element = placedElements.find((placedElement) => placedElement.id === edgeHit.elementRect.id);
+      const record = findElementRecordById(edgeHit.elementRect.id);
+      const element = record?.element;
+      const parent = record?.parent || null;
       if (!element) return;
       normalizeElementBounds(element);
 
       resizeState = {
         id: element.id,
+        type: element.type,
         edge: edgeHit.edge,
+        parentId: parent?.id || null,
+        cells: parent ? (edgeHit.elementRect.localCells || []) : currentCells,
         startPoint: point,
         startBounds: {
           startRow: element.startRow,
@@ -8651,8 +9856,11 @@
 
       const hoveredElement = findPlacedElementAtPoint(point);
       const nextHoveredElementId = hoveredElement ? hoveredElement.id : null;
-      if (nextHoveredElementId !== hoveredElementId) {
+      const hoveredGroup = findTopmostGroupRectAtPoint(point);
+      const nextHoveredGroupControlId = hoveredGroup ? hoveredGroup.id : null;
+      if (nextHoveredElementId !== hoveredElementId || nextHoveredGroupControlId !== hoveredGroupControlId) {
         hoveredElementId = nextHoveredElementId;
+        hoveredGroupControlId = nextHoveredGroupControlId;
         draw();
       }
 
@@ -8665,10 +9873,12 @@
       const edgeHit = findElementEdgeAtPoint(point);
       canvas.style.cursor = edgeHit ? getResizeCursor(edgeHit.edge) : '';
     });
-    canvas.addEventListener('pointerleave', () => {
+    canvas.addEventListener('pointerleave', (event) => {
       if (resizeState || moveState || hoveredElementId === null) return;
+      if (groupGapDividerControl?.contains(event.relatedTarget)) return;
 
       hoveredElementId = null;
+      hideGroupGapDividerControl();
       canvas.style.cursor = '';
       draw();
     });
@@ -8676,7 +9886,8 @@
       if (moveState) {
         const bounds = getSnappedMoveBounds(getCanvasPoint(event));
         let wasBlocked = false;
-        if (bounds && !hasSameTypeOverlap(bounds, moveState.type, moveState.id)) {
+        const parent = moveState.parentId ? findGroupRecordById(moveState.parentId)?.element : null;
+        if (bounds && !hasSameTypeOverlap(bounds, moveState.type, moveState.id, parent)) {
           moveElementToBounds(moveState.id, bounds, false, moveState);
           moveState.lastValidBounds = bounds;
         } else {
@@ -8691,8 +9902,8 @@
         draw();
         setStatus(
           wasBlocked
-            ? `${movedType === 'text' ? 'Text' : 'Bild'} wurde nicht verschoben (gleichartiges Element im Zielbereich).`
-            : `${movedType === 'text' ? 'Text' : 'Bild'} verschoben.`,
+            ? `${getElementTypeLabel(movedType)} wurde nicht verschoben (gleichartiges Element im Zielbereich).`
+            : `${getElementTypeLabel(movedType)} verschoben.`,
           wasBlocked
         );
         if (!wasBlocked) queueSnapshotSave();
