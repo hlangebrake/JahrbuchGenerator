@@ -57,13 +57,15 @@
     }
 
     .app {
+      height: 100vh;
       min-height: 100vh;
       display: grid;
       grid-template-columns: 340px 1fr;
-      grid-template-rows: auto 1fr;
+      grid-template-rows: auto minmax(0, 1fr);
       grid-template-areas:
         "menu menu"
         "sidebar main";
+      overflow: hidden;
     }
 
     .app.sidebar-collapsed {
@@ -832,6 +834,105 @@
       place-items: center;
     }
 
+    #druckMainContent {
+      height: 100%;
+      min-height: 0;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      overflow: hidden;
+    }
+
+    #druckMainContent[hidden] {
+      display: none !important;
+    }
+
+    .druck-card {
+      width: min(680px, 100%);
+      display: grid;
+      gap: 14px;
+      padding: 20px;
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      background:
+        radial-gradient(circle at top left, rgba(96, 165, 250, 0.14), transparent 34%),
+        #10151f;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.24);
+    }
+
+    .druck-card h2 {
+      margin: 0;
+      font-size: 1.25rem;
+    }
+
+    .druck-card p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .druck-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .druck-export-btn {
+      min-height: 38px;
+      padding: 9px 14px;
+      border: 1px solid rgba(96, 165, 250, 0.58);
+      border-radius: 8px;
+      background: rgba(37, 99, 235, 0.22);
+      color: #dbeafe;
+      font: inherit;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .druck-export-btn:disabled {
+      cursor: wait;
+      opacity: 0.58;
+    }
+
+    .druck-progress {
+      display: grid;
+      gap: 7px;
+    }
+
+    .druck-progress-track {
+      height: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      border-radius: 999px;
+      background: #0f172a;
+    }
+
+    .druck-progress-bar {
+      width: 0%;
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(90deg, #60a5fa, #fbbf24);
+      transition: width 120ms ease;
+    }
+
+    .druck-progress-text {
+      min-height: 1.25em;
+      color: var(--muted);
+      font-size: 0.86rem;
+    }
+
+    .druck-render-host {
+      position: fixed;
+      left: -20000px;
+      top: 0;
+      z-index: -1;
+      width: max-content;
+      pointer-events: none;
+      visibility: hidden;
+    }
+
     .redaktion-workspace {
       height: 100%;
       min-height: 0;
@@ -1457,12 +1558,26 @@
 
     .sidebar {
       grid-area: sidebar;
+      min-height: 0;
       background: var(--panel);
       border-right: 1px solid var(--border);
       padding: 24px;
       box-shadow: var(--shadow);
       position: relative;
       z-index: 1;
+      overflow: hidden;
+    }
+
+    #layoutSidebarContent {
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding-right: 4px;
+    }
+
+    #layoutSidebarContent[hidden] {
+      display: none !important;
     }
 
     .sidebar h1 {
@@ -2029,6 +2144,19 @@
       overflow: auto;
     }
 
+    .app.layout-view .main {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    #layoutMainContent {
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      display: grid;
+      place-items: center;
+    }
+
     .app.seite-view .main {
       padding: 0;
       overflow: hidden;
@@ -2462,6 +2590,23 @@
           </section>
         </div>
       </div>
+      <div id="druckMainContent" hidden>
+        <section class="druck-card" aria-labelledby="druckTitle">
+          <h2 id="druckTitle">Druck</h2>
+          <p>Exportiert alle nummerierten Seiten exakt aus der Seitenansicht als PDF. Bildausschnitte, Textformate und Layoutpositionen werden aus derselben Darstellung gerendert.</p>
+          <div class="druck-actions">
+            <button id="druckExportBtn" class="druck-export-btn" type="button">PDF exportieren</button>
+            <span id="druckPageCount" class="druck-progress-text">Keine Seiten berechnet.</span>
+          </div>
+          <div class="druck-progress" aria-live="polite">
+            <div class="druck-progress-track" aria-hidden="true">
+              <div id="druckProgressBar" class="druck-progress-bar"></div>
+            </div>
+            <div id="druckProgressText" class="druck-progress-text">Bereit.</div>
+          </div>
+          <div id="druckRenderHost" class="druck-render-host" aria-hidden="true"></div>
+        </section>
+      </div>
     </main>
   </div>
 
@@ -2496,6 +2641,12 @@
     const seiteMainContent = document.getElementById('seiteMainContent');
     const seiteStage = document.getElementById('seiteStage');
     const seitePageStrip = document.getElementById('seitePageStrip');
+    const druckMainContent = document.getElementById('druckMainContent');
+    const druckExportBtn = document.getElementById('druckExportBtn');
+    const druckPageCount = document.getElementById('druckPageCount');
+    const druckProgressBar = document.getElementById('druckProgressBar');
+    const druckProgressText = document.getElementById('druckProgressText');
+    const druckRenderHost = document.getElementById('druckRenderHost');
     const seiteViewToggleButtons = Array.from(document.querySelectorAll('.seite-view-toggle-btn'));
     const seiteAllAssets = document.getElementById('seiteAllAssets');
     const seiteAssetTypeFilterButtons = Array.from(document.querySelectorAll('.seite-filter-btn[data-seite-asset-type]'));
@@ -2633,6 +2784,7 @@
     let seiteAssetTypeFilter = 'all';
     let seiteImageOrientationFilter = 'both';
     let seiteAssetDisplaySize = 74;
+    let druckExportInProgress = false;
     let activeTextEditState = null;
     let textFormatPopover = null;
     let textStyleRangeDragState = null;
@@ -3113,7 +3265,9 @@
       const isProjektView = nextView === 'projekt';
       const isRedaktionView = nextView === 'redaktion';
       const isSeiteView = nextView === 'seite';
+      const isDruckView = nextView === 'druck';
       if (appRoot) {
+        appRoot.classList.toggle('layout-view', isLayoutView);
         appRoot.classList.toggle('main-only', !isLayoutView && !isProjektView && !isSeiteView);
         appRoot.classList.toggle('seite-view', isSeiteView);
       }
@@ -3124,6 +3278,7 @@
       if (projectMainContent) projectMainContent.hidden = !isProjektView;
       if (redaktionMainContent) redaktionMainContent.hidden = !isRedaktionView;
       if (seiteMainContent) seiteMainContent.hidden = !isSeiteView;
+      if (druckMainContent) druckMainContent.hidden = !isDruckView;
       if (!isSeiteView) clearSeitePreviewObjectUrls();
       if (!isSeiteView) clearSeiteSidebarObjectUrls();
 
@@ -3137,6 +3292,9 @@
         if (isSeiteView) {
           renderSeitePageStrip();
           void renderSeiteSidebarAssets();
+        }
+        if (isDruckView) {
+          refreshDruckView();
         }
         if (mainArea) {
           mainArea.scrollLeft = 0;
@@ -6057,6 +6215,345 @@
       }
     }
 
+    function refreshDruckView(message = '') {
+      const pageCount = getRedaktionNumberedPageCells().length;
+      if (druckPageCount) {
+        druckPageCount.textContent = pageCount === 1 ? '1 Seite bereit.' : `${pageCount} Seiten bereit.`;
+      }
+      if (druckExportBtn) {
+        druckExportBtn.disabled = druckExportInProgress || pageCount === 0;
+      }
+      if (!druckExportInProgress) {
+        if (druckProgressBar) druckProgressBar.style.width = '0%';
+        if (druckProgressText) druckProgressText.textContent = message || (pageCount ? 'Bereit.' : 'Keine Seiten vorhanden.');
+      }
+    }
+
+    function updateDruckProgress(done, total, pageNumber, message = '') {
+      const ratio = total > 0 ? Math.min(1, Math.max(0, done / total)) : 0;
+      if (druckProgressBar) druckProgressBar.style.width = `${Math.round(ratio * 100)}%`;
+      if (druckProgressText) {
+        druckProgressText.textContent = message || `Exportiere Seite ${pageNumber} (${done}/${total}) ...`;
+      }
+    }
+
+    function waitForAnimationFrames(count = 2) {
+      return new Promise((resolve) => {
+        const step = () => {
+          count--;
+          if (count <= 0) {
+            resolve();
+            return;
+          }
+          requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      });
+    }
+
+    async function waitForElementImages(element) {
+      const images = Array.from(element?.querySelectorAll?.('img') || []);
+      await Promise.all(images.map((image) => {
+        if (image.complete && image.naturalWidth) return Promise.resolve();
+        return new Promise((resolve) => {
+          image.addEventListener('load', resolve, { once: true });
+          image.addEventListener('error', resolve, { once: true });
+        });
+      }));
+      await waitForAnimationFrames(2);
+    }
+
+    function blobToDataUrl(blob) {
+      return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result || ''));
+        reader.onerror = () => reject(reader.error);
+        reader.readAsDataURL(blob);
+      });
+    }
+
+    async function imageSourceToDataUrl(src) {
+      if (!src || src.startsWith('data:')) return src || '';
+      const response = await fetch(src);
+      const blob = await response.blob();
+      return blobToDataUrl(blob);
+    }
+
+    function canvasToBlob(canvas, type = 'image/png', quality) {
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (blob) {
+            resolve(blob);
+          } else {
+            reject(new Error('Canvas konnte nicht exportiert werden.'));
+          }
+        }, type, quality);
+      });
+    }
+
+    async function imageElementToSafeDataUrl(image) {
+      if (!image) return '';
+      if (image.complete && image.naturalWidth && image.naturalHeight) {
+        try {
+          const rasterCanvas = document.createElement('canvas');
+          rasterCanvas.width = image.naturalWidth;
+          rasterCanvas.height = image.naturalHeight;
+          const rasterCtx = rasterCanvas.getContext('2d');
+          rasterCtx.drawImage(image, 0, 0);
+          return await blobToDataUrl(await canvasToBlob(rasterCanvas, 'image/png'));
+        } catch {
+          // Fall through to the source fetch path below.
+        }
+      }
+      return imageSourceToDataUrl(image.currentSrc || image.src);
+    }
+
+    async function inlineCloneImagesForExport(sourceElement, clonedElement) {
+      const sourceImages = Array.from(sourceElement.querySelectorAll('img'));
+      const cloneImages = Array.from(clonedElement.querySelectorAll('img'));
+      for (let index = 0; index < cloneImages.length; index++) {
+        const sourceImage = sourceImages[index];
+        const cloneImage = cloneImages[index];
+        if (!sourceImage || !cloneImage) continue;
+        try {
+          cloneImage.src = await imageElementToSafeDataUrl(sourceImage);
+        } catch {
+          cloneImage.removeAttribute('src');
+        }
+        cloneImage.removeAttribute('data-object-url');
+      }
+    }
+
+    function stringToBase64(text) {
+      const bytes = new TextEncoder().encode(text);
+      let binary = '';
+      bytes.forEach((byte) => {
+        binary += String.fromCharCode(byte);
+      });
+      return btoa(binary);
+    }
+
+    function getExportStyleText() {
+      const documentStyles = Array.from(document.querySelectorAll('style'))
+        .map((style) => style.textContent || '')
+        .join('\n');
+      return `${documentStyles}
+        .seite-page-preview { box-shadow: none !important; margin: 0 !important; }
+        .seite-text-edit-btn { display: none !important; }
+        .seite-preview-element.asset-drop-target,
+        .seite-preview-element.asset-drop-invalid { outline: none !important; box-shadow: none !important; }
+      `;
+    }
+
+    function applyRootCssVariables(target) {
+      const rootStyles = getComputedStyle(document.documentElement);
+      for (let index = 0; index < rootStyles.length; index++) {
+        const propertyName = rootStyles[index];
+        if (propertyName.startsWith('--')) {
+          target.style.setProperty(propertyName, rootStyles.getPropertyValue(propertyName));
+        }
+      }
+    }
+
+    async function captureSeitePreviewAsJpeg(pageElement, scale = 2) {
+      await waitForElementImages(pageElement);
+      if (document.fonts?.ready) {
+        try {
+          await document.fonts.ready;
+        } catch {
+          // Font readiness is a best-effort improvement for export consistency.
+        }
+      }
+
+      const rect = pageElement.getBoundingClientRect();
+      const width = Math.max(1, Math.ceil(rect.width));
+      const height = Math.max(1, Math.ceil(rect.height));
+      const clone = pageElement.cloneNode(true);
+      clone.style.width = `${width}px`;
+      clone.style.height = `${height}px`;
+      clone.style.boxShadow = 'none';
+      await inlineCloneImagesForExport(pageElement, clone);
+
+      const wrapper = document.createElement('div');
+      wrapper.setAttribute('xmlns', 'http://www.w3.org/1999/xhtml');
+      wrapper.style.width = `${width}px`;
+      wrapper.style.height = `${height}px`;
+      wrapper.style.margin = '0';
+      applyRootCssVariables(wrapper);
+
+      const style = document.createElement('style');
+      style.textContent = getExportStyleText();
+      wrapper.appendChild(style);
+      wrapper.appendChild(clone);
+
+      const serializedHtml = new XMLSerializer().serializeToString(wrapper);
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}"><foreignObject width="100%" height="100%">${serializedHtml}</foreignObject></svg>`;
+      const svgUrl = `data:image/svg+xml;base64,${stringToBase64(svg)}`;
+      const image = await new Promise((resolve, reject) => {
+        const svgImage = new Image();
+        svgImage.onload = () => resolve(svgImage);
+        svgImage.onerror = () => reject(new Error('Die Seite konnte nicht fuer den PDF-Export gerendert werden.'));
+        svgImage.src = svgUrl;
+      });
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(width * scale);
+      canvas.height = Math.round(height * scale);
+      const exportCtx = canvas.getContext('2d');
+      exportCtx.fillStyle = '#ffffff';
+      exportCtx.fillRect(0, 0, canvas.width, canvas.height);
+      exportCtx.drawImage(image, 0, 0, canvas.width, canvas.height);
+      const jpegBlob = await canvasToBlob(canvas, 'image/jpeg', 0.96);
+      return {
+        jpegBytes: new Uint8Array(await jpegBlob.arrayBuffer()),
+        pixelWidth: canvas.width,
+        pixelHeight: canvas.height,
+        isLandscape: pageElement.classList.contains('landscape') || width > height
+      };
+    }
+
+    function dataUrlToBytes(dataUrl) {
+      const base64 = String(dataUrl).split(',')[1] || '';
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let index = 0; index < binary.length; index++) {
+        bytes[index] = binary.charCodeAt(index);
+      }
+      return bytes;
+    }
+
+    function asciiBytes(text) {
+      const bytes = new Uint8Array(text.length);
+      for (let index = 0; index < text.length; index++) {
+        bytes[index] = text.charCodeAt(index) & 0xff;
+      }
+      return bytes;
+    }
+
+    function createPdfFromPageImages(pageImages) {
+      const a5Portrait = { width: 419.528, height: 595.276 };
+      const chunks = [];
+      const offsets = [];
+      let position = 0;
+      const addChunk = (chunk) => {
+        const bytes = typeof chunk === 'string' ? asciiBytes(chunk) : chunk;
+        chunks.push(bytes);
+        position += bytes.length;
+      };
+      const addObject = (id, bodyChunks) => {
+        offsets[id] = position;
+        addChunk(`${id} 0 obj\n`);
+        bodyChunks.forEach(addChunk);
+        addChunk('\nendobj\n');
+      };
+
+      addChunk('%PDF-1.4\n%PDF-Jahrbuch\n');
+      const pageObjectIds = pageImages.map((_, index) => 3 + index * 3);
+      addObject(1, ['<< /Type /Catalog /Pages 2 0 R >>']);
+      addObject(2, [`<< /Type /Pages /Count ${pageImages.length} /Kids [${pageObjectIds.map((id) => `${id} 0 R`).join(' ')}] >>`]);
+
+      pageImages.forEach((pageImage, index) => {
+        const pageObjectId = 3 + index * 3;
+        const contentObjectId = pageObjectId + 1;
+        const imageObjectId = pageObjectId + 2;
+        const pageSize = pageImage.isLandscape
+          ? { width: a5Portrait.height, height: a5Portrait.width }
+          : a5Portrait;
+        const drawStream = `q\n${pageSize.width.toFixed(3)} 0 0 ${pageSize.height.toFixed(3)} 0 0 cm\n/Im${index + 1} Do\nQ\n`;
+
+        addObject(pageObjectId, [
+          `<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${pageSize.width.toFixed(3)} ${pageSize.height.toFixed(3)}] /Resources << /XObject << /Im${index + 1} ${imageObjectId} 0 R >> >> /Contents ${contentObjectId} 0 R >>`
+        ]);
+        addObject(contentObjectId, [
+          `<< /Length ${asciiBytes(drawStream).length} >>\nstream\n`,
+          drawStream,
+          'endstream'
+        ]);
+        addObject(imageObjectId, [
+          `<< /Type /XObject /Subtype /Image /Width ${pageImage.pixelWidth} /Height ${pageImage.pixelHeight} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pageImage.jpegBytes.length} >>\nstream\n`,
+          pageImage.jpegBytes,
+          '\nendstream'
+        ]);
+      });
+
+      const xrefOffset = position;
+      const objectCount = 2 + pageImages.length * 3;
+      addChunk(`xref\n0 ${objectCount + 1}\n`);
+      addChunk('0000000000 65535 f \n');
+      for (let id = 1; id <= objectCount; id++) {
+        addChunk(`${String(offsets[id] || 0).padStart(10, '0')} 00000 n \n`);
+      }
+      addChunk(`trailer\n<< /Size ${objectCount + 1} /Root 1 0 R >>\nstartxref\n${xrefOffset}\n%%EOF\n`);
+      return new Blob(chunks, { type: 'application/pdf' });
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    }
+
+    async function renderDruckPageElement(pageNumber) {
+      if (!druckRenderHost) throw new Error('Druckbereich ist nicht verfuegbar.');
+      druckRenderHost.replaceChildren();
+      const pageHolder = document.createElement('div');
+      druckRenderHost.appendChild(pageHolder);
+      const token = ++seitePreviewRenderToken;
+      await renderSeitePreviewPage(pageNumber, pageHolder, token);
+      await waitForElementImages(pageHolder);
+      const pageElement = pageHolder.querySelector('.seite-page-preview');
+      if (!pageElement) throw new Error(`Seite ${pageNumber} konnte nicht gerendert werden.`);
+      return pageElement;
+    }
+
+    async function exportDruckPdf() {
+      if (druckExportInProgress) return;
+      const numberedPages = getRedaktionNumberedPageCells();
+      if (numberedPages.length === 0) {
+        refreshDruckView('Keine Seiten zum Exportieren vorhanden.');
+        return;
+      }
+
+      druckExportInProgress = true;
+      refreshDruckView();
+      const pageImages = [];
+      try {
+        for (let index = 0; index < numberedPages.length; index++) {
+          const pageNumber = numberedPages[index].number;
+          updateDruckProgress(index, numberedPages.length, pageNumber, `Exportiere Seite ${pageNumber} (${index + 1}/${numberedPages.length}) ...`);
+          const pageElement = await renderDruckPageElement(pageNumber);
+          pageImages.push(await captureSeitePreviewAsJpeg(pageElement, 2.5));
+          clearSeitePreviewObjectUrls();
+          await waitForAnimationFrames(1);
+          updateDruckProgress(index + 1, numberedPages.length, pageNumber, `Seite ${pageNumber} exportiert (${index + 1}/${numberedPages.length}).`);
+        }
+        const pdfBlob = createPdfFromPageImages(pageImages);
+        const today = new Date().toISOString().slice(0, 10);
+        downloadBlob(pdfBlob, `Jahrbuch-${today}.pdf`);
+        updateDruckProgress(numberedPages.length, numberedPages.length, numberedPages[numberedPages.length - 1].number, 'PDF wurde erstellt.');
+      } catch (error) {
+        console.error(error);
+        if (druckProgressText) druckProgressText.textContent = error?.message || 'PDF-Export fehlgeschlagen.';
+        if (druckProgressBar) druckProgressBar.style.width = '0%';
+        setStatus(error?.message || 'PDF-Export fehlgeschlagen.', true);
+      } finally {
+        const finalProgressMessage = druckProgressText?.textContent || '';
+        druckExportInProgress = false;
+        if (druckRenderHost) druckRenderHost.replaceChildren();
+        clearSeitePreviewObjectUrls();
+        if (druckExportBtn) druckExportBtn.disabled = getRedaktionNumberedPageCells().length === 0;
+        if (druckPageCount) {
+          const pageCount = getRedaktionNumberedPageCells().length;
+          druckPageCount.textContent = pageCount === 1 ? '1 Seite bereit.' : `${pageCount} Seiten bereit.`;
+        }
+        if (druckProgressText) druckProgressText.textContent = finalProgressMessage || 'Bereit.';
+      }
+    }
+
     function renderSeitePageStrip() {
       if (!seitePageStrip) return;
       seitePageStrip.replaceChildren();
@@ -8636,6 +9133,9 @@
       button.addEventListener('click', () => {
         setActiveAppView(button.dataset.appView || 'layout');
       });
+    });
+    druckExportBtn?.addEventListener('click', () => {
+      void exportDruckPdf();
     });
     categoryUi.select.addEventListener('change', () => {
       switchToCategory(categoryUi.select.value);
