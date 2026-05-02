@@ -1088,6 +1088,12 @@
         height: var(--druck-image-height, auto) !important;
       }
 
+      .druck-print-page .seite-preview-text[data-druck-text-fit="true"] {
+        top: var(--druck-text-top, 0%) !important;
+        height: var(--druck-text-height, auto) !important;
+        bottom: auto !important;
+      }
+
       .seite-text-edit-btn,
       .seite-text-format-popover {
         display: none !important;
@@ -5570,6 +5576,16 @@
       return `text:${page?.id || ''}:${layoutSlot}:${elementId}:${normalizedPath}`;
     }
 
+    function createTextEditButton(label = 'Text bearbeiten') {
+      const editButton = document.createElement('button');
+      editButton.type = 'button';
+      editButton.className = 'seite-text-edit-btn';
+      editButton.dataset.textEditButton = 'true';
+      editButton.setAttribute('aria-label', label);
+      editButton.textContent = 'âœŽ';
+      return editButton;
+    }
+
     function createAutoStyledTextHtml(text, category) {
       const { heading, body } = getTextTemplatePair(category);
       const normalizedText = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
@@ -5825,6 +5841,10 @@
         : originalTop;
       slotElement.style.top = `${nextTop}px`;
       slotElement.style.height = `${fittedHeight}px`;
+      const pageHeight = Math.max(1, slotElement.parentElement?.getBoundingClientRect?.().height || 1);
+      slotElement.dataset.druckTextFit = 'true';
+      slotElement.style.setProperty('--druck-text-top', `${(nextTop / pageHeight) * 100}%`);
+      slotElement.style.setProperty('--druck-text-height', `${(fittedHeight / pageHeight) * 100}%`);
     }
 
     function renderTextBorderOverlay(slotElement, style) {
@@ -5928,15 +5948,35 @@
       const override = getTextOverride(page, textKey);
       content.innerHTML = override?.html || createAutoStyledTextHtml(text, category);
       slotElement.appendChild(content);
-      const editButton = document.createElement('button');
-      editButton.type = 'button';
-      editButton.className = 'seite-text-edit-btn';
-      editButton.dataset.textEditButton = 'true';
-      editButton.setAttribute('aria-label', 'Text bearbeiten');
-      editButton.textContent = '✎';
-      slotElement.appendChild(editButton);
+      slotElement.appendChild(createTextEditButton());
       applyTextFieldStyle(slotElement, category, layoutId, elementId);
       applyTextTemplateStylesToElement(content, category);
+    }
+
+    function renderEmptyEditableTextSlot(slotElement, page, category, layoutId, elementId, layoutSlot) {
+      if (!slotElement || !page) return;
+      const textKey = getTextContentKey(page, '', layoutSlot, elementId);
+      slotElement.dataset.textContentKey = textKey;
+      slotElement.dataset.textPath = '';
+      slotElement.dataset.layoutId = layoutId;
+      slotElement.dataset.textElementId = String(elementId);
+      slotElement.replaceChildren();
+      const override = getTextOverride(page, textKey);
+      if (override) {
+        const content = document.createElement('div');
+        content.className = 'seite-text-content';
+        content.dataset.textContent = 'true';
+        content.innerHTML = override.html || createAutoStyledTextHtml('', category);
+        slotElement.appendChild(content);
+        applyTextTemplateStylesToElement(content, category);
+      } else {
+        const empty = document.createElement('div');
+        empty.className = 'seite-preview-empty-slot';
+        empty.textContent = 'Text';
+        slotElement.appendChild(empty);
+      }
+      slotElement.appendChild(createTextEditButton('Neuen Text bearbeiten'));
+      applyTextFieldStyle(slotElement, category, layoutId, elementId);
     }
 
     function getLayoutDummyTextKey(elementId) {
@@ -6010,12 +6050,24 @@
     function startTextEditing(slotElement) {
       const isLayoutDummy = slotElement?.dataset.layoutDummyText === 'true';
       const page = isLayoutDummy ? null : getRedaktionPageById(slotElement?.dataset.pageId);
-      const content = slotElement?.querySelector('.seite-text-content');
-      if ((!page && !isLayoutDummy) || !content) return;
+      let content = slotElement?.querySelector('.seite-text-content');
+      if (!page && !isLayoutDummy) return;
       if (activeTextEditState?.slotElement && activeTextEditState.slotElement !== slotElement) {
         stopTextEditing();
       }
       const category = isLayoutDummy ? getActiveCategory() : getLayoutCategoryById(page.layoutCategoryId || '');
+      if (!content && category) {
+        slotElement.querySelector('.seite-preview-empty-slot')?.remove();
+        content = document.createElement('div');
+        content.className = 'seite-text-content';
+        content.dataset.textContent = 'true';
+        content.innerHTML = createAutoStyledTextHtml('', category);
+        const editButton = slotElement.querySelector('[data-text-edit-button]');
+        slotElement.insertBefore(content, editButton || null);
+        applyTextFieldStyle(slotElement, category, slotElement.dataset.layoutId || '', slotElement.dataset.textElementId || '');
+        applyTextTemplateStylesToElement(content, category);
+      }
+      if (!content) return;
       activeTextEditState = {
         slotElement,
         content,
@@ -6631,10 +6683,14 @@
         if (!renderedEntry) continue;
         const { box, mediaKey, path } = renderedEntry;
         if (!path) {
-          const empty = document.createElement('div');
-          empty.className = 'seite-preview-empty-slot';
-          empty.textContent = 'Text';
-          box.appendChild(empty);
+          renderEmptyEditableTextSlot(
+            box,
+            context.page,
+            category,
+            context.layout.id,
+            entry.element.id,
+            context.layoutSlot.slot
+          );
           continue;
         }
 
