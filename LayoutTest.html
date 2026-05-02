@@ -475,7 +475,42 @@
       background: #10151f;
       display: flex;
       align-items: center;
+      gap: 16px;
       justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .seite-layout-picker {
+      display: inline-grid;
+      grid-template-columns: auto minmax(180px, 280px);
+      gap: 8px;
+      align-items: center;
+    }
+
+    .seite-layout-picker label {
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .seite-layout-picker select {
+      min-height: 36px;
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      background: #141a25;
+      color: var(--text);
+      font: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      padding: 7px 10px;
+    }
+
+    .seite-layout-picker select:disabled {
+      color: var(--muted);
+      opacity: 0.68;
+      cursor: not-allowed;
     }
 
     .seite-view-toggle {
@@ -623,13 +658,24 @@
       line-height: 1;
     }
 
+    .seite-text-content.has-column-flow {
+      display: flex;
+      flex-direction: column;
+      min-height: 0;
+    }
+
     .seite-text-content [data-text-line="true"] {
       display: block;
       margin: 0;
       padding: 0;
     }
 
-    .seite-text-content [data-text-style-id] {
+    .seite-text-column-flow {
+      display: block;
+      flex: 1 1 0;
+      height: 100%;
+      min-height: 0;
+      overflow: visible;
       column-fill: auto;
     }
 
@@ -2451,6 +2497,10 @@
       <div id="seiteMainContent" hidden>
         <div class="seite-workspace">
           <div class="seite-toolbar">
+            <div class="seite-layout-picker">
+              <label for="seiteLayoutSelect">Layout</label>
+              <select id="seiteLayoutSelect" aria-label="Layout der aktiven Seite"></select>
+            </div>
             <div class="seite-view-toggle" role="group" aria-label="Seitenansicht">
               <button class="seite-view-toggle-btn active" type="button" data-seite-view-mode="single">Einzelseite</button>
               <button class="seite-view-toggle-btn" type="button" data-seite-view-mode="double">Doppelseite</button>
@@ -2496,6 +2546,7 @@
     const seiteMainContent = document.getElementById('seiteMainContent');
     const seiteStage = document.getElementById('seiteStage');
     const seitePageStrip = document.getElementById('seitePageStrip');
+    const seiteLayoutSelect = document.getElementById('seiteLayoutSelect');
     const seiteViewToggleButtons = Array.from(document.querySelectorAll('.seite-view-toggle-btn'));
     const seiteAllAssets = document.getElementById('seiteAllAssets');
     const seiteAssetTypeFilterButtons = Array.from(document.querySelectorAll('.seite-filter-btn[data-seite-asset-type]'));
@@ -2625,9 +2676,8 @@
     let activeSeitePageNumber = null;
     let seiteViewMode = 'single';
     let seitePreviewRenderToken = 0;
-    let seitePreviewObjectUrls = [];
+    let seiteViewContentRenderToken = 0;
     let seiteSidebarRenderToken = 0;
-    let seiteSidebarObjectUrls = [];
     let seiteImageDragState = null;
     let seiteDraggedAssetPayload = null;
     let seiteAssetTypeFilter = 'all';
@@ -2640,6 +2690,7 @@
     let textTemplatesPanelOpen = true;
     const layoutStyleDummyTexts = new Map();
     const assetImageOrientationCache = new Map();
+    const assetObjectUrlCache = new Map();
 
     const SNAPSHOT_DB_NAME = 'jahrbuch-generator-db';
     const SNAPSHOT_STORE_NAME = 'snapshots';
@@ -2959,7 +3010,7 @@
       return `rgba(${rgb.r}, ${rgb.g}, ${rgb.b}, ${clampNumber(alpha, 0, 1, 0)})`;
     }
 
-    function getTemplateInlineStyle(template) {
+    function getTemplateInlineStyle(template, includeColumns = false) {
       const normalized = normalizeTextStyleTemplates([template])[0] || createDefaultTextStyleTemplates()[1];
       const columnStyles = normalized.columns > 1
         ? [
@@ -2983,7 +3034,16 @@
         `hyphens: ${normalized.hyphenation ? 'auto' : 'manual'}`,
         `line-height: ${normalized.lineHeight}`,
         'margin-bottom: 0',
-        ...columnStyles
+        ...(includeColumns ? columnStyles : [])
+      ].join('; ');
+    }
+
+    function getTemplateColumnFlowStyle(template) {
+      const normalized = normalizeTextStyleTemplates([template])[0] || createDefaultTextStyleTemplates()[1];
+      return [
+        `column-count: ${Math.max(1, normalized.columns)}`,
+        `column-gap: ${normalized.columnGap}px`,
+        'column-fill: auto'
       ].join('; ');
     }
 
@@ -3136,7 +3196,6 @@
         }
         if (isSeiteView) {
           renderSeitePageStrip();
-          void renderSeiteSidebarAssets();
         }
         if (mainArea) {
           mainArea.scrollLeft = 0;
@@ -3871,7 +3930,7 @@
           const option = document.createElement('option');
           const span = getRedaktionLayoutSpan(layout);
           option.value = layout.id;
-          option.textContent = `${layout.name} (${span === 2 ? 'Doppelseite' : 'Einzelseite'})`;
+          option.textContent = getLayoutOptionLabel(layout, category);
           option.disabled = span > remaining;
           if (!option.disabled) validOptionCount++;
           select.appendChild(option);
@@ -4209,32 +4268,54 @@
         .sort((a, b) => a.relativePath.localeCompare(b.relativePath, 'de', { sensitivity: 'base' }));
     }
 
+    function revokeCachedAssetObjectUrl(path) {
+      const normalizedPath = String(path || '').replace(/\\/g, '/').trim();
+      const cachedUrl = assetObjectUrlCache.get(normalizedPath);
+      if (!cachedUrl) return;
+      URL.revokeObjectURL(cachedUrl);
+      assetObjectUrlCache.delete(normalizedPath);
+    }
+
+    function clearCachedAssetObjectUrls(shouldClearPath = null) {
+      Array.from(assetObjectUrlCache.keys()).forEach((path) => {
+        if (typeof shouldClearPath === 'function' && !shouldClearPath(path)) return;
+        revokeCachedAssetObjectUrl(path);
+      });
+      if (!shouldClearPath) assetImageOrientationCache.clear();
+    }
+
+    async function getCachedAssetObjectUrl(path) {
+      const normalizedPath = String(path || '').replace(/\\/g, '/').trim();
+      if (!normalizedPath) return '';
+      const cachedUrl = assetObjectUrlCache.get(normalizedPath);
+      if (cachedUrl) return cachedUrl;
+      const file = await getImportedFile(normalizedPath);
+      if (!file) return '';
+      const objectUrl = URL.createObjectURL(file);
+      assetObjectUrlCache.set(normalizedPath, objectUrl);
+      return objectUrl;
+    }
+
     function clearSeiteSidebarObjectUrls() {
-      seiteSidebarObjectUrls.forEach((url) => URL.revokeObjectURL(url));
-      seiteSidebarObjectUrls = [];
+      // Sidebar previews share cached URLs so repeated page changes do not decode the same images again.
     }
 
     async function getImageOrientationForPath(path) {
       if (!path) return 'unknown';
       if (assetImageOrientationCache.has(path)) return assetImageOrientationCache.get(path);
-      const file = await getImportedFile(path);
-      if (!file) {
+      const objectUrl = await getCachedAssetObjectUrl(path);
+      if (!objectUrl) {
         assetImageOrientationCache.set(path, 'unknown');
         return 'unknown';
       }
-      const objectUrl = URL.createObjectURL(file);
-      try {
-        const orientation = await new Promise((resolve) => {
-          const image = new Image();
-          image.onload = () => resolve(image.naturalHeight > image.naturalWidth ? 'portrait' : 'landscape');
-          image.onerror = () => resolve('unknown');
-          image.src = objectUrl;
-        });
-        assetImageOrientationCache.set(path, orientation);
-        return orientation;
-      } finally {
-        URL.revokeObjectURL(objectUrl);
-      }
+      const orientation = await new Promise((resolve) => {
+        const image = new Image();
+        image.onload = () => resolve(image.naturalHeight > image.naturalWidth ? 'portrait' : 'landscape');
+        image.onerror = () => resolve('unknown');
+        image.src = objectUrl;
+      });
+      assetImageOrientationCache.set(path, orientation);
+      return orientation;
     }
 
     function getDisplayedSeiteAssetPaths() {
@@ -4272,15 +4353,15 @@
       const thumb = document.createElement('div');
       thumb.className = 'seite-asset-thumb';
       if (file.assetType === 'image') {
-        const imageFile = await getImportedFile(file.relativePath);
+        const objectUrl = await getCachedAssetObjectUrl(file.relativePath);
         if (token !== seiteSidebarRenderToken) return null;
-        if (imageFile) {
-          const objectUrl = URL.createObjectURL(imageFile);
-          seiteSidebarObjectUrls.push(objectUrl);
+        if (objectUrl) {
           const image = document.createElement('img');
           image.src = objectUrl;
           image.alt = file.name;
           image.draggable = false;
+          image.loading = 'lazy';
+          image.decoding = 'async';
           thumb.appendChild(image);
         } else {
           thumb.textContent = 'Bild';
@@ -4307,8 +4388,8 @@
         container.appendChild(empty);
         return;
       }
-      for (const file of files) {
-        const card = await createSeiteAssetCard(file, visiblePaths, token);
+      const cards = await Promise.all(files.map((file) => createSeiteAssetCard(file, visiblePaths, token)));
+      for (const card of cards) {
         if (token !== seiteSidebarRenderToken) return;
         if (card) container.appendChild(card);
       }
@@ -4590,8 +4671,6 @@
     }
 
     function clearSeitePreviewObjectUrls() {
-      seitePreviewObjectUrls.forEach((url) => URL.revokeObjectURL(url));
-      seitePreviewObjectUrls = [];
       if (seiteImageDragState) {
         seiteImageDragState.box.classList.remove('adjusting');
         seiteImageDragState = null;
@@ -4600,10 +4679,7 @@
 
     function revokeSeitePreviewElementObjectUrls(element) {
       element?.querySelectorAll?.('img[data-object-url]').forEach((image) => {
-        const objectUrl = image.dataset.objectUrl;
-        if (!objectUrl) return;
-        URL.revokeObjectURL(objectUrl);
-        seitePreviewObjectUrls = seitePreviewObjectUrls.filter((url) => url !== objectUrl);
+        delete image.dataset.objectUrl;
       });
     }
 
@@ -4618,6 +4694,51 @@
         renderSeitePageStrip();
       }
       if (persist) queueSnapshotSave();
+    }
+
+    function refreshSeiteLayoutSelect() {
+      if (!seiteLayoutSelect) return;
+      seiteLayoutSelect.replaceChildren();
+
+      const context = getSeiteContextByNumber(activeSeitePageNumber);
+      const page = context?.page || null;
+      const category = getLayoutCategoryById(page?.layoutCategoryId || '');
+      const slotIndex = Number.isInteger(context?.layoutSlot?.slot) ? context.layoutSlot.slot : context?.localSlot;
+      const count = normalizeRedaktionCount(page?.count);
+
+      if (!page || !category || !Array.isArray(category.layouts) || category.layouts.length === 0 || !Number.isInteger(slotIndex)) {
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = page ? 'Kein Layout verfuegbar' : 'Keine Seite ausgewaehlt';
+        seiteLayoutSelect.appendChild(emptyOption);
+        seiteLayoutSelect.disabled = true;
+        return;
+      }
+
+      const remaining = count - slotIndex;
+      let validOptionCount = 0;
+      category.layouts.forEach((layout) => {
+        const option = document.createElement('option');
+        const span = getRedaktionLayoutSpan(layout);
+        option.value = layout.id;
+        option.textContent = getLayoutOptionLabel(layout, category);
+        option.disabled = span > remaining;
+        if (!option.disabled) validOptionCount++;
+        seiteLayoutSelect.appendChild(option);
+      });
+
+      if (validOptionCount === 0) {
+        const emptyOption = document.createElement('option');
+        emptyOption.value = '';
+        emptyOption.textContent = 'Kein passendes Layout';
+        emptyOption.selected = true;
+        seiteLayoutSelect.prepend(emptyOption);
+        seiteLayoutSelect.disabled = true;
+        return;
+      }
+
+      seiteLayoutSelect.disabled = false;
+      seiteLayoutSelect.value = context.layout?.id || '';
     }
 
     function refreshSeiteSidebarControls() {
@@ -5102,16 +5223,90 @@
       ].join('');
     }
 
+    function getNodeTextStyleId(node) {
+      if (node?.nodeType !== Node.ELEMENT_NODE) return '';
+      if (node.dataset?.textStyleId) return node.dataset.textStyleId;
+      return node.querySelector?.('[data-text-style-id]')?.dataset.textStyleId || '';
+    }
+
+    function getNearestTextStyleId(node, container, fallbackStyleId) {
+      if (!node || !container) return fallbackStyleId;
+      const ownStyleId = node.nodeType === Node.ELEMENT_NODE
+        ? node.closest?.('[data-text-style-id]')?.dataset.textStyleId
+        : node.parentElement?.closest?.('[data-text-style-id]')?.dataset.textStyleId;
+      if (ownStyleId) return ownStyleId;
+
+      let previous = node.previousSibling;
+      let previousDistance = 1;
+      while (previous) {
+        const styleId = getNodeTextStyleId(previous);
+        if (styleId) break;
+        previous = previous.previousSibling;
+        previousDistance++;
+      }
+
+      let next = node.nextSibling;
+      let nextDistance = 1;
+      while (next) {
+        const styleId = getNodeTextStyleId(next);
+        if (styleId) break;
+        next = next.nextSibling;
+        nextDistance++;
+      }
+
+      const previousStyleId = getNodeTextStyleId(previous);
+      const nextStyleId = getNodeTextStyleId(next);
+      if (previousStyleId && (!nextStyleId || previousDistance <= nextDistance)) return previousStyleId;
+      if (nextStyleId) return nextStyleId;
+      return fallbackStyleId;
+    }
+
+    function runWithTextSelectionMarker(content, callback) {
+      const selection = window.getSelection();
+      const canMarkSelection = selection
+        && selection.rangeCount > 0
+        && selection.isCollapsed
+        && content.contains(selection.getRangeAt(0).commonAncestorContainer);
+      let marker = null;
+      if (canMarkSelection) {
+        marker = document.createElement('span');
+        marker.dataset.textSelectionMarker = 'true';
+        marker.style.display = 'inline-block';
+        marker.style.width = '0';
+        marker.style.overflow = 'hidden';
+        marker.appendChild(document.createTextNode('\u200b'));
+        const range = selection.getRangeAt(0).cloneRange();
+        range.insertNode(marker);
+      }
+
+      callback();
+
+      if (marker?.isConnected) {
+        const nextRange = document.createRange();
+        nextRange.setStartBefore(marker);
+        nextRange.collapse(true);
+        marker.remove();
+        selection.removeAllRanges();
+        selection.addRange(nextRange);
+      }
+    }
+
     function normalizeTextLineStructure(element, category) {
       if (!element) return;
       const { body } = getTextTemplatePair(category);
       const fallbackStyleId = body?.id || 'body';
 
+      Array.from(element.querySelectorAll('.seite-text-column-flow')).forEach((flow) => {
+        const fragment = document.createDocumentFragment();
+        while (flow.firstChild) fragment.appendChild(flow.firstChild);
+        flow.replaceWith(fragment);
+      });
+
       Array.from(element.querySelectorAll('[data-text-style-id]:not([data-text-line="true"])')).forEach((node) => {
         if (node.closest('[data-text-line="true"]')) return;
         if (node.parentElement !== element) return;
         if (node.querySelector('[data-text-line="true"]')) return;
-        const styleId = node.dataset.textStyleId || fallbackStyleId;
+        const styleId = node.dataset.textStyleId || getNearestTextStyleId(node, element, fallbackStyleId);
         const text = (node.textContent || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
         const fragment = document.createDocumentFragment();
         text.split('\n').forEach((line) => {
@@ -5131,12 +5326,13 @@
       Array.from(element.childNodes).forEach((node) => {
         if (node.nodeType !== Node.TEXT_NODE || !node.textContent) return;
         if (!node.textContent.trim() && !node.textContent.includes('\n')) return;
+        const styleId = getNearestTextStyleId(node, element, fallbackStyleId);
         const fragment = document.createDocumentFragment();
         node.textContent.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n').forEach((line) => {
           if (!line && fragment.childNodes.length === 0) return;
           const lineNode = document.createElement('span');
           lineNode.dataset.textLine = 'true';
-          lineNode.dataset.textStyleId = fallbackStyleId;
+          lineNode.dataset.textStyleId = styleId;
           if (line) {
             lineNode.textContent = line;
           } else {
@@ -5148,14 +5344,62 @@
       });
     }
 
+    function normalizeTextColumnFlow(element, category) {
+      if (!element) return;
+      ensureCategoryTextStyleModel(category);
+      element.classList.remove('has-column-flow');
+
+      let currentFlow = null;
+      let currentStyleId = '';
+      Array.from(element.childNodes).forEach((node) => {
+        if (node.nodeType === Node.ELEMENT_NODE && node.dataset.textSelectionMarker === 'true') {
+          if (currentFlow) currentFlow.appendChild(node);
+          return;
+        }
+        if (node.nodeType === Node.TEXT_NODE && !node.textContent.trim()) {
+          if (currentFlow) currentFlow.appendChild(node);
+          return;
+        }
+        if (node.nodeType !== Node.ELEMENT_NODE || node.dataset.textLine !== 'true') {
+          currentFlow = null;
+          currentStyleId = '';
+          return;
+        }
+
+        const styleId = node.dataset.textStyleId || '';
+        const template = getTextStyleTemplateById(category, styleId);
+        if (currentFlow) {
+          currentFlow.appendChild(node);
+          return;
+        }
+        if (!template || template.columns <= 1) {
+          currentStyleId = '';
+          return;
+        }
+
+        currentFlow = document.createElement('div');
+        currentFlow.className = 'seite-text-column-flow';
+        currentFlow.dataset.textColumnFlow = 'true';
+        currentFlow.dataset.textStyleId = styleId;
+        currentFlow.setAttribute('style', getTemplateColumnFlowStyle(template));
+        node.before(currentFlow);
+        currentStyleId = styleId;
+        element.classList.add('has-column-flow');
+        currentFlow.appendChild(node);
+      });
+    }
+
     function applyTextTemplateStylesToElement(element, category) {
       if (!element) return;
       ensureCategoryTextStyleModel(category);
       normalizeTextLineStructure(element, category);
+      normalizeTextColumnFlow(element, category);
       element.querySelectorAll('[data-text-style-id]').forEach((node) => {
         const template = getTextStyleTemplateById(category, node.dataset.textStyleId);
         if (!template) return;
-        node.setAttribute('style', getTemplateInlineStyle(template));
+        node.setAttribute('style', node.dataset.textColumnFlow === 'true'
+          ? getTemplateColumnFlowStyle(template)
+          : getTemplateInlineStyle(template));
       });
     }
 
@@ -5535,8 +5779,8 @@
       delete slotElement.dataset.imageSettingKey;
 
       if (mediaType === 'image') {
-        const file = await getImportedFile(path);
-        if (!file) {
+        const objectUrl = await getCachedAssetObjectUrl(path);
+        if (!objectUrl) {
           const empty = document.createElement('div');
           empty.className = 'seite-preview-empty-slot';
           empty.textContent = 'Bild fehlt';
@@ -5546,11 +5790,10 @@
         const [layoutSlot, elementId] = String(slotElement.dataset.mediaKey || '').split(':');
         const imageSettingKey = getImageViewSettingKey(page, path, layoutSlot, elementId);
         const image = document.createElement('img');
-        const objectUrl = URL.createObjectURL(file);
-        seitePreviewObjectUrls.push(objectUrl);
         image.dataset.objectUrl = objectUrl;
         image.alt = path.split('/').pop() || 'Bild';
         image.draggable = false;
+        image.decoding = 'async';
         slotElement.dataset.imagePath = path;
         slotElement.dataset.imageSettingKey = imageSettingKey;
         slotElement.appendChild(image);
@@ -5953,8 +6196,7 @@
         return box;
       };
 
-      for (const entry of previewRects) {
-        if (token !== seitePreviewRenderToken) return;
+      const renderedEntries = previewRects.map((entry) => {
         const box = createElementBox(entry);
         const mediaKey = getSeiteMediaAssignmentKey(context.layoutSlot.slot, entry.element.id);
         box.dataset.pageId = context.page.id;
@@ -5965,70 +6207,92 @@
         if (entry.element.type === 'text') {
           applyTextFieldStyle(box, category, context.layout.id, entry.element.id);
         }
-        const path = entry.element.type === 'image'
-          ? imageAssignments.get(mediaKey)
-          : textAssignments.get(mediaKey);
+        pagePreview.appendChild(box);
+        return {
+          entry,
+          box,
+          mediaKey,
+          path: entry.element.type === 'image'
+            ? imageAssignments.get(mediaKey)
+            : textAssignments.get(mediaKey)
+        };
+      });
+
+      for (const renderedEntry of renderedEntries.filter((item) => item.entry.element.type === 'image')) {
+        if (token !== seitePreviewRenderToken) return;
+        const { entry, box, mediaKey, path } = renderedEntry;
         if (!path) {
           const empty = document.createElement('div');
           empty.className = 'seite-preview-empty-slot';
-          empty.textContent = entry.element.type === 'image' ? 'Bild' : 'Text';
+          empty.textContent = 'Bild';
           box.appendChild(empty);
-          pagePreview.appendChild(box);
+          continue;
+        }
+        const objectUrl = await getCachedAssetObjectUrl(path);
+        if (token !== seitePreviewRenderToken) return;
+        if (objectUrl) {
+          const image = document.createElement('img');
+          image.dataset.objectUrl = objectUrl;
+          image.alt = path.split('/').pop() || 'Bild';
+          image.draggable = false;
+          image.decoding = 'async';
+          const imageSettingKey = getImageViewSettingKey(context.page, path, context.layoutSlot.slot, entry.element.id);
+          box.dataset.imagePath = path;
+          box.dataset.imageSettingKey = imageSettingKey;
+          box.appendChild(image);
+          applyImageViewStyleWhenReady(image, getImageViewSetting(context.page, path, imageSettingKey));
+          image.src = objectUrl;
+        } else {
+          const empty = document.createElement('div');
+          empty.className = 'seite-preview-empty-slot';
+          empty.textContent = 'Bild fehlt';
+          box.appendChild(empty);
+        }
+      }
+
+      await waitForSeiteStageImages();
+
+      for (const entry of previewRects) {
+        if (token !== seitePreviewRenderToken) return;
+        if (entry.element.type === 'image') continue;
+        const renderedEntry = renderedEntries.find((item) => item.entry === entry);
+        if (!renderedEntry) continue;
+        const { box, mediaKey, path } = renderedEntry;
+        if (!path) {
+          const empty = document.createElement('div');
+          empty.className = 'seite-preview-empty-slot';
+          empty.textContent = 'Text';
+          box.appendChild(empty);
           continue;
         }
 
-        if (entry.element.type === 'image') {
+        const textKey = getTextContentKey(context.page, path, context.layoutSlot.slot, entry.element.id);
+        const override = getTextOverride(context.page, textKey);
+        if (override) {
+          renderTextSlotContent(
+            box,
+            context.page,
+            category,
+            context.layout.id,
+            entry.element.id,
+            context.layoutSlot.slot,
+            path,
+            ''
+          );
+        } else {
           const file = await getImportedFile(path);
           if (token !== seitePreviewRenderToken) return;
-          if (file) {
-            const image = document.createElement('img');
-            const objectUrl = URL.createObjectURL(file);
-            seitePreviewObjectUrls.push(objectUrl);
-            image.dataset.objectUrl = objectUrl;
-            image.alt = path.split('/').pop() || 'Bild';
-            image.draggable = false;
-            const imageSettingKey = getImageViewSettingKey(context.page, path, context.layoutSlot.slot, entry.element.id);
-            box.dataset.imagePath = path;
-            box.dataset.imageSettingKey = imageSettingKey;
-            box.appendChild(image);
-            applyImageViewStyleWhenReady(image, getImageViewSetting(context.page, path, imageSettingKey));
-            image.src = objectUrl;
-          } else {
-            const empty = document.createElement('div');
-            empty.className = 'seite-preview-empty-slot';
-            empty.textContent = 'Bild fehlt';
-            box.appendChild(empty);
-          }
-        } else {
-          const textKey = getTextContentKey(context.page, path, context.layoutSlot.slot, entry.element.id);
-          const override = getTextOverride(context.page, textKey);
-          if (override) {
-            renderTextSlotContent(
-              box,
-              context.page,
-              category,
-              context.layout.id,
-              entry.element.id,
-              context.layoutSlot.slot,
-              path,
-              ''
-            );
-          } else {
-            const file = await getImportedFile(path);
-            if (token !== seitePreviewRenderToken) return;
-            renderTextSlotContent(
-              box,
-              context.page,
-              category,
-              context.layout.id,
-              entry.element.id,
-              context.layoutSlot.slot,
-              path,
-              file ? await file.text() : 'Text fehlt'
-            );
-          }
+          renderTextSlotContent(
+            box,
+            context.page,
+            category,
+            context.layout.id,
+            entry.element.id,
+            context.layoutSlot.slot,
+            path,
+            file ? await file.text() : 'Text fehlt'
+          );
         }
-        pagePreview.appendChild(box);
       }
     }
 
@@ -6057,6 +6321,35 @@
       }
     }
 
+    async function waitForSeiteStageImages() {
+      if (!seiteStage) return;
+      const images = Array.from(seiteStage.querySelectorAll('.seite-preview-element.image img'));
+      if (images.length === 0) return;
+      await Promise.all(images.map((image) => {
+        if (image.complete && image.naturalWidth) return Promise.resolve();
+        if (typeof image.decode === 'function') return image.decode().catch(() => {});
+        return new Promise((resolve) => {
+          image.addEventListener('load', resolve, { once: true });
+          image.addEventListener('error', resolve, { once: true });
+        });
+      }));
+    }
+
+    async function renderSeiteMainContentThenSidebar(pageNumber = activeSeitePageNumber) {
+      if (activeAppView !== 'seite') return;
+      const token = ++seiteViewContentRenderToken;
+      seiteSidebarRenderToken++;
+      if (seiteAllAssets) {
+        seiteAllAssets.replaceChildren();
+        seiteAllAssets.style.setProperty('--seite-asset-size', `${seiteAssetDisplaySize}px`);
+      }
+      await renderSeitePreview(pageNumber);
+      if (token !== seiteViewContentRenderToken || activeAppView !== 'seite') return;
+      await waitForSeiteStageImages();
+      if (token !== seiteViewContentRenderToken || activeAppView !== 'seite') return;
+      await renderSeiteSidebarAssets();
+    }
+
     function renderSeitePageStrip() {
       if (!seitePageStrip) return;
       seitePageStrip.replaceChildren();
@@ -6067,8 +6360,8 @@
         empty.className = 'seite-empty';
         empty.textContent = 'Noch keine Seiten in Redaktion angelegt.';
         seitePageStrip.appendChild(empty);
-        if (activeAppView === 'seite') void renderSeitePreview(null);
-        if (activeAppView === 'seite') void renderSeiteSidebarAssets();
+        refreshSeiteLayoutSelect();
+        if (activeAppView === 'seite') void renderSeiteMainContentThenSidebar(null);
         return;
       }
 
@@ -6111,8 +6404,8 @@
         }
         seitePageStrip.appendChild(item);
       });
-      if (activeAppView === 'seite') void renderSeitePreview(activeSeitePageNumber);
-      if (activeAppView === 'seite') void renderSeiteSidebarAssets();
+      refreshSeiteLayoutSelect();
+      if (activeAppView === 'seite') void renderSeiteMainContentThenSidebar(activeSeitePageNumber);
     }
 
     function renderRedaktionPages() {
@@ -6497,7 +6790,7 @@
       renderTreeIntoContainer(projectImportTree);
       renderTreeIntoContainer(projectMainTree);
       renderRedaktionAssetsTree();
-      if (activeAppView === 'seite') void renderSeiteSidebarAssets();
+      if (activeAppView === 'seite') void renderSeiteMainContentThenSidebar(activeSeitePageNumber);
       if (projectImportSummary) {
         if (missingProjectFilePaths.size > 0) {
           projectImportSummary.textContent = `${missingProjectFilePaths.size} Datei(en) fehlen lokal. Bitte importiere den passenden Ordner erneut.`;
@@ -6511,6 +6804,7 @@
     }
 
     function setImportedProjectFiles(files, preserveExpanded = false) {
+      clearCachedAssetObjectUrls();
       importedProjectFiles = Array.isArray(files) ? files : [];
       importedProjectTree = buildProjectTreeFromFiles(importedProjectFiles);
       if (!preserveExpanded) {
@@ -6529,7 +6823,10 @@
       const beforeCount = importedProjectFiles.length;
       const knownPaths = new Set(importedProjectFiles.map((file) => file.relativePath));
       (Array.isArray(files) ? files : []).forEach((file) => {
-        if (!file?.relativePath || knownPaths.has(file.relativePath)) return;
+        if (!file?.relativePath) return;
+        revokeCachedAssetObjectUrl(file.relativePath);
+        assetImageOrientationCache.delete(file.relativePath);
+        if (knownPaths.has(file.relativePath)) return;
         knownPaths.add(file.relativePath);
         importedProjectFiles.push(file);
       });
@@ -6568,6 +6865,10 @@
       }
 
       importedProjectFiles = importedProjectFiles.filter((file) => !shouldRemovePath(file.relativePath));
+      clearCachedAssetObjectUrls(shouldRemovePath);
+      Array.from(assetImageOrientationCache.keys()).forEach((path) => {
+        if (shouldRemovePath(path)) assetImageOrientationCache.delete(path);
+      });
 
       missingProjectFilePaths = new Set(Array.from(missingProjectFilePaths).filter((path) => !shouldRemovePath(path)));
       redaktionPagesData.forEach((page) => {
@@ -6817,9 +7118,22 @@
       );
     }
 
-    function getImageCount(layout) {
+    function getLayoutImageSlotCount(layout, category = getActiveCategory()) {
       if (!layout || !Array.isArray(layout.elements)) return 0;
-      return getPreviewRectsForLayout(layout, getActiveCategory()).filter((entry) => entry.element.type === 'image').length;
+      const layoutForCount = layout.id === activeLayoutId && category?.id === activeCategoryId
+        ? { ...layout, elements: serializeElements() }
+        : layout;
+      return getPreviewRectsForLayout(layoutForCount, category).filter((entry) => entry.element.type === 'image').length;
+    }
+
+    function getLayoutOptionLabel(layout, category = getActiveCategory()) {
+      const imageCount = getLayoutImageSlotCount(layout, category);
+      const span = getRedaktionLayoutSpan(layout);
+      return `${imageCount} ${layout?.name || 'Layout'} (${span === 2 ? 'Doppelseite' : 'Einzelseite'})`;
+    }
+
+    function getImageCount(layout) {
+      return getLayoutImageSlotCount(layout, getActiveCategory());
     }
 
     function refreshCategorySelector() {
@@ -8940,7 +9254,9 @@
       layoutStyleTextOverlayLayer.addEventListener('input', (event) => {
         if (!activeTextEditState?.layoutDummyKey) return;
         if (event.target !== activeTextEditState.content) return;
-        applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
+        runWithTextSelectionMarker(activeTextEditState.content, () => {
+          applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
+        });
         scheduleTextFieldAutoFit(activeTextEditState.slotElement, getTextFieldStyle(activeTextEditState.category));
         layoutStyleDummyTexts.set(activeTextEditState.layoutDummyKey, activeTextEditState.content.innerHTML);
       });
@@ -9019,6 +9335,19 @@
         setSeiteViewMode(button.dataset.seiteViewMode || 'single');
       });
     });
+    if (seiteLayoutSelect) {
+      seiteLayoutSelect.addEventListener('change', () => {
+        const context = getSeiteContextByNumber(activeSeitePageNumber);
+        const page = context?.page || null;
+        const slotIndex = Number.isInteger(context?.layoutSlot?.slot) ? context.layoutSlot.slot : context?.localSlot;
+        if (!page || !Number.isInteger(slotIndex)) return;
+        setRedaktionPageLayoutAtSlot(page, slotIndex, seiteLayoutSelect.value);
+        refreshRedaktionInspector();
+        renderRedaktionPages();
+        queueSnapshotSave();
+        setStatus('Layout der aktiven Seite aktualisiert.');
+      });
+    }
     seiteAssetTypeFilterButtons.forEach((button) => {
       button.addEventListener('click', () => {
         seiteAssetTypeFilter = button.dataset.seiteAssetType || 'all';
@@ -9038,7 +9367,7 @@
     if (seiteAssetSizeRange) {
       seiteAssetSizeRange.addEventListener('input', () => {
         seiteAssetDisplaySize = Math.min(132, Math.max(52, Number(seiteAssetSizeRange.value) || 74));
-        void renderSeiteSidebarAssets();
+        seiteAllAssets?.style.setProperty('--seite-asset-size', `${seiteAssetDisplaySize}px`);
         queueSnapshotSave();
       });
     }
@@ -9080,7 +9409,9 @@
       seiteStage.addEventListener('input', (event) => {
         if (!activeTextEditState) return;
         if (event.target !== activeTextEditState.content) return;
-        applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
+        runWithTextSelectionMarker(activeTextEditState.content, () => {
+          applyTextTemplateStylesToElement(activeTextEditState.content, activeTextEditState.category);
+        });
         scheduleTextFieldAutoFit(activeTextEditState.slotElement, getTextFieldStyle(activeTextEditState.category));
         saveTextOverride(
           activeTextEditState.page,
